@@ -14,6 +14,16 @@ namespace FreeSpace2TranslationTools.Utils
         public string FullLine { get; set; }
         public bool Treated { get; set; }
 
+        public Xstr(int id, string text, string fullLine)
+        {
+            Id = id;
+            Text = text;
+            FileName = string.Empty;
+            FilePath = string.Empty;
+            FullLine = fullLine;
+            Treated = false;
+        }
+
         public Xstr(int id, string text, FileInfo file)
         {
             Id = id;

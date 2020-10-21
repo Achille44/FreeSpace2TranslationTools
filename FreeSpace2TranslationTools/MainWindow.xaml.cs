@@ -18,15 +18,9 @@ namespace FreeSpace_tstrings_generator
     /// </summary>
     public partial class MainWindow : Window
     {
-        string modFolder = string.Empty;
-        string destinationFolder = string.Empty;
-        string translationSource = string.Empty;
-        string translationDestination = string.Empty;
-        string oldOriginalFile = string.Empty;
-        string oldTranslatedFile = string.Empty;
-        string newOriginalFile = string.Empty;
-        string newTranslatedFile = string.Empty;
+        Regex regexXstr = new Regex("XSTR\\((\".*?\"), (-?\\d+)\\)", RegexOptions.Singleline);
         Regex regexXstrInTstrings = new Regex("(\\d+), (\".*?\")", RegexOptions.Singleline);
+        Regex regexModifyXstr = new Regex("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(\\d+)\\s*\\)", RegexOptions.Singleline);
         Regex regexNotADigit = new Regex("[^0-9.-]+");
 
         public MainWindow()
@@ -46,40 +40,24 @@ namespace FreeSpace_tstrings_generator
 
         private void btnGenerate_Click(object sender, RoutedEventArgs e)
         {
-            modFolder = tbModFolder.Text;
-            destinationFolder = tbDestinationFolder.Text;
+            string modFolder = tbModFolder.Text;
+            string destinationFolder = tbDestinationFolder.Text;
             bool manageDuplicates = cbManageDuplicates.IsChecked ?? false;
-
-            Regex regexXstr = new Regex("XSTR\\((\".*?\"), (-?\\d+)\\)", RegexOptions.Singleline);
 
             if (!string.IsNullOrEmpty(modFolder) && !string.IsNullOrEmpty(destinationFolder))
             {
-                string[] extensions = new[] { ".tbl", ".tbm", ".fc2", ".fs2" };
-
-                List<string> filesList = Directory.GetFiles(modFolder, "*", SearchOption.AllDirectories)
-                    .Where(f => extensions.Contains(Path.GetExtension(f))).ToList();
+                List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
 
                 List<Xstr> lines = new List<Xstr>();
                 List<Xstr> duplicates = new List<Xstr>();
 
+                #region looking for xstr in each file
                 foreach (string file in filesList)
                 {
                     FileInfo fileInfo = new FileInfo(file);
                     string fileContent = File.ReadAllText(file);
-                    MatchCollection resultsFromFile = regexXstr.Matches(fileContent);
 
-                    IEnumerable<Match> combinedResults = resultsFromFile.OfType<Match>().Where(m => m.Success);
-
-                    // there is an additional specific format in fs2 files
-                    if (fileInfo.Extension == ".fs2")
-                    {
-                        Regex regexModify = new Regex("\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(\\d+)\\s*\\)", RegexOptions.Singleline);
-                        MatchCollection modifyResults = regexModify.Matches(fileContent);
-
-                        combinedResults = resultsFromFile.OfType<Match>().Concat(modifyResults.OfType<Match>()).Where(m => m.Success);
-
-                        //resultsFromFile.Concat(modifyResults);
-                    }
+                    IEnumerable<Match> combinedResults = GetAllXstrFromFile(fileInfo, fileContent);
 
                     foreach (Match match in combinedResults)
                     {
@@ -108,21 +86,13 @@ namespace FreeSpace_tstrings_generator
                         }
                     }
                 }
+                #endregion
 
                 if (manageDuplicates && duplicates.Count > 0)
                 {
                     #region write duplicates into a separate file with new IDs
                     // new ID = max ID + 1 to avoid duplicates
-                    int newId = 0;
-
-                    if (tbStartingID.Text != string.Empty && int.TryParse(tbStartingID.Text, out int startingID))
-                    {
-                        newId = startingID;
-                    }
-                    else if (lines.Count > 0)
-                    {
-                        newId = lines.Max(x => x.Id) + 1;
-                    }
+                    int newId =  SetNextID(tbStartingID.Text, ref lines);
 
                     try
                     {
@@ -173,70 +143,25 @@ namespace FreeSpace_tstrings_generator
 
                     foreach (string sourceFile in filesToModify)
                     {
-                        // take care to keep the potential subfolders...
-                        string destFile = sourceFile.Replace(modFolder, destinationFolder);
-                        string destDirectoryPath = Path.GetDirectoryName(destFile);
-
-                        // create the potential subfolders in the destination
-                        Directory.CreateDirectory(destDirectoryPath);
-
-                        string fileName = Path.GetFileName(destFile);
+                        string fileName = Path.GetFileName(sourceFile);
 
                         List<Xstr> linesForThisFile = duplicates.Where(x => x.FileName == fileName).ToList();
 
-                        string content = string.Empty;
-
-                        try
-                        {
-                            using StreamReader reader = new StreamReader(sourceFile);
-                            content = reader.ReadToEnd();
-                        }
-                        catch (Exception ex)
-                        {
-
-                        }
-
-                        Regex regexModify = new Regex("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(\\d+)\\s*\\)", RegexOptions.Singleline);
+                        string content = File.ReadAllText(sourceFile);
 
                         foreach (Xstr lineToModify in linesForThisFile)
                         {
-                            string newLine = string.Empty;
-
-                            if (lineToModify.FullLine.Contains("modify-variable-xstr"))
-                            {
-                                newLine = regexModify.Replace(lineToModify.FullLine,
-                                    m => string.Format(
-                                        "{0}{1}",
-                                        m.Groups[1].Value,
-                                        lineToModify.Id));
-                            }
-                            else
-                            {
-                                newLine = regexXstr.Replace(lineToModify.FullLine,
-                                    m => string.Format(
-                                        "XSTR({0}, {1})",
-                                        m.Groups[1].Value,
-                                        lineToModify.Id));
-                            }
-                            content = content.Replace(lineToModify.FullLine, newLine);
+                            ReplaceContentWithNewXstr(ref content, lineToModify);
                         }
 
-                        try
-                        {
-                            using StreamWriter sw = new StreamWriter(destFile, false);
-                            sw.Write(content);
-                        }
-                        catch (Exception ex)
-                        {
-
-                        }
+                        CreateFileWithNewIDs(sourceFile, modFolder, destinationFolder, content);
                     }
                     #endregion
                 }
 
                 try
                 {
-                    #region Creation of tstring.tbl
+                    #region Creation of tstrings.tbl
                     using StreamWriter sw = File.CreateText(Path.Combine(destinationFolder, "tstrings.tbl"));
                     sw.WriteLine("#default");
 
@@ -281,8 +206,8 @@ namespace FreeSpace_tstrings_generator
 
         private void btnMerge_Click(object sender, RoutedEventArgs e)
         {
-            translationSource = tbTranslationSource.Text;
-            translationDestination = tbTranslationDestination.Text;
+            string translationSource = tbTranslationSource.Text;
+            string translationDestination = tbTranslationDestination.Text;
 
             string sourceContent = Utils.ReadFileContent(translationSource);
             string destinationContent = Utils.ReadFileContent(translationDestination);
@@ -359,12 +284,12 @@ namespace FreeSpace_tstrings_generator
             }
         }
 
-        private void tbStartingID_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void OnlyDigits_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = IsOnlyDigit(e.Text);
         }
 
-        private void tbStartingID_Pasting(object sender, DataObjectPastingEventArgs e)
+        private void OnlyDigits_Pasting(object sender, DataObjectPastingEventArgs e)
         {
             if (e.DataObject.GetDataPresent(typeof(string)))
             {
@@ -405,12 +330,15 @@ namespace FreeSpace_tstrings_generator
             pbGlobalProgress.Value = e.ProgressPercentage;
         }
 
-        private void UpdateTranslation (object sender, DoWorkEventArgs e)
+        private void UpdateTranslation(object sender, DoWorkEventArgs e)
         {
-            oldOriginalFile = tbOldOriginal.Text;
-            newOriginalFile = tbNewOriginal.Text;
-            oldTranslatedFile = tbOldTranslated.Text;
-            newTranslatedFile = tbNewTranslated.Text;
+            int currentProgress = 0;
+            (sender as BackgroundWorker).ReportProgress(currentProgress);
+
+            string oldOriginalFile = tbOldOriginal.Text;
+            string newOriginalFile = tbNewOriginal.Text;
+            string oldTranslatedFile = tbOldTranslated.Text;
+            string newTranslatedFile = tbNewTranslated.Text;
 
             string oldOriginalContent = Utils.ReadFileContent(oldOriginalFile);
             string newOriginalContent = Utils.ReadFileContent(newOriginalFile);
@@ -424,8 +352,6 @@ namespace FreeSpace_tstrings_generator
             {
                 pbGlobalProgress.Maximum = matchesInNewOriginal.Count;
             });
-            
-            int currentProgress = 0;
 
             foreach (Match match in matchesInNewOriginal)
             {
@@ -484,6 +410,215 @@ namespace FreeSpace_tstrings_generator
         {
             e.Handled = true;
             e.Effects = DragDropEffects.Move;
+        }
+
+        private void btnModFolderInsertion_Click(object sender, RoutedEventArgs e)
+        {
+            ChooseLocation("Mod folder", true, ref tbModFolderInsertion);
+        }
+
+        private void btnOriginalTstrings_Click(object sender, RoutedEventArgs e)
+        {
+            ChooseLocation("Original tstrings", false, ref tbOriginalTstrings);
+        }
+
+        private void btnInsert_Click(object sender, RoutedEventArgs e)
+        {
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.WorkerReportsProgress = true;
+            worker.DoWork += IncludeExistingTranslation;
+            worker.ProgressChanged += WorkerProgressChanged;
+            worker.RunWorkerAsync();
+        }
+
+        private void btnDestinationFolderInsert_Click(object sender, RoutedEventArgs e)
+        {
+            ChooseLocation("Destination folder", true, ref tbDestinationFolderInsert);
+        }
+
+        private void IncludeExistingTranslation(object sender, DoWorkEventArgs e)
+        {
+            int currentProgress = 0;
+            (sender as BackgroundWorker).ReportProgress(currentProgress);
+
+            string modFolder = string.Empty;
+            string destinationFolder = string.Empty;
+            string originalTstrings = string.Empty;
+            string startingId = string.Empty;
+            bool manageNewIds = false;
+
+            Dispatcher.Invoke(() =>
+            {
+                modFolder = tbModFolderInsertion.Text;
+                destinationFolder = tbDestinationFolderInsert.Text;
+                originalTstrings = tbOriginalTstrings.Text;
+                startingId = tbStartingIDInsert.Text;
+                manageNewIds = cbManageNewIds.IsChecked ?? false;
+            });
+
+            string originalTstringsContent = File.ReadAllText(originalTstrings);
+
+            MatchCollection allXstrInTstrings = regexXstrInTstrings.Matches(originalTstringsContent);
+            List<Xstr> xstrFromTstringsList = new List<Xstr>();
+
+            foreach (Match match in allXstrInTstrings)
+            {
+                if (int.TryParse(match.Groups[1].Value, out int id))
+                {
+                    xstrFromTstringsList.Add(new Xstr(id, match.Groups[2].Value, match.Groups[0].Value));
+                }
+            }
+
+            int nextID = SetNextID(startingId, ref xstrFromTstringsList);
+
+            List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
+
+            // Required to avoid thread access errors...
+            Dispatcher.Invoke(() =>
+            {
+                pbGlobalProgress.Maximum = filesList.Count;
+            });
+
+            foreach (string sourceFile in filesList)
+            {
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
+
+                bool fileModificationRequired = false;
+                FileInfo fileInfo = new FileInfo(sourceFile);
+                string fileContent = File.ReadAllText(sourceFile);
+                IEnumerable<Match> xstrMatches = GetAllXstrFromFile(fileInfo, fileContent);
+                List<Xstr> xstrToBeAddedList = new List<Xstr>();
+
+                foreach (Match match in xstrMatches)
+                {
+                    List<Xstr> matchingXstr = xstrFromTstringsList.Where(x => x.Text == match.Groups[1].Value).ToList();
+
+                    if (matchingXstr.Count > 0)
+                    {
+                        if (int.TryParse(match.Groups[2].Value, out int id))
+                        {
+                            // in this case, the text already exists, but the ID is not the same
+                            if (!matchingXstr.Exists(x => x.Id == id))
+                            {
+                                fileModificationRequired = true;
+                                ReplaceContentWithNewXstr(ref fileContent, new Xstr(matchingXstr[0].Id, match.Groups[1].Value, fileInfo, match.Groups[0].Value));
+                            }
+                        }
+                    }
+                    // here the text does not exist in the original tstrings, so we have to create new lines in a different file !!! TODO !!!
+                    else if (manageNewIds)
+                    {
+                        fileModificationRequired = true;
+                        Xstr newXstr = new Xstr(nextID, match.Groups[1].Value, fileInfo, match.Groups[0].Value);
+                        ReplaceContentWithNewXstr(ref fileContent, newXstr);
+                        xstrToBeAddedList.Add(newXstr);
+                        nextID++;
+                    }
+                }
+
+                if (fileModificationRequired)
+                {
+                    CreateFileWithNewIDs(sourceFile, modFolder, destinationFolder, fileContent);
+                }
+            }
+
+            ProcessComplete();
+        }
+
+        private List<string> GetFilesWithXstrFromFolder(string folderPath)
+        {
+            string[] extensions = new[] { ".tbl", ".tbm", ".fc2", ".fs2" };
+
+            return Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
+                .Where(f => extensions.Contains(Path.GetExtension(f))).ToList();
+        }
+
+        private IEnumerable<Match> GetAllXstrFromFile(FileInfo fileInfo, string fileContent)
+        {
+            MatchCollection resultsFromFile = regexXstr.Matches(fileContent);
+            IEnumerable<Match> combinedResults = resultsFromFile.OfType<Match>().Where(m => m.Success);
+
+            // there is an additional specific format in fs2 files
+            if (fileInfo.Extension == ".fs2")
+            {
+                Regex regexModify = new Regex("\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(\\d+)\\s*\\)", RegexOptions.Singleline);
+                MatchCollection modifyResults = regexModify.Matches(fileContent);
+
+                combinedResults = resultsFromFile.OfType<Match>().Concat(modifyResults.OfType<Match>()).Where(m => m.Success);
+            }
+
+            return combinedResults;
+        }
+
+        private void CreateFileWithNewIDs(string sourceFile, string modFolder, string destinationFolder, string content)
+        {
+            // take care to keep the potential subfolders...
+            string destFile = sourceFile.Replace(modFolder, destinationFolder);
+            string destDirectoryPath = Path.GetDirectoryName(destFile);
+
+            // create the potential subfolders in the destination
+            Directory.CreateDirectory(destDirectoryPath);
+
+            try
+            {
+                using StreamWriter sw = new StreamWriter(destFile, false);
+                sw.Write(content);
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private void ReplaceContentWithNewXstr(ref string content, Xstr lineToModify)
+        {
+            string newLine = string.Empty;
+
+            if (lineToModify.FullLine.Contains("modify-variable-xstr"))
+            {
+                newLine = regexModifyXstr.Replace(lineToModify.FullLine,
+                    m => string.Format(
+                        "{0}{1}",
+                        m.Groups[1].Value,
+                        lineToModify.Id));
+            }
+            else
+            {
+                newLine = regexXstr.Replace(lineToModify.FullLine,
+                    m => string.Format(
+                        "XSTR({0}, {1})",
+                        m.Groups[1].Value,
+                        lineToModify.Id));
+            }
+
+            content = content.Replace(lineToModify.FullLine, newLine);
+        }
+
+        private int SetNextID(string tbContent, ref List<Xstr> xstrList)
+        {
+            int nextId = 0;
+
+            if (tbContent != string.Empty && int.TryParse(tbContent, out int startingID))
+            {
+                nextId = startingID;
+            }
+            else if (xstrList.Count > 0)
+            {
+                nextId = xstrList.Max(x => x.Id) + 1;
+            }
+
+            return nextId;
+        }
+
+        private void cbManageNewIds_Checked(object sender, RoutedEventArgs e)
+        {
+            tbStartingIDInsert.IsEnabled = true;
+        }
+
+        private void cbManageNewIds_Unchecked(object sender, RoutedEventArgs e)
+        {
+            tbStartingIDInsert.IsEnabled = false;
         }
     }
 }

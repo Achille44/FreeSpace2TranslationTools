@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="FreeSpace 2 Translation tools" Height="500" Width="800">
+        Title="FreeSpace 2 Translation Tools" Height="500" Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="10*" />
@@ -35,19 +35,19 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Label Content="Mod folder:" />
-                        <TextBox Name="tbModFolder" TextWrapping="Wrap" Width="374" Grid.Column="1" AllowDrop="True" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <TextBox Name="tbModFolder" TextWrapping="Wrap" Grid.Column="1" AllowDrop="True" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button Name="btnModFolder" Content="Choose..." Click="btnModFolder_Click" Grid.Column="2" />
                         <Label Content="Destination folder:" Grid.Row="1" />
-                        <TextBox x:Name="tbDestinationFolder" Text="" TextWrapping="Wrap" Width="374" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <TextBox x:Name="tbDestinationFolder" Text="" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnDestinationFolder" Content="Choose..." Click="btnDestinationFolder_Click" Grid.Row="1" Grid.Column="2" />
                     </Grid>
                     <WrapPanel Grid.Row="1">
                     </WrapPanel>
                     <WrapPanel Grid.Row="2">
-                        <CheckBox x:Name="cbManageDuplicates" Content="Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder)" Checked="cbManageDuplicates_Checked" Unchecked="cbManageDuplicates_Unchecked" />
+                        <CheckBox x:Name="cbManageDuplicates" Content="Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder) NOT IMPLEMENTED YET" Checked="cbManageDuplicates_Checked" Unchecked="cbManageDuplicates_Unchecked" />
                     </WrapPanel>
                     <WrapPanel Grid.Row="3">
-                        <TextBox x:Name="tbStartingID" Width="50" PreviewTextInput="tbStartingID_PreviewTextInput" DataObject.Pasting="tbStartingID_Pasting" IsEnabled="False" />
+                        <TextBox x:Name="tbStartingID" Style="{StaticResource SmallTextBox}" PreviewTextInput="OnlyDigits_PreviewTextInput" DataObject.Pasting="OnlyDigits_Pasting" IsEnabled="False" />
                         <TextBlock Style="{StaticResource LongTextBlock}" Text="Starting ID for duplicates (if no value, the starting value will be the existing max ID + 1)." />
                     </WrapPanel>
                     <WrapPanel Grid.Row="4">
@@ -78,10 +78,10 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Label Content="Source file:" />
-                        <TextBox x:Name="tbTranslationSource" Text="" TextWrapping="Wrap" Width="374" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <TextBox x:Name="tbTranslationSource" Text="" TextWrapping="Wrap" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnTranslationSource" Content="Choose..." Click="btnTranslationSource_Click" Grid.Column="2" />
                         <Label Content="Destination file:" Grid.Row="1" />
-                        <TextBox x:Name="tbTranslationDestination" Text="" TextWrapping="Wrap" Width="374" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <TextBox x:Name="tbTranslationDestination" Text="" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnTranslationDestination" Content="Choose..." Click="btnTranslationDestination_Click" Grid.Row="1" Grid.Column="2" />
                     </Grid>
                     <WrapPanel Grid.Row="2">
@@ -115,16 +115,16 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Label Content="Old original file:" />
-                        <TextBox x:Name="tbOldOriginal" Text="" TextWrapping="Wrap" Width="300" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <TextBox x:Name="tbOldOriginal" Text="" TextWrapping="Wrap" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnOldOriginal" Content="Choose..." Click="btnOldOriginal_Click" Grid.Column="2" />
                         <Label Content="New original file:" Grid.Row="1" />
-                        <TextBox x:Name="tbNewOriginal" Text="" TextWrapping="Wrap" Width="300" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <TextBox x:Name="tbNewOriginal" Text="" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnNewOriginal" Content="Choose..." Click="btnNewOriginal_Click" Grid.Row="1" Grid.Column="2" />
                         <Label Content="Old translated file:" Grid.Row="2" />
-                        <TextBox x:Name="tbOldTranslated" Text="" TextWrapping="Wrap" Width="300" Grid.Row="2" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <TextBox x:Name="tbOldTranslated" Text="" TextWrapping="Wrap" Grid.Row="2" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnOldTranslated" Content="Choose..." Click="btnOldTranslated_Click" Grid.Row="2" Grid.Column="2" />
                         <Label Content="New file to translate:" Grid.Row="3" />
-                        <TextBox x:Name="tbNewTranslated" Text="" TextWrapping="Wrap" Width="300" Grid.Row="3" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <TextBox x:Name="tbNewTranslated" Text="" TextWrapping="Wrap" Grid.Row="3" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnNewTranslated" Content="Choose..." Click="btnNewTranslated_Click" Grid.Row="3" Grid.Column="2" />
                     </Grid>
                     <Grid Grid.Row="2">
@@ -132,7 +132,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="tbMarker" Height="20" Width="50" PreviewTextInput="tbStartingID_PreviewTextInput" DataObject.Pasting="tbStartingID_Pasting" />
+                        <TextBox x:Name="tbMarker" Style="{StaticResource SmallTextBox}" Height="20" PreviewTextInput="OnlyDigits_PreviewTextInput" DataObject.Pasting="OnlyDigits_Pasting" />
                         <TextBlock Grid.Column="1" Style="{StaticResource LongTextBlock}" Text="This value serves as a marker. Only the texts starting with this marker in the new translated file will be overwritten. If empty, all lines can be overwritten. Example: [24, &quot;(fr)Return to Base&quot;]. Here the marker (fr) indicates this line can be overwritten. But the line [13, &quot;Aucun&quot;] has no marker so it won't be overwritten." />
                     </Grid>
                     <WrapPanel Grid.Row="3">
@@ -146,11 +146,42 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
-                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality will change all the IDs in the table and missions files to match the IDs in the existing tstrings.tbl. All lines not found in the existing tstrings will be put in a new file with new IDs." />
+                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality will change all the IDs in the table and mission files to match the IDs in the existing tstrings.tbl." />
                     </WrapPanel>
-                    <WrapPanel Grid.Row="1">
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Original tstrings file:" />
+                        <TextBox x:Name="tbOriginalTstrings" Grid.Column="1" AllowDrop="True" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <Button x:Name="btnOriginalTstrings" Content="Choose..." Grid.Column="2" Click="btnOriginalTstrings_Click" />
+                        <Label Content="Mod folder:" Grid.Row="1" />
+                        <TextBox x:Name="tbModFolderInsertion" Grid.Row="1" Grid.Column="1" AllowDrop="True" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <Button x:Name="btnModFolderInsertion" Content="Choose..." Grid.Row="1" Grid.Column="2" Click="btnModFolderInsertion_Click" />
+                        <Label Content="Destination folder:" Grid.Row="2" />
+                        <TextBox x:Name="tbDestinationFolderInsert" Grid.Row="2" Grid.Column="1" AllowDrop="True" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <Button x:Name="btnDestinationFolderInsert" Content="Choose..." Grid.Row="2" Grid.Column="2" Click="btnDestinationFolderInsert_Click" />
+                    </Grid>
+                    <WrapPanel Grid.Row="2">
+                        <CheckBox x:Name="cbManageNewIds" Content="Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder)" Checked="cbManageNewIds_Checked" Unchecked="cbManageNewIds_Unchecked" />
+                    </WrapPanel>
+                    <WrapPanel Grid.Row="3">
+                        <TextBox x:Name="tbStartingIDInsert" Style="{StaticResource SmallTextBox}" PreviewTextInput="OnlyDigits_PreviewTextInput" DataObject.Pasting="OnlyDigits_Pasting" IsEnabled="False" />
+                        <TextBlock Style="{StaticResource LongTextBlock}" Text="Starting ID for duplicates (if no value, the starting value will be the existing max ID + 1)." />
+                    </WrapPanel>
+                    <WrapPanel Grid.Row="4">
+                        <Button x:Name="btnInsert" Content="Include" Click="btnInsert_Click" Style="{StaticResource ValidationButton}" />
                     </WrapPanel>
                 </Grid>
             </TabItem>
