@@ -5,7 +5,7 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <Style TargetType="TextBox">
-            <Setter Property="Width" Value="300" />
+            <Setter Property="Width" Value="400" />
             <Setter Property="Margin" Value="10, 10, 0, 10" />
         </Style>
         <Style TargetType="Button">
@@ -19,6 +19,9 @@
         </Style>
         <Style x:Key="LongTextBlock" TargetType="TextBlock">
             <Setter Property="Margin" Value="10" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="CheckBoxContent" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
         <Style x:Key="ValidationButton" TargetType="Button">

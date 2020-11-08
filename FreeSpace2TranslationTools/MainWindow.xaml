@@ -44,7 +44,7 @@
                     <WrapPanel Grid.Row="1">
                     </WrapPanel>
                     <WrapPanel Grid.Row="2">
-                        <CheckBox x:Name="cbManageDuplicates" Content="Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder) NOT IMPLEMENTED YET" Checked="cbManageDuplicates_Checked" Unchecked="cbManageDuplicates_Unchecked" />
+                        <CheckBox x:Name="cbManageDuplicates" Content="Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder)" Checked="cbManageDuplicates_Checked" Unchecked="cbManageDuplicates_Unchecked" />
                     </WrapPanel>
                     <WrapPanel Grid.Row="3">
                         <TextBox x:Name="tbStartingID" Style="{StaticResource SmallTextBox}" PreviewTextInput="OnlyDigits_PreviewTextInput" DataObject.Pasting="OnlyDigits_Pasting" IsEnabled="False" />
@@ -132,7 +132,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="tbMarker" Style="{StaticResource SmallTextBox}" Height="20" PreviewTextInput="OnlyDigits_PreviewTextInput" DataObject.Pasting="OnlyDigits_Pasting" />
+                        <TextBox x:Name="tbMarker" Style="{StaticResource SmallTextBox}" Height="20" />
                         <TextBlock Grid.Column="1" Style="{StaticResource LongTextBlock}" Text="This value serves as a marker. Only the texts starting with this marker in the new translated file will be overwritten. If empty, all lines can be overwritten. Example: [24, &quot;(fr)Return to Base&quot;]. Here the marker (fr) indicates this line can be overwritten. But the line [13, &quot;Aucun&quot;] has no marker so it won't be overwritten." />
                     </Grid>
                     <WrapPanel Grid.Row="3">
@@ -174,7 +174,9 @@
                         <Button x:Name="btnDestinationFolderInsert" Content="Choose..." Grid.Row="2" Grid.Column="2" Click="btnDestinationFolderInsert_Click" />
                     </Grid>
                     <WrapPanel Grid.Row="2">
-                        <CheckBox x:Name="cbManageNewIds" Content="Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder)" Checked="cbManageNewIds_Checked" Unchecked="cbManageNewIds_Unchecked" />
+                        <CheckBox x:Name="cbManageNewIds" Checked="cbManageNewIds_Checked" Unchecked="cbManageNewIds_Unchecked">
+                            <TextBlock Style="{StaticResource CheckBoxContent}" Text="Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder) NOT IMPLEMENTED YET" />
+                        </CheckBox>
                     </WrapPanel>
                     <WrapPanel Grid.Row="3">
                         <TextBox x:Name="tbStartingIDInsert" Style="{StaticResource SmallTextBox}" PreviewTextInput="OnlyDigits_PreviewTextInput" DataObject.Pasting="OnlyDigits_Pasting" IsEnabled="False" />

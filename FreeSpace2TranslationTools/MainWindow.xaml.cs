@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows;
@@ -209,8 +210,8 @@ namespace FreeSpace_tstrings_generator
             string translationSource = tbTranslationSource.Text;
             string translationDestination = tbTranslationDestination.Text;
 
-            string sourceContent = Utils.ReadFileContent(translationSource);
-            string destinationContent = Utils.ReadFileContent(translationDestination);
+            string sourceContent = File.ReadAllText(translationSource);
+            string destinationContent = File.ReadAllText(translationDestination);
 
             //Regex regexXstr = new Regex("(\\d+), (\".*?\")", RegexOptions.Singleline);
 
@@ -230,17 +231,9 @@ namespace FreeSpace_tstrings_generator
                 }
             }
 
-            try
-            {
-                using StreamWriter sw = new StreamWriter(translationDestination, false);
-                sw.Write(destinationContent);
+            File.WriteAllText(translationDestination, destinationContent);
 
-                ProcessComplete();
-            }
-            catch (Exception ex)
-            {
-
-            }
+            ProcessComplete();
         }
 
         private void btnOldOriginal_Click(object sender, RoutedEventArgs e)
@@ -335,15 +328,27 @@ namespace FreeSpace_tstrings_generator
             int currentProgress = 0;
             (sender as BackgroundWorker).ReportProgress(currentProgress);
 
-            string oldOriginalFile = tbOldOriginal.Text;
-            string newOriginalFile = tbNewOriginal.Text;
-            string oldTranslatedFile = tbOldTranslated.Text;
-            string newTranslatedFile = tbNewTranslated.Text;
+            string oldOriginalFile = string.Empty;
+            string newOriginalFile = string.Empty;
+            string oldTranslatedFile = string.Empty;
+            string newTranslatedFile = string.Empty;
+            string marker = string.Empty;
 
-            string oldOriginalContent = Utils.ReadFileContent(oldOriginalFile);
-            string newOriginalContent = Utils.ReadFileContent(newOriginalFile);
-            string oldTranslatedContent = Utils.ReadFileContent(oldTranslatedFile);
-            string newTranslatedCOntent = Utils.ReadFileContent(newTranslatedFile);
+            Dispatcher.Invoke(() =>
+            {
+                oldOriginalFile = tbOldOriginal.Text;
+                newOriginalFile = tbNewOriginal.Text;
+                oldTranslatedFile = tbOldTranslated.Text;
+                newTranslatedFile = tbNewTranslated.Text;
+                marker = tbMarker.Text;
+            });
+
+            //Encoding encoding = Utils.GetEncoding(oldTranslatedFile);
+
+            string oldOriginalContent = File.ReadAllText(oldOriginalFile);
+            string newOriginalContent = File.ReadAllText(newOriginalFile);
+            string oldTranslatedContent = File.ReadAllText(oldTranslatedFile);
+            string newTranslatedContent = File.ReadAllText(newTranslatedFile);
 
             MatchCollection matchesInNewOriginal = regexXstrInTstrings.Matches(newOriginalContent);
 
@@ -372,7 +377,7 @@ namespace FreeSpace_tstrings_generator
 
                         if (matchInOldTranslated.Success)
                         {
-                            newTranslatedCOntent = newTranslatedCOntent.Replace(match.Groups[2].Value.Insert(1, tbMarker.Text), matchInOldTranslated.Groups[1].Value);
+                            newTranslatedContent = newTranslatedContent.Replace(match.Groups[2].Value.Insert(1, marker), matchInOldTranslated.Groups[1].Value);
                         }
                     }
                 }
@@ -382,17 +387,9 @@ namespace FreeSpace_tstrings_generator
                 }
             }
 
-            try
-            {
-                using StreamWriter sw = new StreamWriter(newTranslatedFile, false);
-                sw.Write(newTranslatedCOntent);
+            File.WriteAllText(newTranslatedFile, newTranslatedContent);
 
-                ProcessComplete();
-            }
-            catch (Exception ex)
-            {
-
-            }
+            ProcessComplete();
         }
 
         private void textBox_Drop(object sender, DragEventArgs e)
@@ -560,15 +557,7 @@ namespace FreeSpace_tstrings_generator
             // create the potential subfolders in the destination
             Directory.CreateDirectory(destDirectoryPath);
 
-            try
-            {
-                using StreamWriter sw = new StreamWriter(destFile, false);
-                sw.Write(content);
-            }
-            catch (Exception ex)
-            {
-
-            }
+            File.WriteAllText(destFile, content);
         }
 
         private void ReplaceContentWithNewXstr(ref string content, Xstr lineToModify)
