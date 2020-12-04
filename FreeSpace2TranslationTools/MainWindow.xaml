@@ -22,7 +22,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
-                        <TextBlock Text="This functionality will create a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder." Style="{StaticResource LongTextBlock}" />
+                        <TextBlock Text="This functionality creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder." Style="{StaticResource LongTextBlock}" />
                     </WrapPanel>
                     <Grid Grid.Row="1">
                         <Grid.RowDefinitions>
@@ -65,7 +65,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
-                        <TextBlock Text="This functionality will copy the content of the strings from source to destination, using IDs as references. Destination file will be overwritten." Style="{StaticResource LongTextBlock}" />
+                        <TextBlock Text="This functionality copies the content of the strings from source to destination, using IDs as references. Only useful if you want to merge several translation files into a single one. Destination file will be overwritten." Style="{StaticResource LongTextBlock}" />
                     </WrapPanel>
                     <Grid Grid.Row="1">
                         <Grid.RowDefinitions>
@@ -100,7 +100,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
-                        <TextBlock Text="This functionality will copy the content of an existing translation to a new one, detecting the identical text entries in both original files, even if the IDs are different. The new file to translate file will be overwritten." Style="{StaticResource LongTextBlock}" />
+                        <TextBlock Text="This functionality will copy the content of an existing translation to a new one, detecting the identical text entries in both original files, even if the IDs are different. The new file to be translated will be overwritten." Style="{StaticResource LongTextBlock}" />
                     </WrapPanel>
                     <Grid Grid.Row="1">
                         <Grid.RowDefinitions>
@@ -150,7 +150,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
-                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality will change all the IDs in the table and mission files to match the IDs in the existing tstrings.tbl." />
+                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality changes all the IDs in the table and mission files to match the IDs in the existing tstrings.tbl." />
                     </WrapPanel>
                     <Grid Grid.Row="1">
                         <Grid.RowDefinitions>
@@ -175,7 +175,7 @@
                     </Grid>
                     <WrapPanel Grid.Row="2">
                         <CheckBox x:Name="cbManageNewIds" Checked="cbManageNewIds_Checked" Unchecked="cbManageNewIds_Unchecked">
-                            <TextBlock Style="{StaticResource CheckBoxContent}" Text="Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder) NOT IMPLEMENTED YET" />
+                            <TextBlock Style="{StaticResource CheckBoxContent}" Text="Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder)" />
                         </CheckBox>
                     </WrapPanel>
                     <WrapPanel Grid.Row="3">
@@ -184,6 +184,38 @@
                     </WrapPanel>
                     <WrapPanel Grid.Row="4">
                         <Button x:Name="btnInsert" Content="Include" Click="btnInsert_Click" Style="{StaticResource ValidationButton}" />
+                    </WrapPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Create missing XSTR">
+                <Grid Background="#FFE5E5E5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <WrapPanel Grid.Row="0">
+                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality replaces hard coded strings with XSTR variables in the following mod files: main hall, weapons, ships." />
+                    </WrapPanel>
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Mod folder:" />
+                        <TextBox Name="tbModFolderXSTR" TextWrapping="Wrap" Grid.Column="1" AllowDrop="True" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <Button Name="btnModFolderXSTR" Content="Choose..." Click="btnModFolderXSTR_Click" Grid.Column="2" />
+                        <Label Content="Destination folder:" Grid.Row="1" />
+                        <TextBox x:Name="tbDestinationFolderXSTR" Text="" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
+                        <Button x:Name="btnDestinationFolderXSTR" Content="Choose..." Click="btnDestinationFolderXSTR_Click" Grid.Row="1" Grid.Column="2" />
+                    </Grid>
+                    <WrapPanel Grid.Row="2">
+                        <Button x:Name="btnCreateXstr" Content="Generate" Click="btnCreateXstr_Click" Style="{StaticResource ValidationButton}" />
                     </WrapPanel>
                 </Grid>
             </TabItem>
