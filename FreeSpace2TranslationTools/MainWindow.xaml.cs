@@ -25,7 +25,7 @@ namespace FreeSpace_tstrings_generator
         Regex regexModifyXstr = new Regex("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(\\d+)\\s*\\)", RegexOptions.Singleline);
         Regex regexNotADigit = new Regex("[^0-9.-]+");
         // (?=...) => look ahead, select only before that part
-        Regex regexEntries = new Regex(@"\$Name:\s*.*?(?=\$Name|#End)", RegexOptions.Singleline);
+        Regex regexEntries = new Regex(@"\$Name:\s*.*?(?=\$Name|#end)", RegexOptions.Singleline);
         Regex regexName = new Regex(@"\$Name:\s*(.*)\r");
         readonly string newLine = Environment.NewLine;
 
@@ -46,13 +46,41 @@ namespace FreeSpace_tstrings_generator
 
         private void btnGenerate_Click(object sender, RoutedEventArgs e)
         {
-            string modFolder = tbModFolder.Text;
-            string destinationFolder = tbDestinationFolder.Text;
-            bool manageDuplicates = cbManageDuplicates.IsChecked ?? false;
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.WorkerReportsProgress = true;
+            worker.DoWork += GenerateTstrings;
+            worker.ProgressChanged += WorkerProgressChanged;
+            worker.RunWorkerAsync();
+        }
+
+        private void GenerateTstrings(object sender, DoWorkEventArgs e)
+        {
+            int currentProgress = 0;
+            (sender as BackgroundWorker).ReportProgress(currentProgress);
+
+            string modFolder = string.Empty;
+            string destinationFolder = string.Empty;
+            string startingID = string.Empty;
+            bool manageDuplicates = false;
+
+            Dispatcher.Invoke(() =>
+            {
+                modFolder = tbModFolder.Text;
+                destinationFolder = tbDestinationFolder.Text;
+                manageDuplicates = cbManageDuplicates.IsChecked ?? false;
+                startingID = tbStartingID.Text;
+            });
 
             if (!string.IsNullOrEmpty(modFolder) && !string.IsNullOrEmpty(destinationFolder))
             {
                 List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
+
+                // Required to avoid thread access errors...
+                Dispatcher.Invoke(() =>
+                {
+                    // number of table and mission files + tstrings + additional tstrings if checked
+                    pbGlobalProgress.Maximum = filesList.Count + 1 + (manageDuplicates ? 1 : 0);
+                });
 
                 List<Xstr> lines = new List<Xstr>();
                 List<Xstr> duplicates = new List<Xstr>();
@@ -60,6 +88,9 @@ namespace FreeSpace_tstrings_generator
                 #region looking for xstr in each file
                 foreach (string file in filesList)
                 {
+                    currentProgress++;
+                    (sender as BackgroundWorker).ReportProgress(currentProgress);
+
                     FileInfo fileInfo = new FileInfo(file);
                     string fileContent = File.ReadAllText(file);
 
@@ -94,26 +125,37 @@ namespace FreeSpace_tstrings_generator
                 }
                 #endregion
 
+                #region Manage duplicates
                 if (manageDuplicates && duplicates.Count > 0)
                 {
+                    currentProgress++;
+                    (sender as BackgroundWorker).ReportProgress(currentProgress);
+
                     #region write duplicates into a separate file with new IDs
                     // new ID = max ID + 1 to avoid duplicates
-                    int newId = SetNextID(tbStartingID.Text, ref lines);
+                    int newId = SetNextID(startingID, ref lines);
 
                     string currentFile = string.Empty;
-                    string tstringsModifiedContent = $"#Default{newLine}";
+                    string tstringsModifiedContent = $"#default{newLine}";
 
                     foreach (Xstr duplicate in duplicates)
                     {
+                        Xstr originalXstr = lines.FirstOrDefault(x => x.Text == duplicate.Text);
+
+                        // if duplicated text exists in another xstr in the original file, then copy its ID
+                        if (originalXstr != null)
+                        {
+                            duplicate.Id = originalXstr.Id;
+                            duplicate.Treated = true;
+                        }
                         // if there is another duplicate with the same text, we can reuse the same ID to avoid new duplicates in the new file
-                        if (tstringsModifiedContent.Contains(duplicate.Text))
+                        else if (tstringsModifiedContent.Contains(duplicate.Text))
                         {
                             Xstr result = duplicates.FirstOrDefault(x => x.Treated && x.Text == duplicate.Text);
 
                             if (result != null)
                             {
                                 duplicate.Id = result.Id;
-                                //duplicate.Id = duplicates.First(x => x.Treated && x.Text == duplicate.Text).Id;
                                 duplicate.Treated = true;
                             }
                             else
@@ -138,7 +180,7 @@ namespace FreeSpace_tstrings_generator
                         }
                     }
 
-                    tstringsModifiedContent += $"{newLine}#End";
+                    tstringsModifiedContent += $"{newLine}#end";
                     CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstringsModified-tlc.tbm"), tstringsModifiedContent);
                     #endregion
 
@@ -164,10 +206,14 @@ namespace FreeSpace_tstrings_generator
                     }
                     #endregion
                 }
+                #endregion
 
                 #region Creation of tstrings.tbl
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
+
                 string iterationFile = string.Empty;
-                string content = $"#Default{newLine}";
+                string content = $"#default{newLine}";
 
                 foreach (Xstr line in lines)
                 {
@@ -181,7 +227,7 @@ namespace FreeSpace_tstrings_generator
                     content += $"{newLine}{line.Id}, {line.Text}{newLine}";
                 }
 
-                content += $"{newLine}#End";
+                content += $"{newLine}#end";
                 CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstrings.tbl"), content);
                 #endregion
 
@@ -548,7 +594,7 @@ namespace FreeSpace_tstrings_generator
         private string GenerateTstringsModified(List<Xstr> xstrToBeAddedList)
         {
             string currentFile = string.Empty;
-            string tstringsModifiedContent = $"#Default{newLine}";
+            string tstringsModifiedContent = $"#default{newLine}";
 
             foreach (Xstr xstr in xstrToBeAddedList)
             {
@@ -581,17 +627,26 @@ namespace FreeSpace_tstrings_generator
                 }
             }
 
-            tstringsModifiedContent += $"{newLine}#End";
+            tstringsModifiedContent += $"{newLine}#end";
 
             return tstringsModifiedContent;
         }
 
         private List<string> GetFilesWithXstrFromFolder(string folderPath)
         {
-            string[] extensions = new[] { ".tbl", ".tbm", ".fc2", ".fs2" };
+            List<string> result = new List<string>();
 
-            return Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
-                .Where(f => extensions.Contains(Path.GetExtension(f))).ToList();
+            // First we look for tables, then we look for missions, to try to follow the translation conventions... and to avoid token problems in tables
+            string[] tablesExtensions = new[] { ".tbl", ".tbm" };
+            string[] missionsExtensions = new[] { ".fc2", ".fs2" };
+
+            result.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
+                .Where(f => tablesExtensions.Contains(Path.GetExtension(f))).ToList());
+
+            result.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
+                .Where(f => missionsExtensions.Contains(Path.GetExtension(f))).ToList());
+
+            return result;
         }
 
         private IEnumerable<Match> GetAllXstrFromFile(FileInfo fileInfo, string fileContent)
@@ -727,8 +782,8 @@ namespace FreeSpace_tstrings_generator
                 List<string> primaryNames = new List<string>();
                 List<string> secondaryNames = new List<string>();
 
-                Regex regexPrimary = new Regex("#Primary Weapons.*?#End", RegexOptions.Singleline);
-                Regex regexSecondary = new Regex("#Secondary Weapons.*?#End", RegexOptions.Singleline);
+                Regex regexPrimary = new Regex("#Primary Weapons.*?#end", RegexOptions.Singleline);
+                Regex regexSecondary = new Regex("#Secondary Weapons.*?#end", RegexOptions.Singleline);
 
                 foreach (string file in weaponFiles)
                 {
@@ -793,7 +848,7 @@ namespace FreeSpace_tstrings_generator
                 $"{newLine}$Alt Name: XSTR(\"{entry.Trim('@')}\", -1){newLine}";
             }
 
-            content += $"{newLine}#End";
+            content += $"{newLine}#end";
             return content;
         }
 
