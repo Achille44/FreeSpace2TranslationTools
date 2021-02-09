@@ -4,7 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="FreeSpace 2 Translation Tools" Height="500" Width="800">
+        Name="mainWindow"
+        Title="FreeSpace 2 Translation Tools" 
+        Height="500" 
+        Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="10*" />
@@ -41,8 +44,6 @@
                         <TextBox x:Name="tbDestinationFolder" Text="" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnDestinationFolder" Content="Choose..." Click="btnDestinationFolder_Click" Grid.Row="1" Grid.Column="2" />
                     </Grid>
-                    <WrapPanel Grid.Row="1">
-                    </WrapPanel>
                     <WrapPanel Grid.Row="2">
                         <CheckBox x:Name="cbManageDuplicates" Content="Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder)" Checked="cbManageDuplicates_Checked" Unchecked="cbManageDuplicates_Unchecked" />
                     </WrapPanel>
