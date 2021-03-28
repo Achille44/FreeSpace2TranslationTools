@@ -799,14 +799,14 @@ namespace FreeSpace_tstrings_generator
                     #region Main hall => door descriptions
                     List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("Mainhall.tbl")).ToList();
 
-                    // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) should be taken away
+                    // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
                     Regex regexDoorDescription = new Regex(@"\+Door description:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline);
 
                     foreach (string file in mainHallFiles)
                     {
                         string sourceContent = File.ReadAllText(file);
 
-                        string newContent = regexDoorDescription.Replace(sourceContent, new MatchEvaluator(GenerateXstrWithoutComments));
+                        string newContent = regexDoorDescription.Replace(sourceContent, new MatchEvaluator(GenerateDoorDescription));
 
                         if (sourceContent != newContent)
                         {
@@ -886,6 +886,29 @@ namespace FreeSpace_tstrings_generator
                     }
                     #endregion
 
+                    #region Mission labels and ships names
+                    List<string> missionFiles = filesList.Where(x => x.Contains(".fs2")).ToList();
+
+                    // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
+                    Regex regexLabels = new Regex(@"\$label:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline);
+
+                    Regex regexShipNames = new Regex(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline);
+
+                    foreach (string file in missionFiles)
+                    {
+                        string sourceContent = File.ReadAllText(file);
+
+                        string newContent = regexLabels.Replace(sourceContent, new MatchEvaluator(GenerateLabels));
+
+                        newContent = regexShipNames.Replace(newContent, new MatchEvaluator(GenerateShipNames));
+
+                        if (sourceContent != newContent)
+                        {
+                            CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
+                        }
+                    }
+                    #endregion
+
                     ProcessComplete();
                 }
             }
@@ -941,10 +964,10 @@ namespace FreeSpace_tstrings_generator
             return nameList;
         }
 
-        private string GenerateXstrWithoutComments(Match match)
+        private string GenerateXstrWithoutComments(string key, Match match)
         {
             string[] values = match.Groups[1].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-            string result = $"+Door description: XSTR(\"{values[0]}\", -1)";
+            string result = $"{key}: XSTR(\"{values[0]}\", -1)";
 
             if (values.Count() > 1)
             {
@@ -954,6 +977,24 @@ namespace FreeSpace_tstrings_generator
             return result;
         }
 
+        private string GenerateDoorDescription(Match match)
+        {
+            return GenerateXstrWithoutComments("+Door description", match);
+        }
+
+        private string GenerateLabels(Match match)
+        {
+            return GenerateXstrWithoutComments("$label", match);
+        }
+
+        private string GenerateShipNames(Match match)
+        {
+            string[] values = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
+            string result = $"{match.Groups[1].Value}$Display Name: XSTR(\"{values[0].Trim()}\", -1){newLine}{match.Groups[3].Value}";
+
+            return result;
+        }
+        
         private void btnModFolderXSTR_Click(object sender, RoutedEventArgs e)
         {
             ChooseLocation("Mod folder", true, ref tbModFolderXSTR);

@@ -196,7 +196,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
-                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality replaces hard coded strings with XSTR variables in the following mod files: main hall, weapons, ships." />
+                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality replaces hard coded strings with XSTR variables in the following mod files: main hall, weapons, ships, missions." />
                     </WrapPanel>
                     <Grid Grid.Row="1">
                         <Grid.RowDefinitions>
