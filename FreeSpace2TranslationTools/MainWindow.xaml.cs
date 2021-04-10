@@ -23,7 +23,7 @@ namespace FreeSpace_tstrings_generator
         Regex regexModifyXstr = new Regex("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(\\d+)\\s*\\)", RegexOptions.Singleline);
         Regex regexNotADigit = new Regex("[^0-9.-]+");
         // (?=...) => look ahead, select only before that part
-        Regex regexEntries = new Regex(@"\$Name:\s*.*?(?=\$Name|#end)", RegexOptions.Singleline);
+        Regex regexEntries = new Regex(@"\$Name:\s*.*?(?=\$Name|#end|#End)", RegexOptions.Singleline);
         Regex regexName = new Regex(@"\$Name:\s*(.*)\r");
         readonly string newLine = Environment.NewLine;
 
@@ -138,7 +138,7 @@ namespace FreeSpace_tstrings_generator
                         int newId = SetNextID(startingID, ref lines);
 
                         string currentFile = string.Empty;
-                        string tstringsModifiedContent = $"#default{newLine}";
+                        string tstringsModifiedContent = $"#Default{newLine}";
 
                         foreach (Xstr duplicate in duplicates)
                         {
@@ -182,7 +182,7 @@ namespace FreeSpace_tstrings_generator
                             }
                         }
 
-                        tstringsModifiedContent += $"{newLine}#end";
+                        tstringsModifiedContent += $"{newLine}#End";
                         CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstringsModified-tlc.tbm"), tstringsModifiedContent);
                         #endregion
 
@@ -215,7 +215,7 @@ namespace FreeSpace_tstrings_generator
                     (sender as BackgroundWorker).ReportProgress(currentProgress);
 
                     string iterationFile = string.Empty;
-                    string content = $"#default{newLine}";
+                    string content = $"#Default{newLine}";
 
                     foreach (Xstr line in lines)
                     {
@@ -229,7 +229,7 @@ namespace FreeSpace_tstrings_generator
                         content += $"{newLine}{line.Id}, {line.Text}{newLine}";
                     }
 
-                    content += $"{newLine}#end";
+                    content += $"{newLine}#End";
                     CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstrings.tbl"), content);
                     #endregion
 
@@ -647,7 +647,7 @@ namespace FreeSpace_tstrings_generator
         private string GenerateTstringsModified(List<Xstr> xstrToBeAddedList)
         {
             string currentFile = string.Empty;
-            string tstringsModifiedContent = $"#default{newLine}";
+            string tstringsModifiedContent = $"#Default{newLine}";
 
             foreach (Xstr xstr in xstrToBeAddedList)
             {
@@ -839,8 +839,8 @@ namespace FreeSpace_tstrings_generator
                     List<string> primaryNames = new List<string>();
                     List<string> secondaryNames = new List<string>();
 
-                    Regex regexPrimary = new Regex("#Primary Weapons.*?#end", RegexOptions.Singleline);
-                    Regex regexSecondary = new Regex("#Secondary Weapons.*?#end", RegexOptions.Singleline);
+                    Regex regexPrimary = new Regex("#Primary Weapons.*?(#end|#End)", RegexOptions.Singleline);
+                    Regex regexSecondary = new Regex("#Secondary Weapons.*?(#end|#End)", RegexOptions.Singleline);
 
                     foreach (string file in weaponFiles)
                     {
@@ -990,10 +990,11 @@ namespace FreeSpace_tstrings_generator
             {
                 content += $"{newLine}$Name: {entry}" +
                 $"{newLine}+nocreate" +
-                $"{newLine}$Alt Name: XSTR(\"{entry.Trim('@')}\", -1){newLine}";
+                // remove @ and # alias from xstr
+                $"{newLine}$Alt Name: XSTR(\"{entry.Split("#")[0].Trim('@')}\", -1){newLine}";
             }
 
-            content += $"{newLine}#end";
+            content += $"{newLine}#End";
             return content;
         }
 

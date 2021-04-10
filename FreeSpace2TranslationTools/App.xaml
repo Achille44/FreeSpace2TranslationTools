@@ -21,6 +21,12 @@
             <Setter Property="Margin" Value="10" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
+        <Style x:Key="TextBlockLink" TargetType="TextBlock">
+            <Setter Property="TextDecorations" Value="Underline" />
+            <Setter Property="Foreground" Value="Blue" />
+            <Setter Property="Margin" Value="10,0,0,10" />
+            <Setter Property="ToolTipService.ShowDuration" Value="30000" />
+        </Style>
         <Style x:Key="CheckBoxContent" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>

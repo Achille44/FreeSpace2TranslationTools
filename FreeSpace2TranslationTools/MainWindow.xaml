@@ -194,11 +194,42 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
-                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality replaces hard coded strings with XSTR variables in the following mod files: main hall, weapons, ships, missions." />
+                        <TextBlock Style="{StaticResource LongTextBlock}" Text="This functionality replaces hard coded strings with XSTR variables in the following mod files:" />
                     </WrapPanel>
-                    <Grid Grid.Row="1">
+                    <WrapPanel Grid.Row="1">
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="main hall">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/mainhall.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="ships">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/ships.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="weapons">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/weapons.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="missions">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/missions.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                    </WrapPanel>
+                    <Grid Grid.Row="2">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -215,7 +246,7 @@
                         <TextBox x:Name="tbDestinationFolderXSTR" Text="" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnDestinationFolderXSTR" Content="Choose..." Click="btnDestinationFolderXSTR_Click" Grid.Row="1" Grid.Column="2" />
                     </Grid>
-                    <WrapPanel Grid.Row="2">
+                    <WrapPanel Grid.Row="3">
                         <Button x:Name="btnCreateXstr" Content="Generate" Click="btnCreateXstr_Click" Style="{StaticResource ValidationButton}" />
                     </WrapPanel>
                 </Grid>
