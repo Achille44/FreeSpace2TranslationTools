@@ -21,6 +21,9 @@
             <Setter Property="Margin" Value="10" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
+        <Style x:Key="TextInCB" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
         <Style x:Key="TextBlockLink" TargetType="TextBlock">
             <Setter Property="TextDecorations" Value="Underline" />
             <Setter Property="Foreground" Value="Blue" />

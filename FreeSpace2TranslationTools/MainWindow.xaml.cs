@@ -798,7 +798,7 @@ namespace FreeSpace_tstrings_generator
                     List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("Mainhall.tbl")).ToList();
 
                     // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-                    Regex regexDoorDescription = new Regex(@"\+Door description:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline);
+                    Regex regexDoorDescription = new Regex(@"\+Door description:\s*(((?!XSTR).)*)\r\n", RegexOptions.Multiline);
 
                     foreach (string file in mainHallFiles)
                     {
@@ -1022,7 +1022,7 @@ namespace FreeSpace_tstrings_generator
         private string GenerateXstrWithoutComments(string key, Match match)
         {
             string[] values = match.Groups[1].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-            string result = $"{key}: XSTR(\"{values[0]}\", -1)";
+            string result = $"{key}: XSTR(\"{values[0]}\", -1){newLine}";
 
             if (values.Count() > 1)
             {
