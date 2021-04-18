@@ -814,7 +814,7 @@ namespace FreeSpace_tstrings_generator
                     #endregion
 
                     #region Ships alt names
-                    List<string> shipFiles = filesList.Where(x => x.Contains("-shp.tbm") || x.Contains("Ships.tbl")).ToList();
+                    List<string> shipFiles = filesList.Where(x => x.Contains("-shp.tbm") || x.Contains("ships.tbl")).ToList();
                     List<string> shipNames = new List<string>();
 
                     foreach (string file in shipFiles)
@@ -835,7 +835,7 @@ namespace FreeSpace_tstrings_generator
                     #endregion
 
                     #region Weapons alt names
-                    List<string> weaponFiles = filesList.Where(x => x.Contains("-wep.tbm") || x.Contains("Weapons.tbl")).ToList();
+                    List<string> weaponFiles = filesList.Where(x => x.Contains("-wep.tbm") || x.Contains("weapons.tbl")).ToList();
                     List<string> primaryNames = new List<string>();
                     List<string> secondaryNames = new List<string>();
 
