@@ -76,23 +76,12 @@ namespace FreeSpace_tstrings_generator
                 if (!string.IsNullOrEmpty(modFolder) && !string.IsNullOrEmpty(destinationFolder))
                 {
                     List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
-
-                    // Required to avoid thread access errors...
-                    Dispatcher.Invoke(() =>
-                    {
-                        // number of table and mission files + tstrings + additional tstrings if checked
-                        pbGlobalProgress.Maximum = filesList.Count + 1 + (manageDuplicates ? 1 : 0);
-                    });
-
                     List<Xstr> lines = new List<Xstr>();
                     List<Xstr> duplicates = new List<Xstr>();
 
                     #region looking for xstr in each file
                     foreach (string file in filesList)
                     {
-                        currentProgress++;
-                        (sender as BackgroundWorker).ReportProgress(currentProgress);
-
                         FileInfo fileInfo = new FileInfo(file);
                         string fileContent = File.ReadAllText(file);
 
@@ -127,12 +116,15 @@ namespace FreeSpace_tstrings_generator
                     }
                     #endregion
 
+                    // Required to avoid thread access errors...
+                    Dispatcher.Invoke(() =>
+                    {
+                        pbGlobalProgress.Maximum = lines.Count + (manageDuplicates ? filesList.Count + duplicates.Count : 0);
+                    });
+
                     #region Manage duplicates
                     if (manageDuplicates && duplicates.Count > 0)
                     {
-                        currentProgress++;
-                        (sender as BackgroundWorker).ReportProgress(currentProgress);
-
                         #region write duplicates into a separate file with new IDs
                         // new ID = max ID + 1 to avoid duplicates
                         int newId = SetNextID(startingID, ref lines);
@@ -180,6 +172,8 @@ namespace FreeSpace_tstrings_generator
                                 tstringsModifiedContent += $"{newLine}{duplicate.Id}, {duplicate.Text}{newLine}";
                                 duplicate.Treated = true;
                             }
+                            currentProgress++;
+                            (sender as BackgroundWorker).ReportProgress(currentProgress);
                         }
 
                         tstringsModifiedContent += $"{newLine}#End";
@@ -205,15 +199,15 @@ namespace FreeSpace_tstrings_generator
                             }
 
                             CreateFileWithNewContent(sourceFile, modFolder, destinationFolder, fileContent);
+
+                            currentProgress++;
+                            (sender as BackgroundWorker).ReportProgress(currentProgress);
                         }
                         #endregion
                     }
                     #endregion
 
                     #region Creation of tstrings.tbl
-                    currentProgress++;
-                    (sender as BackgroundWorker).ReportProgress(currentProgress);
-
                     string iterationFile = string.Empty;
                     string content = $"#Default{newLine}";
 
@@ -227,12 +221,20 @@ namespace FreeSpace_tstrings_generator
                         }
 
                         content += $"{newLine}{line.Id}, {line.Text}{newLine}";
+
+                        currentProgress++;
+                        (sender as BackgroundWorker).ReportProgress(currentProgress);
                     }
 
                     content += $"{newLine}#End";
                     CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstrings.tbl"), content);
                     #endregion
 
+                    Dispatcher.Invoke(() =>
+                    {
+                        (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
+                    });
+                    
                     ProcessComplete();
                 }
             }
@@ -372,7 +374,7 @@ namespace FreeSpace_tstrings_generator
 
         private void ManageException(Exception ex)
         {
-            MessageBox.Show($"{ex.Message}{Environment.NewLine}{ex.StackTrace}{Environment.NewLine}{ex.InnerException}");
+            MessageBox.Show($"{ex.Message}{newLine}{ex.StackTrace}{newLine}{ex.InnerException}");
         }
 
         private void cbManageDuplicates_Checked(object sender, RoutedEventArgs e)
@@ -794,174 +796,13 @@ namespace FreeSpace_tstrings_generator
                 {
                     List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
 
-                    #region Main hall => door descriptions
-                    List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("Mainhall.tbl")).ToList();
+                    ProcessMainHallFiles(filesList, modFolder, destinationFolder);
 
-                    // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-                    Regex regexDoorDescription = new Regex(@"\+Door description:\s*(((?!XSTR).)*)\r\n", RegexOptions.Multiline);
+                    ProcessShipFiles(filesList, destinationFolder);
 
-                    foreach (string file in mainHallFiles)
-                    {
-                        string sourceContent = File.ReadAllText(file);
+                    ProcessWeaponFiles(filesList, destinationFolder);
 
-                        string newContent = regexDoorDescription.Replace(sourceContent, new MatchEvaluator(GenerateDoorDescription));
-
-                        if (sourceContent != newContent)
-                        {
-                            CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
-                        }
-                    }
-                    #endregion
-
-                    #region Ships alt names
-                    List<string> shipFiles = filesList.Where(x => x.Contains("-shp.tbm") || x.Contains("ships.tbl")).ToList();
-                    List<string> shipNames = new List<string>();
-
-                    foreach (string file in shipFiles)
-                    {
-                        string sourceContent = File.ReadAllText(file);
-                        // Match all ship entries
-                        MatchCollection shipEntries = regexEntries.Matches(sourceContent);
-
-                        shipNames.AddRange(GetEntryNames(shipEntries));
-                    }
-
-                    // create new file containing ship alt names
-                    if (shipNames.Count > 0)
-                    {
-                        string newShipFileContent = GenerateFileContent("#Ship Classes", shipNames);
-                        CreateFileWithPath(Path.Combine(destinationFolder, "tables/new-shp.tbm"), newShipFileContent);
-                    }
-                    #endregion
-
-                    #region Weapons alt names
-                    List<string> weaponFiles = filesList.Where(x => x.Contains("-wep.tbm") || x.Contains("weapons.tbl")).ToList();
-                    List<string> primaryNames = new List<string>();
-                    List<string> secondaryNames = new List<string>();
-
-                    Regex regexPrimary = new Regex("#Primary Weapons.*?(#end|#End)", RegexOptions.Singleline);
-                    Regex regexSecondary = new Regex("#Secondary Weapons.*?(#end|#End)", RegexOptions.Singleline);
-
-                    foreach (string file in weaponFiles)
-                    {
-                        string content = File.ReadAllText(file);
-                        Match primarySection = regexPrimary.Match(content);
-                        Match secondarySection = regexSecondary.Match(content);
-
-                        if (primarySection.Success)
-                        {
-                            MatchCollection primaries = regexEntries.Matches(primarySection.Value);
-
-                            primaryNames.AddRange(GetEntryNames(primaries));
-                        }
-
-                        if (secondarySection.Success)
-                        {
-                            MatchCollection secondaries = regexEntries.Matches(secondarySection.Value);
-
-                            secondaryNames.AddRange(GetEntryNames(secondaries));
-                        }
-                    }
-
-                    // create new file containing weapons alt names
-                    if (primaryNames.Count > 0 || secondaryNames.Count > 0)
-                    {
-                        string newWeaponsFileContent = string.Empty;
-
-                        if (primaryNames.Count > 0)
-                        {
-                            newWeaponsFileContent += GenerateFileContent("#Primary Weapons", primaryNames);
-                            // add a new line in case of a following secondary section
-                            newWeaponsFileContent += $"{newLine}{newLine}";
-                        }
-
-                        if (secondaryNames.Count > 0)
-                        {
-                            newWeaponsFileContent += GenerateFileContent("#Secondary Weapons", secondaryNames);
-                        }
-
-                        CreateFileWithPath(Path.Combine(destinationFolder, "tables/new-wep.tbm"), newWeaponsFileContent);
-                    }
-                    #endregion
-
-                    #region Mission labels, ships names, subtitles
-                    List<string> missionFiles = filesList.Where(x => x.Contains(".fs2")).ToList();
-
-                    // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-                    // ex: $Label: Alpha 1 ==> $Label: XSTR ("Alpha 1", -1)
-                    Regex regexLabels = new Regex(@"\$label:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline);
-
-                    // ex: $Name: Psamtik   ==>     $Name: Psamtik
-                    //     $Class.......    ==>     $Display Name: XSTR("Psamtik", -1)
-                    //                      ==>     $Class......
-                    Regex regexShipNames = new Regex(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline);
-
-                    // ex: ( show-subtitle-text     ==>     ( show-subtitle-text
-                    //        "Europa, 2386"        ==>        "AutoGeneratedMessage1"
-                    //                              ==>----------------------------------
-                    //                              ==>     #Messages
-                    //                              ==>     
-                    //                              ==>     $Name: AutoGeneratedMessage1
-                    //                              ==>     $Team: -1
-                    //                              ==>     $MessageNew: XSTR("Europa, 2386", -1)
-                    //                              ==>     $end_multi_text
-                    //                              ==>     
-                    //                              ==>     #Reinforcements
-                    Regex regexSubtitles = new Regex("(show-subtitle-text\\s*\r\n\\s*\")(.*?)\"", RegexOptions.Multiline);
-                    Regex regexMessagesBox = new Regex(@"#Messages.*#Reinforcements", RegexOptions.Singleline);
-                    Regex regexAllMessages = new Regex(@"\$Name:\s*(.*?)(?=;|\r)", RegexOptions.Multiline);
-
-                    foreach (string file in missionFiles)
-                    {
-                        string sourceContent = File.ReadAllText(file);
-
-                        string newContent = regexLabels.Replace(sourceContent, new MatchEvaluator(GenerateLabels));
-
-                        newContent = regexShipNames.Replace(newContent, new MatchEvaluator(GenerateShipNames));
-
-                        #region get all existing messages in the mission
-                        string messagesBox = regexMessagesBox.Match(newContent).Value;
-                        MatchCollection messages = regexAllMessages.Matches(messagesBox);
-                        List<string> allMessages = new List<string>();
-
-                        foreach (Match match in messages)
-                        {
-                            allMessages.Add(match.Groups[1].Value);
-                        } 
-                        #endregion
-
-                        MatchCollection subtitleResults = regexSubtitles.Matches(newContent);
-                        string newMessages = string.Empty;
-                        int subtitleMessagesCount = 0;
-
-                        foreach (Match match in subtitleResults)
-                        {
-                            if (!allMessages.Contains(match.Groups[2].Value))
-                            {
-                                subtitleMessagesCount++;
-
-                                newContent = newContent.Replace(match.Value, match.Groups[1].Value + "AutoGeneratedMessage" + subtitleMessagesCount + "\"");
-
-                                newMessages += $"$Name: AutoGeneratedMessage{subtitleMessagesCount}{newLine}" +
-                                    $"$Team: -1{newLine}" +
-                                    $"$MessageNew:  XSTR(\"{match.Groups[2].Value}\", -1){newLine}" +
-                                    $"$end_multi_text{newLine}{newLine}";
-
-                                allMessages.Add(match.Groups[2].Value);
-                            }
-                        }
-
-                        if (newMessages != string.Empty)
-                        {
-                            newContent = newContent.Replace("#Reinforcements", newMessages + "#Reinforcements");
-                        }
-
-                        if (sourceContent != newContent)
-                        {
-                            CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
-                        }
-                    }
-                    #endregion
+                    ProcessMissionFiles(filesList, modFolder, destinationFolder);
 
                     ProcessComplete();
                 }
@@ -974,6 +815,291 @@ namespace FreeSpace_tstrings_generator
             {
                 ToggleInputGrid();
             }
+        }
+
+
+        private void ProcessMainHallFiles(List<string> filesList, string modFolder, string destinationFolder)
+        {
+            #region Main hall => door descriptions
+            List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("Mainhall.tbl")).ToList();
+
+            // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
+            Regex regexDoorDescription = new Regex(@"\+Door description:\s*(((?!XSTR).)*)\r\n", RegexOptions.Multiline);
+
+            foreach (string file in mainHallFiles)
+            {
+                string sourceContent = File.ReadAllText(file);
+
+                string newContent = regexDoorDescription.Replace(sourceContent, new MatchEvaluator(GenerateDoorDescription));
+
+                if (sourceContent != newContent)
+                {
+                    CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
+                }
+            }
+            #endregion
+        }
+
+        private void ProcessShipFiles(List<string> filesList, string destinationFolder)
+        {
+            List<string> shipFiles = filesList.Where(x => x.Contains("-shp.tbm") || x.Contains("ships.tbl")).ToList();
+            List<string> shipNames = new List<string>();
+
+            foreach (string file in shipFiles)
+            {
+                string sourceContent = File.ReadAllText(file);
+                // Match all ship entries
+                MatchCollection shipEntries = regexEntries.Matches(sourceContent);
+
+                shipNames.AddRange(GetEntryNames(shipEntries));
+            }
+
+            // create new file containing ship alt names
+            if (shipNames.Count > 0)
+            {
+                string newShipFileContent = GenerateFileContent("#Ship Classes", shipNames);
+                CreateFileWithPath(Path.Combine(destinationFolder, "tables/new-shp.tbm"), newShipFileContent);
+            }
+        }
+
+        private void ProcessWeaponFiles(List<string> filesList, string destinationFolder)
+        {
+            List<string> weaponFiles = filesList.Where(x => x.Contains("-wep.tbm") || x.Contains("weapons.tbl")).ToList();
+            List<string> primaryNames = new List<string>();
+            List<string> secondaryNames = new List<string>();
+
+            Regex regexPrimary = new Regex("#Primary Weapons.*?(#end|#End)", RegexOptions.Singleline);
+            Regex regexSecondary = new Regex("#Secondary Weapons.*?(#end|#End)", RegexOptions.Singleline);
+
+            foreach (string file in weaponFiles)
+            {
+                string content = File.ReadAllText(file);
+                Match primarySection = regexPrimary.Match(content);
+                Match secondarySection = regexSecondary.Match(content);
+
+                if (primarySection.Success)
+                {
+                    MatchCollection primaries = regexEntries.Matches(primarySection.Value);
+
+                    primaryNames.AddRange(GetEntryNames(primaries));
+                }
+
+                if (secondarySection.Success)
+                {
+                    MatchCollection secondaries = regexEntries.Matches(secondarySection.Value);
+
+                    secondaryNames.AddRange(GetEntryNames(secondaries));
+                }
+            }
+
+            // create new file containing weapons alt names
+            if (primaryNames.Count > 0 || secondaryNames.Count > 0)
+            {
+                string newWeaponsFileContent = string.Empty;
+
+                if (primaryNames.Count > 0)
+                {
+                    newWeaponsFileContent += GenerateFileContent("#Primary Weapons", primaryNames);
+                    // add a new line in case of a following secondary section
+                    newWeaponsFileContent += $"{newLine}{newLine}";
+                }
+
+                if (secondaryNames.Count > 0)
+                {
+                    newWeaponsFileContent += GenerateFileContent("#Secondary Weapons", secondaryNames);
+                }
+
+                CreateFileWithPath(Path.Combine(destinationFolder, "tables/new-wep.tbm"), newWeaponsFileContent);
+            }
+        }
+
+        private void ProcessMissionFiles(List<string> filesList, string modFolder, string destinationFolder)
+        {
+            List<string> missionFiles = filesList.Where(x => x.Contains(".fs2")).ToList();
+
+            // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
+            // ex: $Label: Alpha 1 ==> $Label: XSTR ("Alpha 1", -1)
+            Regex regexLabels = new Regex(@"\$label:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline);
+
+            // ex: $Name: Psamtik   ==>     $Name: Psamtik
+            //     $Class.......    ==>     $Display Name: XSTR("Psamtik", -1)
+            //                      ==>     $Class......
+            Regex regexShipNames = new Regex(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline);
+
+            foreach (string file in missionFiles)
+            {
+                string sourceContent = File.ReadAllText(file);
+
+                string newContent = regexLabels.Replace(sourceContent, new MatchEvaluator(GenerateLabels));
+
+                newContent = regexShipNames.Replace(newContent, new MatchEvaluator(GenerateShipNames));
+
+                newContent = ConvertShowSubtitleToShowSubtitleText(newContent);
+
+                newContent = ExtractShowSubtitleTextContentToMessages(newContent);
+
+                if (sourceContent != newContent)
+                {
+                    CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extract hardcoded strings from show-subtitle-text and put them into new messages so they can be translated
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        private string ExtractShowSubtitleTextContentToMessages(string content)
+        {
+            // ex: ( show-subtitle-text     ==>     ( show-subtitle-text
+            //        "Europa, 2386"        ==>        "AutoGeneratedMessage1"
+            //                              ==>----------------------------------
+            //                              ==>     #Messages
+            //                              ==>     
+            //                              ==>     $Name: AutoGeneratedMessage1
+            //                              ==>     $Team: -1
+            //                              ==>     $MessageNew: XSTR("Europa, 2386", -1)
+            //                              ==>     $end_multi_text
+            //                              ==>     
+            //                              ==>     #Reinforcements
+            Regex regexShowSubtitleText = new Regex("(show-subtitle-text\\s*\r\n\\s*\")(.*?)\"", RegexOptions.Multiline);
+            Regex regexMessagesBox = new Regex(@"#Messages.*#Reinforcements", RegexOptions.Singleline);
+            Regex regexAllMessages = new Regex(@"\$Name:\s*(.*?)(?=;|\r)", RegexOptions.Multiline);
+
+            #region get all existing messages in the mission
+            string messagesBox = regexMessagesBox.Match(content).Value;
+            MatchCollection messages = regexAllMessages.Matches(messagesBox);
+            List<string> allMessages = new List<string>();
+
+            foreach (Match match in messages)
+            {
+                allMessages.Add(match.Groups[1].Value);
+            }
+            #endregion
+
+            MatchCollection subtitleTextResults = regexShowSubtitleText.Matches(content);
+            string newMessages = string.Empty;
+            int subtitleMessagesCount = 0;
+
+            foreach (Match match in subtitleTextResults)
+            {
+                if (!allMessages.Contains(match.Groups[2].Value))
+                {
+                    subtitleMessagesCount++;
+
+                    content = content.Replace(match.Value, match.Groups[1].Value + "AutoGeneratedMessage" + subtitleMessagesCount + "\"");
+
+                    newMessages += $"$Name: AutoGeneratedMessage{subtitleMessagesCount}{newLine}" +
+                        $"$Team: -1{newLine}" +
+                        $"$MessageNew:  XSTR(\"{match.Groups[2].Value}\", -1){newLine}" +
+                        $"$end_multi_text{newLine}{newLine}";
+
+                    allMessages.Add(match.Groups[2].Value);
+                }
+            }
+
+            if (newMessages != string.Empty)
+            {
+                content = content.Replace("#Reinforcements", newMessages + "#Reinforcements");
+            }
+
+            return content;
+        }
+
+        /// <summary>
+        /// Convert sexp show-subtitle to show-subtitle-text so they can be translated
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        private string ConvertShowSubtitleToShowSubtitleText(string content)
+        {
+            Regex regexShowSubtitle = new Regex(@"show-subtitle\s+.*?\)", RegexOptions.Singleline);
+            Regex regexFullLines = new Regex(@"(\s*)(.*?)(\s*\r\n)", RegexOptions.Multiline);
+            MatchCollection subtitleResults = regexShowSubtitle.Matches(content);
+
+            foreach (Match match in subtitleResults)
+            {
+                MatchCollection parameters = regexFullLines.Matches(match.Value);
+
+                Sexp sexp = new Sexp("show-subtitle-text", parameters[1].Groups[1].Value, parameters[1].Groups[3].Value);
+
+                // text to display
+                sexp.AddParameter(parameters[3].Groups[2].Value);
+                // X position, from 0 to 100%
+                sexp.AddParameter(ConvertXPositionFromAbsoluteToRelative(parameters[1].Groups[2].Value));
+                // Y position, from 0 to 100%
+                sexp.AddParameter(ConvertYPositionFromAbsoluteToRelative(parameters[2].Groups[2].Value));
+                // Center horizontally?
+                if (parameters.Count < 8)
+                {
+                    sexp.AddParameter("( false )");
+                }
+                else
+                {
+                    sexp.AddParameter(parameters[7].Groups[2].Value);
+                }
+                // Center vertically?
+                if (parameters.Count < 9)
+                {
+                    sexp.AddParameter("( false )");
+                }
+                else
+                {
+                    sexp.AddParameter(parameters[8].Groups[2].Value);
+                }
+                // Time (in milliseconds) to be displayed
+                sexp.AddParameter(parameters[4].Groups[2].Value);
+                // Fade time (in milliseconds) (optional)
+                if (parameters.Count > 6)
+                {
+                    sexp.AddParameter(parameters[6].Groups[2].Value);
+                }
+                // Paragraph width, from 1 to 100% (optional; 0 uses default 200 pixels)
+                if (parameters.Count > 9)
+                {
+                    sexp.AddParameter(parameters[9].Groups[2].Value);
+                }
+                // Text red component (0-255) (optional)
+                if (parameters.Count > 10)
+                {
+                    sexp.AddParameter(parameters[10].Groups[2].Value);
+                }
+                // Text green component(0 - 255) (optional)
+                if (parameters.Count > 11)
+                {
+                    sexp.AddParameter(parameters[11].Groups[2].Value);
+                }
+                // Text blue component(0 - 255) (optional)
+                if (parameters.Count > 12)
+                {
+                    sexp.AddParameter(parameters[12].Groups[2].Value);
+                }
+
+                sexp.CloseFormula();
+
+                content = content.Replace(match.Value, sexp.Formula);
+            }
+
+            return content;
+        }
+
+        private string ConvertXPositionFromAbsoluteToRelative(string absolute)
+        {
+            // values determined testing the mission bp-09 of blue planet
+            double input = 900;
+            double output = 88;
+
+            return Convert.ToInt32(Math.Round(int.Parse(absolute) / input * output)).ToString();
+        }
+
+        private string ConvertYPositionFromAbsoluteToRelative(string absolute)
+        {
+            // values determined testing the mission bp-09 of blue planet
+            double input = 500;
+            double output = 65;
+
+            return Convert.ToInt32(Math.Round(int.Parse(absolute) / input * output)).ToString();
         }
 
         /// <summary>
@@ -1050,7 +1176,7 @@ namespace FreeSpace_tstrings_generator
 
             return result;
         }
-        
+
         private void btnModFolderXSTR_Click(object sender, RoutedEventArgs e)
         {
             ChooseLocation("Mod folder", true, ref tbModFolderXSTR);
