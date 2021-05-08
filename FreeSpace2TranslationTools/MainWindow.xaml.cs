@@ -20,7 +20,7 @@ namespace FreeSpace_tstrings_generator
         // \s => whitespace ; *? => select the shortest matching value
         Regex regexXstr = new Regex("XSTR\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
         Regex regexXstrInTstrings = new Regex("(\\d+), (\".*?\")", RegexOptions.Singleline);
-        Regex regexModifyXstr = new Regex("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(\\d+)\\s*\\)", RegexOptions.Singleline);
+        Regex regexModifyXstr = new Regex("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline);
         Regex regexNotADigit = new Regex("[^0-9.-]+");
         // (?=...) => look ahead, select only before that part
         Regex regexEntries = new Regex(@"\$Name:\s*.*?(?=\$Name|#end|#End)", RegexOptions.Singleline);
@@ -234,7 +234,7 @@ namespace FreeSpace_tstrings_generator
                     {
                         (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
                     });
-                    
+
                     ProcessComplete();
                 }
             }
@@ -712,7 +712,7 @@ namespace FreeSpace_tstrings_generator
             // there is an additional specific format in fs2 files
             if (fileInfo.Extension == ".fs2")
             {
-                Regex regexModify = new Regex("\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(\\d+)\\s*\\)", RegexOptions.Singleline);
+                Regex regexModify = new Regex("\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
                 MatchCollection modifyResults = regexModify.Matches(fileContent);
 
                 combinedResults = resultsFromFile.OfType<Match>().Concat(modifyResults.OfType<Match>()).Where(m => m.Success);
@@ -746,7 +746,7 @@ namespace FreeSpace_tstrings_generator
             if (lineToModify.FullLine.Contains("modify-variable-xstr"))
             {
                 newLine = regexModifyXstr.Replace(lineToModify.FullLine,
-                    m => $"{m.Groups[1].Value}{lineToModify.Id}");
+                    m => $"{m.Groups[1].Value}{lineToModify.Id}{m.Groups[3].Value}");
             }
             else
             {
@@ -785,24 +785,53 @@ namespace FreeSpace_tstrings_generator
 
         private void btnCreateXstr_Click(object sender, RoutedEventArgs e)
         {
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.WorkerReportsProgress = true;
+            worker.DoWork += CreateXstr;
+            worker.ProgressChanged += WorkerProgressChanged;
+            worker.RunWorkerAsync();
+        }
+
+        private void CreateXstr(object sender, DoWorkEventArgs e)
+        {
             ToggleInputGrid();
 
             try
             {
-                string modFolder = tbModFolderXSTR.Text;
-                string destinationFolder = tbDestinationFolderXSTR.Text;
+                int currentProgress = 0;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
+
+                string modFolder = string.Empty;
+                string destinationFolder = string.Empty;
+
+                Dispatcher.Invoke(() =>
+                {
+                    modFolder = tbModFolderXSTR.Text;
+                    destinationFolder = tbDestinationFolderXSTR.Text;
+                });
 
                 if (!string.IsNullOrEmpty(modFolder) && !string.IsNullOrEmpty(destinationFolder))
                 {
                     List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
 
-                    ProcessMainHallFiles(filesList, modFolder, destinationFolder);
+                    // Required to avoid thread access errors...
+                    Dispatcher.Invoke(() =>
+                    {
+                        pbGlobalProgress.Maximum = filesList.Count;
+                    });
 
-                    ProcessShipFiles(filesList, destinationFolder);
+                    ProcessMainHallFiles(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
 
-                    ProcessWeaponFiles(filesList, destinationFolder);
+                    ProcessShipFiles(filesList, destinationFolder, ref currentProgress, ref sender);
 
-                    ProcessMissionFiles(filesList, modFolder, destinationFolder);
+                    ProcessWeaponFiles(filesList, destinationFolder, ref currentProgress, ref sender);
+
+                    ProcessMissionFiles(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
+                    });
 
                     ProcessComplete();
                 }
@@ -818,7 +847,7 @@ namespace FreeSpace_tstrings_generator
         }
 
 
-        private void ProcessMainHallFiles(List<string> filesList, string modFolder, string destinationFolder)
+        private void ProcessMainHallFiles(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, ref object sender)
         {
             #region Main hall => door descriptions
             List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("Mainhall.tbl")).ToList();
@@ -836,11 +865,14 @@ namespace FreeSpace_tstrings_generator
                 {
                     CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
                 }
+
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
             }
             #endregion
         }
 
-        private void ProcessShipFiles(List<string> filesList, string destinationFolder)
+        private void ProcessShipFiles(List<string> filesList, string destinationFolder, ref int currentProgress, ref object sender)
         {
             List<string> shipFiles = filesList.Where(x => x.Contains("-shp.tbm") || x.Contains("ships.tbl")).ToList();
             List<string> shipNames = new List<string>();
@@ -852,6 +884,9 @@ namespace FreeSpace_tstrings_generator
                 MatchCollection shipEntries = regexEntries.Matches(sourceContent);
 
                 shipNames.AddRange(GetEntryNames(shipEntries));
+
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
             }
 
             // create new file containing ship alt names
@@ -862,7 +897,7 @@ namespace FreeSpace_tstrings_generator
             }
         }
 
-        private void ProcessWeaponFiles(List<string> filesList, string destinationFolder)
+        private void ProcessWeaponFiles(List<string> filesList, string destinationFolder, ref int currentProgress, ref object sender)
         {
             List<string> weaponFiles = filesList.Where(x => x.Contains("-wep.tbm") || x.Contains("weapons.tbl")).ToList();
             List<string> primaryNames = new List<string>();
@@ -890,6 +925,9 @@ namespace FreeSpace_tstrings_generator
 
                     secondaryNames.AddRange(GetEntryNames(secondaries));
                 }
+
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
             }
 
             // create new file containing weapons alt names
@@ -913,7 +951,7 @@ namespace FreeSpace_tstrings_generator
             }
         }
 
-        private void ProcessMissionFiles(List<string> filesList, string modFolder, string destinationFolder)
+        private void ProcessMissionFiles(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, ref object sender)
         {
             List<string> missionFiles = filesList.Where(x => x.Contains(".fs2")).ToList();
 
@@ -938,10 +976,15 @@ namespace FreeSpace_tstrings_generator
 
                 newContent = ExtractShowSubtitleTextContentToMessages(newContent);
 
+                newContent = ConvertAltToVariables(newContent);
+
                 if (sourceContent != newContent)
                 {
                     CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
                 }
+
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
             }
         }
 
@@ -964,23 +1007,36 @@ namespace FreeSpace_tstrings_generator
             //                              ==>     
             //                              ==>     #Reinforcements
             Regex regexShowSubtitleText = new Regex("(show-subtitle-text\\s*\r\n\\s*\")(.*?)\"", RegexOptions.Multiline);
-            Regex regexMessagesBox = new Regex(@"#Messages.*#Reinforcements", RegexOptions.Singleline);
+            Regex regexMessagesSection = new Regex(@"#Messages.*#Reinforcements", RegexOptions.Singleline);
             Regex regexAllMessages = new Regex(@"\$Name:\s*(.*?)(?=;|\r)", RegexOptions.Multiline);
 
             #region get all existing messages in the mission
-            string messagesBox = regexMessagesBox.Match(content).Value;
-            MatchCollection messages = regexAllMessages.Matches(messagesBox);
+            string messagesSection = regexMessagesSection.Match(content).Value;
+            MatchCollection messages = regexAllMessages.Matches(messagesSection);
             List<string> allMessages = new List<string>();
+
+            string autoGeneratedMessage = "AutoGeneratedMessage";
+            int subtitleMessagesCount = 0;
 
             foreach (Match match in messages)
             {
                 allMessages.Add(match.Groups[1].Value);
+
+                // Check for existing AutoGeneratedMessage to increment the count in order to avoid duplications
+                if (match.Groups[1].Value.Contains(autoGeneratedMessage))
+                {
+                    int iteration = int.Parse(match.Groups[1].Value.Substring(autoGeneratedMessage.Length));
+
+                    if (iteration >= subtitleMessagesCount)
+                    {
+                        subtitleMessagesCount = iteration++;
+                    }
+                }
             }
             #endregion
 
             MatchCollection subtitleTextResults = regexShowSubtitleText.Matches(content);
             string newMessages = string.Empty;
-            int subtitleMessagesCount = 0;
 
             foreach (Match match in subtitleTextResults)
             {
@@ -988,9 +1044,9 @@ namespace FreeSpace_tstrings_generator
                 {
                     subtitleMessagesCount++;
 
-                    content = content.Replace(match.Value, match.Groups[1].Value + "AutoGeneratedMessage" + subtitleMessagesCount + "\"");
+                    content = content.Replace(match.Value, match.Groups[1].Value + autoGeneratedMessage + subtitleMessagesCount + "\"");
 
-                    newMessages += $"$Name: AutoGeneratedMessage{subtitleMessagesCount}{newLine}" +
+                    newMessages += $"$Name: {autoGeneratedMessage}{subtitleMessagesCount}{newLine}" +
                         $"$Team: -1{newLine}" +
                         $"$MessageNew:  XSTR(\"{match.Groups[2].Value}\", -1){newLine}" +
                         $"$end_multi_text{newLine}{newLine}";
@@ -1005,6 +1061,147 @@ namespace FreeSpace_tstrings_generator
             }
 
             return content;
+        }
+
+        /// <summary>
+        /// Convert ship alt names to sexp variables so that they can be translated via modify-variable-xstr sexp
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        private string ConvertAltToVariables(string content)
+        {
+            Regex regexAlternateTypes = new Regex(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline);
+
+            if (regexAlternateTypes.IsMatch(content))
+            {
+                #region alt from '#Alternate Types' section
+                string alternateTypes = regexAlternateTypes.Match(content).Value;
+                // for unknown reason in this case \r case is captured, so we have to uncapture it
+                // in some cases and Alt can have an empty value... 
+                Regex regexAlt = new Regex(@"\$Alt:\s*(((?!\$Alt).)+)(?=\r)");
+                MatchCollection altTypes = regexAlt.Matches(alternateTypes);
+                #endregion
+
+                #region alt from '#Objects' section
+                Regex regexObjects = new Regex(@"#Objects.*#Wings", RegexOptions.Singleline);
+                string objects = regexObjects.Match(content).Value;
+                // ((?!\$Name).)* => all characters not containing \$Name
+                //Regex regexAltShips = new Regex(@"\$Name:\s*(.*?)\s*(\r\n|;)((?!\$Name).)*?\$Alt(.*?)\s*\r\n", RegexOptions.Singleline);
+                Regex regexAltShips = new Regex(@"\$Name:\s*(((?!\$Name).)*?)\s*(\r\n|;)((?!\$Name).)*?\$Alt:\s*(.*?)\s*\r\n", RegexOptions.Singleline);
+                MatchCollection altShips = regexAltShips.Matches(objects);
+                #endregion
+
+                List<Alt> altList = new List<Alt>();
+
+                foreach (Match match in altTypes)
+                {
+                    Alt alt = new Alt(match.Groups[1].Value);
+
+                    foreach (Match altShip in altShips)
+                    {
+                        if (altShip.Groups[5].Value == alt.DefaultValue)
+                        {
+                            alt.AddShip(altShip.Groups[1].Value);
+                        }
+                    }
+
+                    // some alt are not used for unknown reasons, so we dont keep them
+                    if (alt.Ships.Count > 0)
+                    {
+                        altList.Add(alt);
+                    }
+                }
+
+                // Remove the 'Alternate Types' section
+                content = content.Replace(alternateTypes, string.Empty);
+                // Remove all '$Alt' from '#Objects' section
+                Regex regexAltLines = new Regex(@"\$Alt:\s*.*?\r\n", RegexOptions.Singleline);
+                content = regexAltLines.Replace(content, string.Empty);
+
+                content = AddVariablesToSexpVariablesSection(content, altList);
+
+                content = AddEventToManageAltNames(content, altList);
+            }
+
+            return content;
+        }
+
+        private string AddVariablesToSexpVariablesSection(string content, List<Alt> altList)
+        {
+            // Create '#Sexp_variables' section if not exists
+            if (!content.Contains("#Sexp_variables"))
+            {
+                Regex regexBeforeSexp = new Regex(@"(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline);
+
+                string beforeSexp = regexBeforeSexp.Match(content).Value;
+
+                string newSection = $"#Sexp_variables{newLine}{newLine}$Variables:{newLine}({newLine}){newLine}{newLine}{beforeSexp}";
+
+                content = content.Replace(beforeSexp, newSection);
+            }
+
+            Regex regexSexpVariablesSection = new Regex(@"#Sexp_variables.*?(#Fiction Viewer|#Command Briefing)", RegexOptions.Singleline);
+            string sexpVariablesSection = regexSexpVariablesSection.Match(content).Value;
+            Regex regexVariableId = new Regex(@"\t\t(\d+)\t\t", RegexOptions.Multiline);
+            MatchCollection variableIds = regexVariableId.Matches(sexpVariablesSection);
+
+            int variableId = 0;
+
+            // set the next variable id
+            foreach (Match match in variableIds)
+            {
+                int currentId = int.Parse(match.Groups[1].Value);
+
+                if (currentId >= variableId)
+                {
+                    variableId++;
+                }
+            }
+
+            string newSexpVariablesSection = string.Empty;
+
+            // here we add a new variable for each alt
+            foreach (Alt alt in altList)
+            {
+                alt.VariableName = "autoGenVar" + variableId;
+                newSexpVariablesSection += $"\t\t{variableId}\t\t\"{alt.VariableName}\"\t\t\"{alt.DefaultValue}\"\t\t\"string\"{newLine}";
+                variableId++;
+            }
+
+            Regex regexEndOfVariables = new Regex(@"\)\r\n\r\n(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline);
+            string endOfVariables = regexEndOfVariables.Match(content).Value;
+
+            return content.Replace(endOfVariables, newSexpVariablesSection + endOfVariables);
+        }
+
+        private string AddEventToManageAltNames(string content, List<Alt> altList)
+        {
+            // very unorthodox way to add the event but it allows me to manage the case when this event already exists in the original file
+            string eventForAltNamesTitle = "Auto generated event: alt names";
+            string eventEnd = $"){newLine}"
+                + $"+Name: {eventForAltNamesTitle}{newLine}"
+                + $"+Repeat Count: 1{newLine}"
+                + $"+Interval: 1{newLine}{newLine}";
+
+            if (!content.Contains(eventForAltNamesTitle))
+            {
+                Regex regexEvents = new Regex(@"#Events.*?\r\n\r\n", RegexOptions.Singleline);
+                string events = regexEvents.Match(content).Value;
+
+                string eventBeginning = $"$Formula: ( when {newLine}"
+                    + $"   ( true ) {newLine}";
+
+                content = content.Replace(events, events + eventBeginning + eventEnd);
+            }
+
+            string newSexp = string.Empty;
+
+            foreach (Alt alt in altList)
+            {
+                newSexp += alt.ModifyVariableXstr() + alt.ShipChangeAltName();
+            }
+
+            return content.Replace(eventEnd, newSexp + eventEnd);
         }
 
         /// <summary>
@@ -1187,6 +1384,9 @@ namespace FreeSpace_tstrings_generator
             ChooseLocation("Destination folder", true, ref tbDestinationFolderXSTR);
         }
 
+        /// <summary>
+        /// Enable/Disable all inputs on the screen
+        /// </summary>
         private void ToggleInputGrid()
         {
             Dispatcher.Invoke(() =>
