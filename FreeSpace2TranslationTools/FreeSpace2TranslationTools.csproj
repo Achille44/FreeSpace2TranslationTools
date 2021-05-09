@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <None Remove="Images\mainhall.png" />
+    <None Remove="Images\medals.png" />
     <None Remove="Images\missions.png" />
     <None Remove="Images\ships.png" />
     <None Remove="Images\weapons.png" />
@@ -34,6 +35,12 @@
 
   <ItemGroup>
     <Content Include="Images\ships.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Images\medals.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

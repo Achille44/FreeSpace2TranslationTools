@@ -822,6 +822,8 @@ namespace FreeSpace_tstrings_generator
 
                     ProcessMainHallFiles(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
 
+                    ProcessMedalsFile(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
+
                     ProcessShipFiles(filesList, destinationFolder, ref currentProgress, ref sender);
 
                     ProcessWeaponFiles(filesList, destinationFolder, ref currentProgress, ref sender);
@@ -846,11 +848,45 @@ namespace FreeSpace_tstrings_generator
             }
         }
 
+        /// <summary>
+        /// Adds alt names with XSTR variables to medals
+        /// </summary>
+        /// <param name="filesList"></param>
+        /// <param name="modFolder"></param>
+        /// <param name="destinationFolder"></param>
+        /// <param name="currentProgress"></param>
+        /// <param name="sender"></param>
+        private void ProcessMedalsFile(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, ref object sender)
+        {
+            string medalsFile = filesList.First(x => x.Contains("medals.tbl"));
+            string sourceContent = File.ReadAllText(medalsFile);
 
+            Regex regexMedalNames = new Regex(@"(\$Name:\s*(.*?)\r\n)(\$Bitmap)", RegexOptions.Multiline);
+
+            string newContent = regexMedalNames.Replace(sourceContent, new MatchEvaluator(GenerateMedals));
+
+            if (sourceContent != newContent)
+            {
+                CreateFileWithNewContent(medalsFile, modFolder, destinationFolder, newContent);
+            }
+
+            currentProgress++;
+            (sender as BackgroundWorker).ReportProgress(currentProgress);
+        }
+
+
+        /// <summary>
+        /// Adds XSTR variables to door descriptions of main halls
+        /// </summary>
+        /// <param name="filesList"></param>
+        /// <param name="modFolder"></param>
+        /// <param name="destinationFolder"></param>
+        /// <param name="currentProgress"></param>
+        /// <param name="sender"></param>
         private void ProcessMainHallFiles(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, ref object sender)
         {
             #region Main hall => door descriptions
-            List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("Mainhall.tbl")).ToList();
+            List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("mainhall.tbl")).ToList();
 
             // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
             Regex regexDoorDescription = new Regex(@"\+Door description:\s*(((?!XSTR).)*)\r\n", RegexOptions.Multiline);
@@ -859,7 +895,7 @@ namespace FreeSpace_tstrings_generator
             {
                 string sourceContent = File.ReadAllText(file);
 
-                string newContent = regexDoorDescription.Replace(sourceContent, new MatchEvaluator(GenerateDoorDescription));
+                string newContent = regexDoorDescription.Replace(sourceContent, new MatchEvaluator(GenerateDoorDescriptions));
 
                 if (sourceContent != newContent)
                 {
@@ -1342,10 +1378,16 @@ namespace FreeSpace_tstrings_generator
             return nameList;
         }
 
-        private string GenerateXstrWithoutComments(string key, Match match)
+        /// <summary>
+        /// Replaces an hardcoded line with an XSTR variable
+        /// </summary>
+        /// <param name="marker">Marker identifying the line</param>
+        /// <param name="match">Groups[1] must be the XSTR value (comments will be removed)</param>
+        /// <returns></returns>
+        private string ReplaceHardcodedValueWithXstr(string marker, Match match)
         {
             string[] values = match.Groups[1].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-            string result = $"{key}: XSTR(\"{values[0]}\", -1){newLine}";
+            string result = $"{marker}: XSTR(\"{values[0]}\", -1){newLine}";
 
             if (values.Count() > 1)
             {
@@ -1355,23 +1397,37 @@ namespace FreeSpace_tstrings_generator
             return result;
         }
 
-        private string GenerateDoorDescription(Match match)
+        /// <summary>
+        /// Adds a new line including an XSTR variable
+        /// </summary>
+        /// <param name="newMarker">Name of the new marker identifying the XSTR variable</param>
+        /// <param name="match">Groups[1]: first original line (including \r\n), Groups[2]: hardcoded value to be translated, Groups[3]: line after the hardcoded value</param>
+        /// <returns></returns>
+        private string AddXstrLineToHardcodedValue(string newMarker, Match match)
         {
-            return GenerateXstrWithoutComments("+Door description", match);
+            string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0];
+            string valueWithoutAlias = valueWithoutComment.Split('#', 2, StringSplitOptions.RemoveEmptyEntries)[0];
+            return $"{match.Groups[1].Value}{newMarker}: XSTR(\"{valueWithoutAlias.Trim()}\", -1){newLine}{match.Groups[3].Value}";
+        }
+
+        private string GenerateDoorDescriptions(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr("+Door description", match);
         }
 
         private string GenerateLabels(Match match)
         {
-            return GenerateXstrWithoutComments("$label", match);
+            return ReplaceHardcodedValueWithXstr("$label", match);
         }
 
         private string GenerateShipNames(Match match)
         {
-            string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-            string valueWithoutAlias = valueWithoutComment.Split('#', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-            string result = $"{match.Groups[1].Value}$Display Name: XSTR(\"{valueWithoutAlias.Trim()}\", -1){newLine}{match.Groups[3].Value}";
+            return AddXstrLineToHardcodedValue("$Display Name", match);
+        }
 
-            return result;
+        private string GenerateMedals(Match match)
+        {
+            return AddXstrLineToHardcodedValue("$Alt Name", match);
         }
 
         private void btnModFolderXSTR_Click(object sender, RoutedEventArgs e)

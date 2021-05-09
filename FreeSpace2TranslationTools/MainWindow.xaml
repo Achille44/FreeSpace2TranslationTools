@@ -33,6 +33,20 @@
                                 </StackPanel>
                             </TextBlock.ToolTip>
                         </TextBlock>
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="medals">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/medals.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="missions">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/missions.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
                         <TextBlock Style="{StaticResource TextBlockLink}" Text="ships">
                             <TextBlock.ToolTip>
                                 <StackPanel>
@@ -44,13 +58,6 @@
                             <TextBlock.ToolTip>
                                 <StackPanel>
                                     <Image Source="/Images/weapons.png" />
-                                </StackPanel>
-                            </TextBlock.ToolTip>
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource TextBlockLink}" Text="missions">
-                            <TextBlock.ToolTip>
-                                <StackPanel>
-                                    <Image Source="/Images/missions.png" />
                                 </StackPanel>
                             </TextBlock.ToolTip>
                         </TextBlock>
