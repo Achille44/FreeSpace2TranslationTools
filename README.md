@@ -11,8 +11,11 @@ This is the main goal of this program.
 ## What does it do?
 
 First, the program will look for any 'hardcoded' text and try to put it into a 'XSTR' variable containing the translatable text.
+
 Then, all XSTR variables are extracted to one or two plain files (tstrings.tbl and potentially xxx-tlc.tbm) that regroup all texts displayed in the mod.
+
 From here you can start to manually translate these files.
+
 If a mod you translated received an update with modified/new content, you might want to adapt you translation without starting again from scratch, so there is a feature to help you updating your translations.
 
 ## How does it work?
