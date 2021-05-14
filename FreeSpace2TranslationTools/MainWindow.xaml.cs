@@ -73,170 +73,73 @@ namespace FreeSpace_tstrings_generator
                     startingID = tbStartingID.Text;
                 });
 
-                if (!string.IsNullOrEmpty(modFolder) && !string.IsNullOrEmpty(destinationFolder))
+                CheckDirectoryIsValid(modFolder, "Mod folder");
+                CheckDirectoryIsValid(destinationFolder, "Destination folder");
+
+                List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
+                List<Xstr> lines = new List<Xstr>();
+                List<Xstr> duplicates = new List<Xstr>();
+
+                #region looking for xstr in each file
+                foreach (string file in filesList)
                 {
-                    List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
-                    List<Xstr> lines = new List<Xstr>();
-                    List<Xstr> duplicates = new List<Xstr>();
+                    FileInfo fileInfo = new FileInfo(file);
+                    string fileContent = File.ReadAllText(file);
 
-                    #region looking for xstr in each file
-                    foreach (string file in filesList)
+                    IEnumerable<Match> combinedResults = GetAllXstrFromFile(fileInfo, fileContent);
+
+                    foreach (Match match in combinedResults)
                     {
-                        FileInfo fileInfo = new FileInfo(file);
-                        string fileContent = File.ReadAllText(file);
+                        //match.Groups[0] => entire line
+                        //match.Groups[1] => text
+                        //match.Groups[2] => id
 
-                        IEnumerable<Match> combinedResults = GetAllXstrFromFile(fileInfo, fileContent);
-
-                        foreach (Match match in combinedResults)
+                        if (int.TryParse(match.Groups[2].Value, out int id))
                         {
-                            //match.Groups[0] => entire line
-                            //match.Groups[1] => text
-                            //match.Groups[2] => id
+                            string text = match.Groups[1].Value;
 
-                            if (int.TryParse(match.Groups[2].Value, out int id))
+                            // if id not existing, add a new line
+                            if (id > 0 && !lines.Any(x => x.Id == id))
                             {
-                                string text = match.Groups[1].Value;
-
-                                // if id not existing, add a new line
-                                if (id > 0 && !lines.Any(x => x.Id == id))
-                                {
-                                    lines.Add(new Xstr(id, text, fileInfo));
-                                }
-                                // if id already existing but value is different, then put it in another list that will be treated separately
-                                else if (manageDuplicates && (id <= 0 || lines.First(x => x.Id == id).Text != text))
-                                {
-                                    duplicates.Add(new Xstr(id, text, fileInfo, match.Value));
-                                }
+                                lines.Add(new Xstr(id, text, fileInfo));
                             }
-                            else
+                            // if id already existing but value is different, then put it in another list that will be treated separately
+                            else if (manageDuplicates && (id <= 0 || lines.First(x => x.Id == id).Text != text))
                             {
-                                throw new Exception();
+                                duplicates.Add(new Xstr(id, text, fileInfo, match.Value));
                             }
+                        }
+                        else
+                        {
+                            throw new Exception();
                         }
                     }
-                    #endregion
-
-                    // Required to avoid thread access errors...
-                    Dispatcher.Invoke(() =>
-                    {
-                        pbGlobalProgress.Maximum = lines.Count + (manageDuplicates ? filesList.Count + duplicates.Count : 0);
-                    });
-
-                    #region Manage duplicates
-                    if (manageDuplicates && duplicates.Count > 0)
-                    {
-                        #region write duplicates into a separate file with new IDs
-                        // new ID = max ID + 1 to avoid duplicates
-                        int newId = SetNextID(startingID, ref lines);
-
-                        string currentFile = string.Empty;
-                        string tstringsModifiedContent = $"#Default{newLine}";
-
-                        foreach (Xstr duplicate in duplicates)
-                        {
-                            Xstr originalXstr = lines.FirstOrDefault(x => x.Text == duplicate.Text);
-
-                            // if duplicated text exists in another xstr in the original file, then copy its ID
-                            if (originalXstr != null)
-                            {
-                                duplicate.Id = originalXstr.Id;
-                                duplicate.Treated = true;
-                            }
-                            // if there is another duplicate with the same text, we can reuse the same ID to avoid new duplicates in the new file
-                            else if (tstringsModifiedContent.Contains(duplicate.Text))
-                            {
-                                Xstr result = duplicates.FirstOrDefault(x => x.Treated && x.Text == duplicate.Text);
-
-                                if (result != null)
-                                {
-                                    duplicate.Id = result.Id;
-                                    duplicate.Treated = true;
-                                }
-                                else
-                                {
-
-                                }
-                            }
-                            else
-                            {
-                                duplicate.Id = newId;
-                                newId++;
-
-                                // add the name of the file in comment
-                                if (currentFile != duplicate.FileName)
-                                {
-                                    currentFile = duplicate.FileName;
-                                    tstringsModifiedContent += $"{newLine}; {duplicate.FileName}{newLine}";
-                                }
-
-                                tstringsModifiedContent += $"{newLine}{duplicate.Id}, {duplicate.Text}{newLine}";
-                                duplicate.Treated = true;
-                            }
-                            currentProgress++;
-                            (sender as BackgroundWorker).ReportProgress(currentProgress);
-                        }
-
-                        tstringsModifiedContent += $"{newLine}#End";
-                        CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstringsModified-tlc.tbm"), tstringsModifiedContent);
-                        #endregion
-
-                        #region create new version of tables and missions files with new IDs
-                        duplicates = duplicates.OrderBy(x => x.FileName).ToList();
-
-                        List<string> filesToModify = duplicates.Select(x => x.FilePath).Distinct().ToList();
-
-                        foreach (string sourceFile in filesToModify)
-                        {
-                            string fileName = Path.GetFileName(sourceFile);
-
-                            List<Xstr> linesForThisFile = duplicates.Where(x => x.FileName == fileName).ToList();
-
-                            string fileContent = File.ReadAllText(sourceFile);
-
-                            foreach (Xstr lineToModify in linesForThisFile)
-                            {
-                                ReplaceContentWithNewXstr(ref fileContent, lineToModify);
-                            }
-
-                            CreateFileWithNewContent(sourceFile, modFolder, destinationFolder, fileContent);
-
-                            currentProgress++;
-                            (sender as BackgroundWorker).ReportProgress(currentProgress);
-                        }
-                        #endregion
-                    }
-                    #endregion
-
-                    #region Creation of tstrings.tbl
-                    string iterationFile = string.Empty;
-                    string content = $"#Default{newLine}";
-
-                    foreach (Xstr line in lines)
-                    {
-                        // add the name of the file in comment
-                        if (iterationFile != line.FileName)
-                        {
-                            iterationFile = line.FileName;
-                            content += $"{newLine}; {line.FileName}{newLine}";
-                        }
-
-                        content += $"{newLine}{line.Id}, {line.Text}{newLine}";
-
-                        currentProgress++;
-                        (sender as BackgroundWorker).ReportProgress(currentProgress);
-                    }
-
-                    content += $"{newLine}#End";
-                    CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstrings.tbl"), content);
-                    #endregion
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
-                    });
-
-                    ProcessComplete();
                 }
+                #endregion
+
+                // Required to avoid thread access errors...
+                Dispatcher.Invoke(() =>
+                {
+                    pbGlobalProgress.Maximum = lines.Count + (manageDuplicates ? filesList.Count + duplicates.Count : 0);
+                });
+
+                #region Manage duplicates
+                if (manageDuplicates && duplicates.Count > 0)
+                {
+                    CreateFileForDuplicates(startingID, lines, duplicates, destinationFolder, ref currentProgress, ref sender);
+
+                    CreateModFilesWithNewIds(duplicates, modFolder, destinationFolder, ref currentProgress, ref sender);
+                }
+                #endregion
+
+                CreateTstringsFile(lines, destinationFolder, ref currentProgress, ref sender);
+
+                Dispatcher.Invoke(() =>
+                {
+                    (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
+                });
+
+                ProcessComplete();
             }
             catch (Exception ex)
             {
@@ -245,6 +148,130 @@ namespace FreeSpace_tstrings_generator
             finally
             {
                 ToggleInputGrid();
+            }
+        }
+
+        private void CreateFileForDuplicates(string startingID, List<Xstr> lines, List<Xstr> duplicates, string destinationFolder, ref int currentProgress, ref object sender)
+        {
+            // new ID = max ID + 1 to avoid duplicates
+            int newId = SetNextID(startingID, ref lines);
+
+            string currentFile = string.Empty;
+            string tstringsModifiedContent = $"#Default{newLine}";
+
+            foreach (Xstr duplicate in duplicates)
+            {
+                Xstr originalXstr = lines.FirstOrDefault(x => x.Text == duplicate.Text);
+
+                // if duplicated text exists in another xstr in the original file, then copy its ID
+                if (originalXstr != null)
+                {
+                    duplicate.Id = originalXstr.Id;
+                    duplicate.Treated = true;
+                }
+                // if there is another duplicate with the same text, we can reuse the same ID to avoid new duplicates in the new file
+                else if (tstringsModifiedContent.Contains(duplicate.Text))
+                {
+                    Xstr result = duplicates.FirstOrDefault(x => x.Treated && x.Text == duplicate.Text);
+
+                    if (result != null)
+                    {
+                        duplicate.Id = result.Id;
+                        duplicate.Treated = true;
+                    }
+                    else
+                    {
+                        throw new Exception();
+                    }
+                }
+                else
+                {
+                    duplicate.Id = newId;
+                    newId++;
+
+                    // add the name of the file in comment
+                    if (currentFile != duplicate.FileName)
+                    {
+                        currentFile = duplicate.FileName;
+                        tstringsModifiedContent += $"{newLine}; {duplicate.FileName}{newLine}";
+                    }
+
+                    tstringsModifiedContent += $"{newLine}{duplicate.Id}, {duplicate.Text}{newLine}";
+                    duplicate.Treated = true;
+                }
+
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
+            }
+
+            tstringsModifiedContent += $"{newLine}#End";
+
+            CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstringsModified-tlc.tbm"), tstringsModifiedContent);
+        }
+
+        /// <summary>
+        /// Creates table and mission files with new IDs
+        /// </summary>
+        /// <param name="duplicates"></param>
+        /// <param name="modFolder"></param>
+        /// <param name="destinationFolder"></param>
+        /// <param name="currentProgress"></param>
+        /// <param name="sender"></param>
+        private void CreateModFilesWithNewIds(List<Xstr> duplicates, string modFolder, string destinationFolder, ref int currentProgress, ref object sender)
+        {
+            duplicates = duplicates.OrderBy(x => x.FileName).ToList();
+            List<string> filesToModify = duplicates.Select(x => x.FilePath).Distinct().ToList();
+
+            foreach (string sourceFile in filesToModify)
+            {
+                string fileName = Path.GetFileName(sourceFile);
+                string fileContent = File.ReadAllText(sourceFile);
+
+                List<Xstr> linesForThisFile = duplicates.Where(x => x.FileName == fileName).ToList();
+
+                foreach (Xstr lineToModify in linesForThisFile)
+                {
+                    ReplaceContentWithNewXstr(ref fileContent, lineToModify);
+                }
+
+                CreateFileWithNewContent(sourceFile, modFolder, destinationFolder, fileContent);
+
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
+            }
+        }
+
+        /// <summary>
+        /// Creates the tstrings.tbl file with original IDs
+        /// </summary>
+        /// <param name="lines"></param>
+        /// <param name="destinationFolder"></param>
+        /// <param name="currentProgress"></param>
+        /// <param name="sender"></param>
+        private void CreateTstringsFile(List<Xstr> lines, string destinationFolder, ref int currentProgress, ref object sender)
+        {
+            if (lines.Count > 0)
+            {
+                string iterationFile = string.Empty;
+                string content = $"#Default{newLine}";
+
+                foreach (Xstr line in lines)
+                {
+                    // add the name of the file in comment
+                    if (iterationFile != line.FileName)
+                    {
+                        iterationFile = line.FileName;
+                        content += $"{newLine}; {line.FileName}{newLine}";
+                    }
+
+                    content += $"{newLine}{line.Id}, {line.Text}{newLine}";
+
+                    currentProgress++;
+                    (sender as BackgroundWorker).ReportProgress(currentProgress);
+                }
+
+                content += $"{newLine}#End";
+                CreateFileWithPath(Path.Combine(destinationFolder, "tables/tstrings.tbl"), content);
             }
         }
 
@@ -266,6 +293,9 @@ namespace FreeSpace_tstrings_generator
             {
                 string translationSource = tbTranslationSource.Text;
                 string translationDestination = tbTranslationDestination.Text;
+
+                CheckFileIsValid(translationSource, "Source file");
+                CheckFileIsValid(translationDestination, "Destination file");
 
                 string sourceContent = File.ReadAllText(translationSource);
                 string destinationContent = File.ReadAllText(translationDestination);
@@ -367,6 +397,28 @@ namespace FreeSpace_tstrings_generator
             return regexNotADigit.IsMatch(text);
         }
 
+        /// <summary>
+        /// Check if directory is valid, and show a MessageBox if not
+        /// </summary>
+        /// <param name="directoryLocation"></param>
+        /// <param name="directoryLabel"></param>
+        /// <returns></returns>
+        private void CheckDirectoryIsValid(string directoryLocation, string directoryLabel)
+        {
+            if (!Directory.Exists(directoryLocation))
+            {
+                throw new UserFriendlyException($"{directoryLabel} is not a valid directory.");
+            }
+        }
+
+        private void CheckFileIsValid(string FileLocation, string fileLabel)
+        {
+            if (!File.Exists(FileLocation))
+            {
+                throw new UserFriendlyException($"{fileLabel} is not valid.");
+            }
+        }
+
         private void ProcessComplete()
         {
             MessageBox.Show("Process Complete!");
@@ -374,7 +426,14 @@ namespace FreeSpace_tstrings_generator
 
         private void ManageException(Exception ex)
         {
-            MessageBox.Show($"{ex.Message}{newLine}{ex.StackTrace}{newLine}{ex.InnerException}");
+            if (ex.GetType().Name == "UserFriendlyException")
+            {
+                MessageBox.Show(ex.Message);
+            }
+            else
+            {
+                MessageBox.Show($"Technical error:{newLine}{newLine}{ex.Message}{newLine}{ex.StackTrace}{newLine}{ex.InnerException}");
+            }
         }
 
         private void cbManageDuplicates_Checked(object sender, RoutedEventArgs e)
@@ -416,7 +475,10 @@ namespace FreeSpace_tstrings_generator
                     marker = tbMarker.Text;
                 });
 
-                //Encoding encoding = Utils.GetEncoding(oldTranslatedFile);
+                CheckFileIsValid(oldOriginalFile, "Old original file");
+                CheckFileIsValid(newOriginalFile, "New original file");
+                CheckFileIsValid(oldTranslatedFile, "Old translated file");
+                CheckFileIsValid(newTranslatedFile, "New translated file");
 
                 string oldOriginalContent = File.ReadAllText(oldOriginalFile);
                 string newOriginalContent = File.ReadAllText(newOriginalFile);
@@ -544,6 +606,10 @@ namespace FreeSpace_tstrings_generator
                     manageNewIds = cbManageNewIds.IsChecked ?? false;
                 });
 
+                CheckFileIsValid(originalTstrings, "Original tstrings file");
+                CheckDirectoryIsValid(modFolder, "Mod folder");
+                CheckDirectoryIsValid(destinationFolder, "Destination folder");
+
                 string originalTstringsContent = File.ReadAllText(originalTstrings);
 
                 MatchCollection allXstrInTstrings = regexXstrInTstrings.Matches(originalTstringsContent);
@@ -665,7 +731,7 @@ namespace FreeSpace_tstrings_generator
                     }
                     else
                     {
-
+                        throw new Exception();
                     }
                 }
                 else
@@ -682,7 +748,7 @@ namespace FreeSpace_tstrings_generator
                 }
             }
 
-            tstringsModifiedContent += $"{newLine}#end";
+            tstringsModifiedContent += $"{newLine}#End";
 
             return tstringsModifiedContent;
         }
@@ -700,6 +766,11 @@ namespace FreeSpace_tstrings_generator
 
             result.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
                 .Where(f => missionsExtensions.Contains(Path.GetExtension(f))).ToList());
+
+            if (result.Count == 0)
+            {
+                throw new UserFriendlyException("No valid file to be translated was found in the mod folder.");
+            }
 
             return result;
         }
@@ -810,33 +881,33 @@ namespace FreeSpace_tstrings_generator
                     destinationFolder = tbDestinationFolderXSTR.Text;
                 });
 
-                if (!string.IsNullOrEmpty(modFolder) && !string.IsNullOrEmpty(destinationFolder))
+                CheckDirectoryIsValid(modFolder, "Mod folder");
+                CheckDirectoryIsValid(destinationFolder, "Destination folder");
+
+                List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
+
+                // Required to avoid thread access errors...
+                Dispatcher.Invoke(() =>
                 {
-                    List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
+                    pbGlobalProgress.Maximum = filesList.Count;
+                });
 
-                    // Required to avoid thread access errors...
-                    Dispatcher.Invoke(() =>
-                    {
-                        pbGlobalProgress.Maximum = filesList.Count;
-                    });
+                ProcessMainHallFiles(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
 
-                    ProcessMainHallFiles(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
+                ProcessMedalsFile(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
 
-                    ProcessMedalsFile(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
+                ProcessShipFiles(filesList, destinationFolder, ref currentProgress, ref sender);
 
-                    ProcessShipFiles(filesList, destinationFolder, ref currentProgress, ref sender);
+                ProcessWeaponFiles(filesList, destinationFolder, ref currentProgress, ref sender);
 
-                    ProcessWeaponFiles(filesList, destinationFolder, ref currentProgress, ref sender);
+                ProcessMissionFiles(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
 
-                    ProcessMissionFiles(filesList, modFolder, destinationFolder, ref currentProgress, ref sender);
+                Dispatcher.Invoke(() =>
+                {
+                    (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
+                });
 
-                    Dispatcher.Invoke(() =>
-                    {
-                        (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
-                    });
-
-                    ProcessComplete();
-                }
+                ProcessComplete();
             }
             catch (Exception ex)
             {
@@ -1336,7 +1407,7 @@ namespace FreeSpace_tstrings_generator
         }
 
         /// <summary>
-        /// This function generates content of a weapons/ships alt name list
+        /// Generates content of a weapons/ships alt name list
         /// </summary>
         /// <param name="sectionTitle"></param>
         /// <param name="entryNames"></param>
