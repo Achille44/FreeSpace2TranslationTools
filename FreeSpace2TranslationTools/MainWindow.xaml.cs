@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Localization = FreeSpace2TranslationTools.Properties.Resources;
 
 namespace FreeSpace_tstrings_generator
 {
@@ -34,12 +35,12 @@ namespace FreeSpace_tstrings_generator
 
         private void btnModFolder_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Mod folder", true, ref tbModFolder);
+            ChooseLocation(Localization.ModFolder, true, ref tbModFolder);
         }
 
         private void btnDestinationFolder_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Destination folder", true, ref tbDestinationFolder);
+            ChooseLocation(Localization.DestinationFolder, true, ref tbDestinationFolder);
         }
 
         private void btnGenerate_Click(object sender, RoutedEventArgs e)
@@ -73,8 +74,8 @@ namespace FreeSpace_tstrings_generator
                     startingID = tbStartingID.Text;
                 });
 
-                CheckDirectoryIsValid(modFolder, "Mod folder");
-                CheckDirectoryIsValid(destinationFolder, "Destination folder");
+                CheckDirectoryIsValid(modFolder, Localization.ModFolder);
+                CheckDirectoryIsValid(destinationFolder, Localization.DestinationFolder);
 
                 List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
                 List<Xstr> lines = new List<Xstr>();
@@ -277,12 +278,12 @@ namespace FreeSpace_tstrings_generator
 
         private void btnTranslationSource_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Translation source", false, ref tbTranslationSource);
+            ChooseLocation(Localization.SourceFile, false, ref tbTranslationSource);
         }
 
         private void btnTranslationDestination_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Translation destination", false, ref tbTranslationDestination);
+            ChooseLocation(Localization.DestinationFile, false, ref tbTranslationDestination);
         }
 
         private void btnMerge_Click(object sender, RoutedEventArgs e)
@@ -294,8 +295,8 @@ namespace FreeSpace_tstrings_generator
                 string translationSource = tbTranslationSource.Text;
                 string translationDestination = tbTranslationDestination.Text;
 
-                CheckFileIsValid(translationSource, "Source file");
-                CheckFileIsValid(translationDestination, "Destination file");
+                CheckFileIsValid(translationSource, Localization.SourceFile);
+                CheckFileIsValid(translationDestination, Localization.DestinationFile);
 
                 string sourceContent = File.ReadAllText(translationSource);
                 string destinationContent = File.ReadAllText(translationDestination);
@@ -332,22 +333,22 @@ namespace FreeSpace_tstrings_generator
 
         private void btnOldOriginal_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Old original file", false, ref tbOldOriginal);
+            ChooseLocation(Localization.OldOriginalFile, false, ref tbOldOriginal);
         }
 
         private void btnOldTranslated_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Old translated file", false, ref tbOldTranslated);
+            ChooseLocation(Localization.OldTranslatedFile, false, ref tbOldTranslated);
         }
 
         private void btnNewOriginal_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("New original file", false, ref tbNewOriginal);
+            ChooseLocation(Localization.NewOriginalFile, false, ref tbNewOriginal);
         }
 
         private void btnNewTranslated_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("New file to translate", false, ref tbNewTranslated);
+            ChooseLocation(Localization.NewTranslatedFile, false, ref tbNewTranslated);
         }
 
         private void btnUpdate_Click(object sender, RoutedEventArgs e)
@@ -359,7 +360,7 @@ namespace FreeSpace_tstrings_generator
             worker.RunWorkerAsync();
         }
 
-        private void ChooseLocation(string title, bool isFolderPicker, ref TextBox textBox)
+        private static void ChooseLocation(string title, bool isFolderPicker, ref TextBox textBox)
         {
             CommonOpenFileDialog dlg = new CommonOpenFileDialog();
             dlg.Title = title;
@@ -403,25 +404,25 @@ namespace FreeSpace_tstrings_generator
         /// <param name="directoryLocation"></param>
         /// <param name="directoryLabel"></param>
         /// <returns></returns>
-        private void CheckDirectoryIsValid(string directoryLocation, string directoryLabel)
+        private static void CheckDirectoryIsValid(string directoryLocation, string directoryLabel)
         {
             if (!Directory.Exists(directoryLocation))
             {
-                throw new UserFriendlyException($"{directoryLabel} is not a valid directory.");
+                throw new UserFriendlyException($"{Localization.InvalidDirectory}{directoryLabel}");
             }
         }
 
-        private void CheckFileIsValid(string FileLocation, string fileLabel)
+        private static void CheckFileIsValid(string FileLocation, string fileLabel)
         {
             if (!File.Exists(FileLocation))
             {
-                throw new UserFriendlyException($"{fileLabel} is not valid.");
+                throw new UserFriendlyException($"{Localization.InvalidFile}{fileLabel}");
             }
         }
 
-        private void ProcessComplete()
+        private static void ProcessComplete()
         {
-            MessageBox.Show("Process Complete!");
+            MessageBox.Show(Localization.ProcessComplete);
         }
 
         private void ManageException(Exception ex)
@@ -432,7 +433,7 @@ namespace FreeSpace_tstrings_generator
             }
             else
             {
-                MessageBox.Show($"Technical error:{newLine}{newLine}{ex.Message}{newLine}{ex.StackTrace}{newLine}{ex.InnerException}");
+                MessageBox.Show($"{Localization.TechnicalError}{newLine}{newLine}{ex.Message}{newLine}{ex.StackTrace}{newLine}{ex.InnerException}");
             }
         }
 
@@ -475,10 +476,10 @@ namespace FreeSpace_tstrings_generator
                     marker = tbMarker.Text;
                 });
 
-                CheckFileIsValid(oldOriginalFile, "Old original file");
-                CheckFileIsValid(newOriginalFile, "New original file");
-                CheckFileIsValid(oldTranslatedFile, "Old translated file");
-                CheckFileIsValid(newTranslatedFile, "New translated file");
+                CheckFileIsValid(oldOriginalFile, Localization.OldOriginalFile);
+                CheckFileIsValid(newOriginalFile, Localization.NewOriginalFile);
+                CheckFileIsValid(oldTranslatedFile, Localization.OldTranslatedFile);
+                CheckFileIsValid(newTranslatedFile, Localization.NewTranslatedFile);
 
                 string oldOriginalContent = File.ReadAllText(oldOriginalFile);
                 string newOriginalContent = File.ReadAllText(newOriginalFile);
@@ -560,12 +561,12 @@ namespace FreeSpace_tstrings_generator
 
         private void btnModFolderInsertion_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Mod folder", true, ref tbModFolderInsertion);
+            ChooseLocation(Localization.ModFolder, true, ref tbModFolderInsertion);
         }
 
         private void btnOriginalTstrings_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Original tstrings", false, ref tbOriginalTstrings);
+            ChooseLocation(Localization.OriginalTstringsFile, false, ref tbOriginalTstrings);
         }
 
         private void btnInsert_Click(object sender, RoutedEventArgs e)
@@ -579,7 +580,7 @@ namespace FreeSpace_tstrings_generator
 
         private void btnDestinationFolderInsert_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Destination folder", true, ref tbDestinationFolderInsert);
+            ChooseLocation(Localization.DestinationFolder, true, ref tbDestinationFolderInsert);
         }
 
         private void IncludeExistingTranslation(object sender, DoWorkEventArgs e)
@@ -606,9 +607,9 @@ namespace FreeSpace_tstrings_generator
                     manageNewIds = cbManageNewIds.IsChecked ?? false;
                 });
 
-                CheckFileIsValid(originalTstrings, "Original tstrings file");
-                CheckDirectoryIsValid(modFolder, "Mod folder");
-                CheckDirectoryIsValid(destinationFolder, "Destination folder");
+                CheckFileIsValid(originalTstrings, Localization.OriginalTstringsFile);
+                CheckDirectoryIsValid(modFolder, Localization.ModFolder);
+                CheckDirectoryIsValid(destinationFolder, Localization.DestinationFolder);
 
                 string originalTstringsContent = File.ReadAllText(originalTstrings);
 
@@ -769,7 +770,7 @@ namespace FreeSpace_tstrings_generator
 
             if (result.Count == 0)
             {
-                throw new UserFriendlyException("No valid file to be translated was found in the mod folder.");
+                throw new UserFriendlyException(Localization.NoValidFileInFolder);
             }
 
             return result;
@@ -881,8 +882,8 @@ namespace FreeSpace_tstrings_generator
                     destinationFolder = tbDestinationFolderXSTR.Text;
                 });
 
-                CheckDirectoryIsValid(modFolder, "Mod folder");
-                CheckDirectoryIsValid(destinationFolder, "Destination folder");
+                CheckDirectoryIsValid(modFolder, Localization.ModFolder);
+                CheckDirectoryIsValid(destinationFolder, Localization.DestinationFolder);
 
                 List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
 
@@ -1503,12 +1504,12 @@ namespace FreeSpace_tstrings_generator
 
         private void btnModFolderXSTR_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Mod folder", true, ref tbModFolderXSTR);
+            ChooseLocation(Localization.ModFolder, true, ref tbModFolderXSTR);
         }
 
         private void btnDestinationFolderXSTR_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation("Destination folder", true, ref tbDestinationFolderXSTR);
+            ChooseLocation(Localization.DestinationFolder, true, ref tbDestinationFolderXSTR);
         }
 
         /// <summary>

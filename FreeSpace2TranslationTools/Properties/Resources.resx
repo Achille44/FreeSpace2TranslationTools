@@ -1,0 +1,243 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ApplicationTitle" xml:space="preserve">
+    <value>FreeSpace 2 Translation Tools</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="CheckBoxManageDuplicates" xml:space="preserve">
+    <value>Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder). Almost mandatory if original files only contain '-1' as ID.</value>
+  </data>
+  <data name="CheckBoxManageNewIds" xml:space="preserve">
+    <value>Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder)</value>
+  </data>
+  <data name="CreateMissingXstrDescription" xml:space="preserve">
+    <value>This functionality replaces hard coded strings with XSTR variables in the following mod files:</value>
+  </data>
+  <data name="CreateMissingXstrTitle" xml:space="preserve">
+    <value>Create missing XSTR</value>
+  </data>
+  <data name="DestinationFile" xml:space="preserve">
+    <value>Destination file</value>
+  </data>
+  <data name="DestinationFolder" xml:space="preserve">
+    <value>Destination folder</value>
+  </data>
+  <data name="DestinationFolderTooltip" xml:space="preserve">
+    <value>If not empty, identical files will be overwritten.</value>
+  </data>
+  <data name="Generate" xml:space="preserve">
+    <value>Generate</value>
+  </data>
+  <data name="GenerateTstringsDescription" xml:space="preserve">
+    <value>This functionality creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder.</value>
+  </data>
+  <data name="GenerateTstringsTitle" xml:space="preserve">
+    <value>Generate tstrings.tbl</value>
+  </data>
+  <data name="Include" xml:space="preserve">
+    <value>Include</value>
+  </data>
+  <data name="IncludeNewFileDescription" xml:space="preserve">
+    <value>This functionality changes all the IDs in the table and mission files to match the IDs in the existing tstrings.tbl.</value>
+  </data>
+  <data name="IncludeNewFileTitle" xml:space="preserve">
+    <value>Include new files</value>
+  </data>
+  <data name="InvalidDirectory" xml:space="preserve">
+    <value>The following directory is invalid: </value>
+  </data>
+  <data name="InvalidFile" xml:space="preserve">
+    <value>The following file is invalid: </value>
+  </data>
+  <data name="MainHall" xml:space="preserve">
+    <value>main hall</value>
+  </data>
+  <data name="MarkerDescription" xml:space="preserve">
+    <value>This value serves as a marker. Only the texts starting with this marker in the new translated file will be overwritten. If empty, all lines can be overwritten. Example: [24, &amp;quot;(fr)Return to Base&amp;quot;]. Here the marker (fr) indicates this line can be overwritten. But the line [13, &amp;quot;Aucun&amp;quot;] has no marker so it won't be overwritten.</value>
+  </data>
+  <data name="Medals" xml:space="preserve">
+    <value>medals</value>
+  </data>
+  <data name="Merge" xml:space="preserve">
+    <value>Merge</value>
+  </data>
+  <data name="MergeTranslationDescription" xml:space="preserve">
+    <value>This functionality copies the content of the strings from source to destination, using IDs as references. Only useful if you want to merge several translation files into a single one. Destination file will be overwritten.</value>
+  </data>
+  <data name="MergeTranslationTitle" xml:space="preserve">
+    <value>Merge translations</value>
+  </data>
+  <data name="Missions" xml:space="preserve">
+    <value>missions</value>
+  </data>
+  <data name="ModFolder" xml:space="preserve">
+    <value>Mod folder</value>
+  </data>
+  <data name="ModFolderTooltip" xml:space="preserve">
+    <value>Ideally the data folder. Can contain subdirectories. Must contain table and mission files.</value>
+  </data>
+  <data name="NewOriginalFile" xml:space="preserve">
+    <value>New original file</value>
+  </data>
+  <data name="NewTranslatedFile" xml:space="preserve">
+    <value>New file to be translated</value>
+  </data>
+  <data name="NoValidFileInFolder" xml:space="preserve">
+    <value>No valid file to be translated was found in the mod folder.</value>
+  </data>
+  <data name="OldOriginalFile" xml:space="preserve">
+    <value>Old original file</value>
+  </data>
+  <data name="OldTranslatedFile" xml:space="preserve">
+    <value>Old translated file</value>
+  </data>
+  <data name="OriginalTstringsFile" xml:space="preserve">
+    <value>Original tstrings file</value>
+  </data>
+  <data name="ProcessComplete" xml:space="preserve">
+    <value>Process Complete!</value>
+  </data>
+  <data name="Ships" xml:space="preserve">
+    <value>ships</value>
+  </data>
+  <data name="SourceFile" xml:space="preserve">
+    <value>Source file</value>
+  </data>
+  <data name="StartingIdDescription" xml:space="preserve">
+    <value>Starting ID for duplicates (if no value, the starting value will be the existing max ID + 1)</value>
+  </data>
+  <data name="TechnicalError" xml:space="preserve">
+    <value>Technical error:</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="UpdateTranslationDescription" xml:space="preserve">
+    <value>This functionality will copy the content of an existing translation to a new one, detecting the identical text entries in both original files, even if the IDs are different. The new file to be translated will be overwritten.</value>
+  </data>
+  <data name="UpdateTranslationTitle" xml:space="preserve">
+    <value>Update translations</value>
+  </data>
+  <data name="Weapons" xml:space="preserve">
+    <value>weapons</value>
+  </data>
+</root>
