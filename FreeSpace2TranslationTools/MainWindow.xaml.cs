@@ -1327,63 +1327,67 @@ namespace FreeSpace_tstrings_generator
             {
                 MatchCollection parameters = regexFullLines.Matches(match.Value);
 
-                Sexp sexp = new Sexp("show-subtitle-text", parameters[1].Groups[1].Value, parameters[1].Groups[3].Value);
+                // Try not to accidentally convert image subtitle to text...
+                if (!string.IsNullOrWhiteSpace(parameters[3].Groups[2].Value.Trim('"')))
+                {
+                    Sexp sexp = new Sexp("show-subtitle-text", parameters[1].Groups[1].Value, parameters[1].Groups[3].Value);
 
-                // text to display
-                sexp.AddParameter(parameters[3].Groups[2].Value);
-                // X position, from 0 to 100%
-                sexp.AddParameter(ConvertXPositionFromAbsoluteToRelative(parameters[1].Groups[2].Value));
-                // Y position, from 0 to 100%
-                sexp.AddParameter(ConvertYPositionFromAbsoluteToRelative(parameters[2].Groups[2].Value));
-                // Center horizontally?
-                if (parameters.Count < 8)
-                {
-                    sexp.AddParameter("( false )");
-                }
-                else
-                {
-                    sexp.AddParameter(parameters[7].Groups[2].Value);
-                }
-                // Center vertically?
-                if (parameters.Count < 9)
-                {
-                    sexp.AddParameter("( false )");
-                }
-                else
-                {
-                    sexp.AddParameter(parameters[8].Groups[2].Value);
-                }
-                // Time (in milliseconds) to be displayed
-                sexp.AddParameter(parameters[4].Groups[2].Value);
-                // Fade time (in milliseconds) (optional)
-                if (parameters.Count > 6)
-                {
-                    sexp.AddParameter(parameters[6].Groups[2].Value);
-                }
-                // Paragraph width, from 1 to 100% (optional; 0 uses default 200 pixels)
-                if (parameters.Count > 9)
-                {
-                    sexp.AddParameter(parameters[9].Groups[2].Value);
-                }
-                // Text red component (0-255) (optional)
-                if (parameters.Count > 10)
-                {
-                    sexp.AddParameter(parameters[10].Groups[2].Value);
-                }
-                // Text green component(0 - 255) (optional)
-                if (parameters.Count > 11)
-                {
-                    sexp.AddParameter(parameters[11].Groups[2].Value);
-                }
-                // Text blue component(0 - 255) (optional)
-                if (parameters.Count > 12)
-                {
-                    sexp.AddParameter(parameters[12].Groups[2].Value);
-                }
+                    // text to display
+                    sexp.AddParameter(parameters[3].Groups[2].Value);
+                    // X position, from 0 to 100%
+                    sexp.AddParameter(ConvertXPositionFromAbsoluteToRelative(parameters[1].Groups[2].Value));
+                    // Y position, from 0 to 100%
+                    sexp.AddParameter(ConvertYPositionFromAbsoluteToRelative(parameters[2].Groups[2].Value));
+                    // Center horizontally?
+                    if (parameters.Count < 8)
+                    {
+                        sexp.AddParameter("( false )");
+                    }
+                    else
+                    {
+                        sexp.AddParameter(parameters[7].Groups[2].Value);
+                    }
+                    // Center vertically?
+                    if (parameters.Count < 9)
+                    {
+                        sexp.AddParameter("( false )");
+                    }
+                    else
+                    {
+                        sexp.AddParameter(parameters[8].Groups[2].Value);
+                    }
+                    // Time (in milliseconds) to be displayed
+                    sexp.AddParameter(parameters[4].Groups[2].Value);
+                    // Fade time (in milliseconds) (optional)
+                    if (parameters.Count > 6)
+                    {
+                        sexp.AddParameter(parameters[6].Groups[2].Value);
+                    }
+                    // Paragraph width, from 1 to 100% (optional; 0 uses default 200 pixels)
+                    if (parameters.Count > 9)
+                    {
+                        sexp.AddParameter(parameters[9].Groups[2].Value);
+                    }
+                    // Text red component (0-255) (optional)
+                    if (parameters.Count > 10)
+                    {
+                        sexp.AddParameter(parameters[10].Groups[2].Value);
+                    }
+                    // Text green component(0 - 255) (optional)
+                    if (parameters.Count > 11)
+                    {
+                        sexp.AddParameter(parameters[11].Groups[2].Value);
+                    }
+                    // Text blue component(0 - 255) (optional)
+                    if (parameters.Count > 12)
+                    {
+                        sexp.AddParameter(parameters[12].Groups[2].Value);
+                    }
 
-                sexp.CloseFormula();
+                    sexp.CloseFormula();
 
-                content = content.Replace(match.Value, sexp.Formula);
+                    content = content.Replace(match.Value, sexp.Formula);
+                }
             }
 
             return content;
