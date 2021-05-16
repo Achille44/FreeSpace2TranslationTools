@@ -6,6 +6,7 @@
     <RootNamespace>FreeSpace2TranslationTools</RootNamespace>
     <UseWPF>true</UseWPF>
     <AssemblyName>FreeSpace2TranslationTools</AssemblyName>
+    <ApplicationIcon>Hlplogo512_60x60.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
