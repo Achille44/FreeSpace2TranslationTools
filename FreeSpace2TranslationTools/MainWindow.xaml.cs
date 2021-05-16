@@ -1182,14 +1182,6 @@ namespace FreeSpace_tstrings_generator
 
             if (regexAlternateTypes.IsMatch(content))
             {
-                #region alt from '#Alternate Types' section
-                string alternateTypes = regexAlternateTypes.Match(content).Value;
-                // for unknown reason in this case \r case is captured, so we have to uncapture it
-                // in some cases and Alt can have an empty value... 
-                Regex regexAlt = new Regex(@"\$Alt:\s*(((?!\$Alt).)+)(?=\r)");
-                MatchCollection altTypes = regexAlt.Matches(alternateTypes);
-                #endregion
-
                 #region alt from '#Objects' section
                 Regex regexObjects = new Regex(@"#Objects.*#Wings", RegexOptions.Singleline);
                 string objects = regexObjects.Match(content).Value;
@@ -1199,36 +1191,48 @@ namespace FreeSpace_tstrings_generator
                 MatchCollection altShips = regexAltShips.Matches(objects);
                 #endregion
 
-                List<Alt> altList = new List<Alt>();
-
-                foreach (Match match in altTypes)
+                // Check at least one alt name is used before starting modifications
+                if (altShips.Count > 0)
                 {
-                    Alt alt = new Alt(match.Groups[1].Value);
+                    #region alt from '#Alternate Types' section
+                    string alternateTypes = regexAlternateTypes.Match(content).Value;
+                    // for unknown reason in this case \r case is captured, so we have to uncapture it
+                    // in some cases and Alt can have an empty value... 
+                    Regex regexAlt = new Regex(@"\$Alt:\s*(((?!\$Alt).)+)(?=\r)");
+                    MatchCollection altTypes = regexAlt.Matches(alternateTypes);
+                    #endregion
 
-                    foreach (Match altShip in altShips)
+                    List<Alt> altList = new List<Alt>();
+
+                    foreach (Match match in altTypes)
                     {
-                        if (altShip.Groups[5].Value == alt.DefaultValue)
+                        Alt alt = new Alt(match.Groups[1].Value);
+
+                        foreach (Match altShip in altShips)
                         {
-                            alt.AddShip(altShip.Groups[1].Value);
+                            if (altShip.Groups[5].Value == alt.DefaultValue)
+                            {
+                                alt.AddShip(altShip.Groups[1].Value);
+                            }
+                        }
+
+                        // some alt are not used for unknown reasons, so we dont keep them
+                        if (alt.Ships.Count > 0)
+                        {
+                            altList.Add(alt);
                         }
                     }
 
-                    // some alt are not used for unknown reasons, so we dont keep them
-                    if (alt.Ships.Count > 0)
-                    {
-                        altList.Add(alt);
-                    }
+                    // Remove the 'Alternate Types' section
+                    content = content.Replace(alternateTypes, string.Empty);
+                    // Remove all '$Alt' from '#Objects' section
+                    Regex regexAltLines = new Regex(@"\$Alt:\s*.*?\r\n", RegexOptions.Singleline);
+                    content = regexAltLines.Replace(content, string.Empty);
+
+                    content = AddVariablesToSexpVariablesSection(content, altList);
+
+                    content = AddEventToManageAltNames(content, altList);
                 }
-
-                // Remove the 'Alternate Types' section
-                content = content.Replace(alternateTypes, string.Empty);
-                // Remove all '$Alt' from '#Objects' section
-                Regex regexAltLines = new Regex(@"\$Alt:\s*.*?\r\n", RegexOptions.Singleline);
-                content = regexAltLines.Replace(content, string.Empty);
-
-                content = AddVariablesToSexpVariablesSection(content, altList);
-
-                content = AddEventToManageAltNames(content, altList);
             }
 
             return content;
