@@ -1457,8 +1457,11 @@ namespace FreeSpace_tstrings_generator
         /// <returns></returns>
         private static string ReplaceHardcodedValueWithXstr(string marker, Match match)
         {
-            string[] values = match.Groups[1].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-            string result = $"{marker}: XSTR(\"{values[0]}\", -1){newLine}";
+            string[] values = match.Groups[1].Value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
+
+            string value = values.Length == 0 ? "" : values[0];
+
+            string result = $"{marker}: XSTR(\"{value}\", -1){newLine}";
 
             if (values.Length > 1)
             {
@@ -1504,24 +1507,44 @@ namespace FreeSpace_tstrings_generator
         private string GenerateSubsystems(Match match)
         {
             string newSubsystem = match.Value;
+            bool altNameAlreadyExisting = true;
+            bool altDamagePopupNameAlreadyExisting = true;
 
             if (!match.Value.Contains("$Alt Subsystem Name:"))
             {
+                altNameAlreadyExisting = false;
                 newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));
             }
             else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
             {
-                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Subsystem Name:\s*(.*?)(?=\r)", new MatchEvaluator(ReplaceAltSubsystemName));
+                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Subsystem Name:\s*(.*?)\r\n", new MatchEvaluator(ReplaceAltSubsystemName));
             }
 
             if (!match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
             {
-                // take 2 lines after subsystem to skip alt subsystem line
-                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n.*?\r\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                altDamagePopupNameAlreadyExisting = false;
+
+                // if existing, copy the alt name to damage popup name
+                if (altNameAlreadyExisting)
+                {
+                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name: XSTR\\(\"(.*?)\", -1\\)\\r\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                }
+                else
+                {
+                    // take 2 lines after subsystem to skip alt subsystem line
+                    newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n.*?\r\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                }
             }
             else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
             {
-                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Damage Popup Subsystem Name:\s*(.*?)(?=\r)", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
+                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Damage Popup Subsystem Name:(.*?)\r\n", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
+            }
+
+            // if alt damage popup name already existing but not alt name, then copy it to alt name 
+            if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
+            {
+                string newName = Regex.Match(newSubsystem, "\\$Alt Damage Popup Subsystem Name: XSTR\\(\"(.*?)\", -1\\)").Groups[1].Value;
+                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name: XSTR\\(\"(.*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");
             }
 
             return newSubsystem;
@@ -1544,15 +1567,7 @@ namespace FreeSpace_tstrings_generator
 
         private string ReplaceAltDamagePopupSubsystemName(Match match)
         {
-            // in the following case, the existing $Alt Damage Popup Subsystem Name is empty, so we don't modify it
-            if (match.Value.Contains("\r"))
-            {
-                return match.Value;
-            }
-            else
-            {
-                return ReplaceHardcodedValueWithXstr("$Alt Damage Popup Subsystem Name", match);
-            }
+            return ReplaceHardcodedValueWithXstr("$Alt Damage Popup Subsystem Name", match);
         }
 
         private void btnModFolderXSTR_Click(object sender, RoutedEventArgs e)
