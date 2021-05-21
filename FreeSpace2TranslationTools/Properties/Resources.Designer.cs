@@ -232,7 +232,7 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à This value serves as a marker. Only the texts starting with this marker in the new translated file will be overwritten. If empty, all lines can be overwritten. Example: [24, &amp;quot;(fr)Return to Base&amp;quot;]. Here the marker (fr) indicates this line can be overwritten. But the line [13, &amp;quot;Aucun&amp;quot;] has no marker so it won&apos;t be overwritten..
+        ///   Recherche une chaîne localisée semblable à This value serves as a marker. Only the texts starting with this marker in the new translated file will be overwritten. If empty, all lines can be overwritten. Example: [24, &quot;(fr)Return to Base&quot;]. Here the marker (fr) indicates this line can be overwritten. But the line [13, &quot;Aucun&quot;] has no marker so it won&apos;t be overwritten..
         /// </summary>
         public static string MarkerDescription {
             get {

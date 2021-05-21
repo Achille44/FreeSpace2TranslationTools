@@ -24,8 +24,6 @@ namespace FreeSpace_tstrings_generator
         Regex regexXstrInTstrings = new("(\\d+), (\".*?\")", RegexOptions.Singleline | RegexOptions.Compiled);
         Regex regexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
         Regex regexNotADigit = new("[^0-9.-]+", RegexOptions.Compiled);
-        // (?=...) => look ahead, select only before that part
-        Regex regexEntries = new(@"\$Name:\s*.*?(?=\$Name|#end|#End)", RegexOptions.Singleline | RegexOptions.Compiled);
         Regex regexName = new(@"\$Name:\s*(.*)\r", RegexOptions.Compiled);
         Regex regexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
         readonly static string newLine = Environment.NewLine;
@@ -435,7 +433,7 @@ namespace FreeSpace_tstrings_generator
 
         private static void ProcessComplete(TimeSpan time)
         {
-            MessageBox.Show(Localization.ProcessComplete + newLine + newLine + Localization.ExecutionTime + time.Seconds.ToString() + Localization.Seconds);
+            MessageBox.Show(Localization.ProcessComplete + newLine + newLine + Localization.ExecutionTime + time.Seconds.ToString() + " " + Localization.Seconds);
         }
 
         private static void ManageException(Exception ex)
@@ -641,7 +639,7 @@ namespace FreeSpace_tstrings_generator
                 }
 
                 List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
-                List<Xstr> xstrToBeAddedList = new List<Xstr>();
+                List<Xstr> xstrToBeAddedList = new();
                 int nextID = SetNextID(startingId, xstrFromTstringsList);
 
                 // Required to avoid thread access errors...
@@ -687,12 +685,12 @@ namespace FreeSpace_tstrings_generator
 
                                 if (result != null)
                                 {
-                                    Xstr newXstr = new Xstr(result.Id, match.Groups[1].Value, fileInfo, match.Groups[0].Value);
+                                    Xstr newXstr = new(result.Id, match.Groups[1].Value, fileInfo, match.Groups[0].Value);
                                     fileContent = ReplaceContentWithNewXstr(fileContent, result);
                                 }
                                 else
                                 {
-                                    Xstr newXstr = new Xstr(nextID, match.Groups[1].Value, fileInfo, match.Groups[0].Value);
+                                    Xstr newXstr = new(nextID, match.Groups[1].Value, fileInfo, match.Groups[0].Value);
                                     fileContent = ReplaceContentWithNewXstr(fileContent, newXstr);
                                     xstrToBeAddedList.Add(newXstr);
                                     nextID++;
@@ -914,7 +912,7 @@ namespace FreeSpace_tstrings_generator
 
                 ProcessMedalsFile(filesList, modFolder, destinationFolder, ref currentProgress, sender);
 
-                ProcessShipFiles(filesList, destinationFolder, ref currentProgress, sender);
+                ProcessShipFiles(filesList, modFolder, destinationFolder, ref currentProgress, sender);
 
                 ProcessWeaponFiles(filesList, destinationFolder, ref currentProgress, sender);
 
@@ -948,20 +946,23 @@ namespace FreeSpace_tstrings_generator
         /// <param name="sender"></param>
         private void ProcessMedalsFile(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, object sender)
         {
-            string medalsFile = filesList.First(x => x.Contains("medals.tbl"));
-            string sourceContent = File.ReadAllText(medalsFile);
+            string medalsFile = filesList.FirstOrDefault(x => x.Contains("medals.tbl"));
 
-            string newContent = Regex.Replace(sourceContent, @"(\$Name:\s*(.*?)\r\n)(\$Bitmap)", new MatchEvaluator(GenerateMedals), RegexOptions.Multiline);
-
-            if (sourceContent != newContent)
+            if (medalsFile != null)
             {
-                CreateFileWithNewContent(medalsFile, modFolder, destinationFolder, newContent);
+                string sourceContent = File.ReadAllText(medalsFile);
+
+                string newContent = Regex.Replace(sourceContent, @"(\$Name:\s*(.*?)\r\n)(\$Bitmap)", new MatchEvaluator(GenerateAltNames), RegexOptions.Multiline);
+
+                if (sourceContent != newContent)
+                {
+                    CreateFileWithNewContent(medalsFile, modFolder, destinationFolder, newContent);
+                }
+
+                currentProgress++;
+                (sender as BackgroundWorker).ReportProgress(currentProgress);
             }
-
-            currentProgress++;
-            (sender as BackgroundWorker).ReportProgress(currentProgress);
         }
-
 
         /// <summary>
         /// Adds XSTR variables to door descriptions of main halls
@@ -977,7 +978,7 @@ namespace FreeSpace_tstrings_generator
             List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("mainhall.tbl")).ToList();
 
             // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-            Regex regexDoorDescription = new Regex(@"\+Door description:\s*(((?!XSTR).)*)\r\n", RegexOptions.Multiline | RegexOptions.Compiled);
+            Regex regexDoorDescription = new(@"\+Door description:\s*(((?!XSTR).)*)\r\n", RegexOptions.Multiline | RegexOptions.Compiled);
 
             foreach (string file in mainHallFiles)
             {
@@ -996,36 +997,32 @@ namespace FreeSpace_tstrings_generator
             #endregion
         }
 
-        private void ProcessShipFiles(List<string> filesList, string destinationFolder, ref int currentProgress, object sender)
+        private void ProcessShipFiles(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, object sender)
         {
             List<string> shipFiles = filesList.Where(x => x.Contains("-shp.tbm") || x.Contains("ships.tbl")).ToList();
-            List<string> shipNames = new List<string>();
 
             foreach (string file in shipFiles)
             {
                 string sourceContent = File.ReadAllText(file);
-                // Match all ship entries
-                MatchCollection shipEntries = regexEntries.Matches(sourceContent);
 
-                shipNames.AddRange(GetEntryNames(shipEntries));
+                string newContent = Regex.Replace(sourceContent, @"(\$Subsystem:\s+(.*?),.*?\r\n)(.*?)(?=\$Name|\$Subsystem:|#End)", new MatchEvaluator(GenerateSubsystems), RegexOptions.Singleline);
+
+                newContent = Regex.Replace(newContent, @"(\$Name:\s*(.*?)\r\n(?:\+nocreate\r\n)?)(((?!\$Alt Name).)*?\r\n)", new MatchEvaluator(GenerateAltNames), RegexOptions.Singleline);
+
+                CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
 
                 currentProgress++;
                 (sender as BackgroundWorker).ReportProgress(currentProgress);
-            }
-
-            // create new file containing ship alt names
-            if (shipNames.Count > 0)
-            {
-                string newShipFileContent = GenerateFileContent("#Ship Classes", shipNames);
-                CreateFileWithPath(Path.Combine(destinationFolder, "tables/new-shp.tbm"), newShipFileContent);
             }
         }
 
         private void ProcessWeaponFiles(List<string> filesList, string destinationFolder, ref int currentProgress, object sender)
         {
             List<string> weaponFiles = filesList.Where(x => x.Contains("-wep.tbm") || x.Contains("weapons.tbl")).ToList();
-            List<string> primaryNames = new List<string>();
-            List<string> secondaryNames = new List<string>();
+            List<string> primaryNames = new();
+            List<string> secondaryNames = new();
+            // (?=...) => look ahead, select only before that part
+            Regex regexEntries = new(@"\$Name:\s*.*?(?=\$Name|#end|#End)", RegexOptions.Singleline | RegexOptions.Compiled);
 
             foreach (string file in weaponFiles)
             {
@@ -1078,12 +1075,12 @@ namespace FreeSpace_tstrings_generator
 
             // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
             // ex: $Label: Alpha 1 ==> $Label: XSTR ("Alpha 1", -1)
-            Regex regexLabels = new Regex(@"\$label:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline | RegexOptions.Compiled);
+            Regex regexLabels = new(@"\$label:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline | RegexOptions.Compiled);
 
             // ex: $Name: Psamtik   ==>     $Name: Psamtik
             //     $Class.......    ==>     $Display Name: XSTR("Psamtik", -1)
             //                      ==>     $Class......
-            Regex regexShipNames = new Regex(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline | RegexOptions.Compiled);
+            Regex regexShipNames = new(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline | RegexOptions.Compiled);
 
             foreach (string file in missionFiles)
             {
@@ -1114,7 +1111,7 @@ namespace FreeSpace_tstrings_generator
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
-        private string ExtractShowSubtitleTextContentToMessages(string content)
+        private static string ExtractShowSubtitleTextContentToMessages(string content)
         {
             // ex: ( show-subtitle-text     ==>     ( show-subtitle-text
             //        "Europa, 2386"        ==>        "AutoGeneratedMessage1"
@@ -1205,7 +1202,7 @@ namespace FreeSpace_tstrings_generator
                     MatchCollection altTypes = Regex.Matches(alternateTypes, @"\$Alt:\s*(((?!\$Alt).)+)(?=\r)");
                     #endregion
 
-                    List<Alt> altList = new List<Alt>();
+                    List<Alt> altList = new();
 
                     foreach (Match match in altTypes)
                     {
@@ -1410,7 +1407,7 @@ namespace FreeSpace_tstrings_generator
         }
 
         /// <summary>
-        /// Generates content of a weapons/ships alt name list
+        /// Generates content of a weapons alt name list
         /// </summary>
         /// <param name="sectionTitle"></param>
         /// <param name="entryNames"></param>
@@ -1481,7 +1478,7 @@ namespace FreeSpace_tstrings_generator
         {
             string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0];
             string valueWithoutAlias = valueWithoutComment.Split('#', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-            return $"{match.Groups[1].Value}{newMarker}: XSTR(\"{valueWithoutAlias.Trim()}\", -1){newLine}{match.Groups[3].Value}";
+            return $"{match.Groups[1].Value}{newMarker}: XSTR(\"{valueWithoutAlias.Trim().TrimStart('@')}\", -1){newLine}{match.Groups[3].Value}";
         }
 
         private string GenerateDoorDescriptions(Match match)
@@ -1499,9 +1496,63 @@ namespace FreeSpace_tstrings_generator
             return AddXstrLineToHardcodedValue("$Display Name", match);
         }
 
-        private string GenerateMedals(Match match)
+        private string GenerateAltNames(Match match)
         {
             return AddXstrLineToHardcodedValue("$Alt Name", match);
+        }
+
+        private string GenerateSubsystems(Match match)
+        {
+            string newSubsystem = match.Value;
+
+            if (!match.Value.Contains("$Alt Subsystem Name:"))
+            {
+                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));
+            }
+            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
+            {
+                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Subsystem Name:\s*(.*?)(?=\r)", new MatchEvaluator(ReplaceAltSubsystemName));
+            }
+
+            if (!match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
+            {
+                // take 2 lines after subsystem to skip alt subsystem line
+                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n.*?\r\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+            }
+            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
+            {
+                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Damage Popup Subsystem Name:\s*(.*?)(?=\r)", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
+            }
+
+            return newSubsystem;
+        }
+
+        private string AddAltSubsystemName(Match match)
+        {
+            return AddXstrLineToHardcodedValue("$Alt Subsystem Name", match);
+        }
+
+        private string ReplaceAltSubsystemName(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr("$Alt Subsystem Name", match);
+        }
+
+        private string AddAltDamagePopupSubsystemName(Match match)
+        {
+            return AddXstrLineToHardcodedValue("$Alt Damage Popup Subsystem Name", match);
+        }
+
+        private string ReplaceAltDamagePopupSubsystemName(Match match)
+        {
+            // in the following case, the existing $Alt Damage Popup Subsystem Name is empty, so we don't modify it
+            if (match.Value.Contains("\r"))
+            {
+                return match.Value;
+            }
+            else
+            {
+                return ReplaceHardcodedValueWithXstr("$Alt Damage Popup Subsystem Name", match);
+            }
         }
 
         private void btnModFolderXSTR_Click(object sender, RoutedEventArgs e)

@@ -175,7 +175,7 @@
     <value>main hall</value>
   </data>
   <data name="MarkerDescription" xml:space="preserve">
-    <value>This value serves as a marker. Only the texts starting with this marker in the new translated file will be overwritten. If empty, all lines can be overwritten. Example: [24, &amp;quot;(fr)Return to Base&amp;quot;]. Here the marker (fr) indicates this line can be overwritten. But the line [13, &amp;quot;Aucun&amp;quot;] has no marker so it won't be overwritten.</value>
+    <value>This value serves as a marker. Only the texts starting with this marker in the new translated file will be overwritten. If empty, all lines can be overwritten. Example: [24, "(fr)Return to Base"]. Here the marker (fr) indicates this line can be overwritten. But the line [13, "Aucun"] has no marker so it won't be overwritten.</value>
   </data>
   <data name="Medals" xml:space="preserve">
     <value>medals</value>
