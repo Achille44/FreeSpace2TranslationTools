@@ -142,6 +142,15 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Execution time: .
+        /// </summary>
+        public static string ExecutionTime {
+            get {
+                return ResourceManager.GetString("ExecutionTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Generate.
         /// </summary>
         public static string Generate {
@@ -354,6 +363,15 @@ namespace FreeSpace2TranslationTools.Properties {
         public static string ProcessComplete {
             get {
                 return ResourceManager.GetString("ProcessComplete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à seconds.
+        /// </summary>
+        public static string Seconds {
+            get {
+                return ResourceManager.GetString("Seconds", resourceCulture);
             }
         }
         

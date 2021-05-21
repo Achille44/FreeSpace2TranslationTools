@@ -144,6 +144,9 @@
   <data name="DestinationFolderTooltip" xml:space="preserve">
     <value>If not empty, identical files will be overwritten.</value>
   </data>
+  <data name="ExecutionTime" xml:space="preserve">
+    <value>Execution time: </value>
+  </data>
   <data name="Generate" xml:space="preserve">
     <value>Generate</value>
   </data>
@@ -215,6 +218,9 @@
   </data>
   <data name="ProcessComplete" xml:space="preserve">
     <value>Process Complete!</value>
+  </data>
+  <data name="Seconds" xml:space="preserve">
+    <value>seconds</value>
   </data>
   <data name="Ships" xml:space="preserve">
     <value>ships</value>
