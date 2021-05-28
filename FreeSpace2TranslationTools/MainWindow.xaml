@@ -1,4 +1,4 @@
-﻿<Window x:Class="FreeSpace_tstrings_generator.MainWindow"
+﻿<Window x:Class="FreeSpace2TranslationTools.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -27,6 +27,13 @@
                         <TextBlock Style="{StaticResource LongTextBlock}" Text="{x:Static p:Resources.CreateMissingXstrDescription}" />
                     </WrapPanel>
                     <WrapPanel Grid.Row="1">
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.Credits}">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/credits.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
                         <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.MainHall}">
                             <TextBlock.ToolTip>
                                 <StackPanel>

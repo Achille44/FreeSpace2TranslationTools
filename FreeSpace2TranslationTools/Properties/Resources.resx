@@ -135,6 +135,9 @@
   <data name="CreateMissingXstrTitle" xml:space="preserve">
     <value>Create missing XSTR</value>
   </data>
+  <data name="Credits" xml:space="preserve">
+    <value>Credits</value>
+  </data>
   <data name="DestinationFile" xml:space="preserve">
     <value>Destination file</value>
   </data>

@@ -12,7 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Localization = FreeSpace2TranslationTools.Properties.Resources;
 
-namespace FreeSpace_tstrings_generator
+namespace FreeSpace2TranslationTools
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -23,16 +23,13 @@ namespace FreeSpace_tstrings_generator
         Regex regexXstr = new("XSTR\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         Regex regexXstrInTstrings = new("(\\d+), (\".*?\")", RegexOptions.Singleline | RegexOptions.Compiled);
         Regex regexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
-        Regex regexNotADigit = new("[^0-9.-]+", RegexOptions.Compiled);
-        Regex regexName = new(@"\$Name:\s*(.*)\r", RegexOptions.Compiled);
-        Regex regexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
         readonly static string newLine = Environment.NewLine;
 
         public MainWindow()
         {
             InitializeComponent();
             // Default cache is 15
-            Regex.CacheSize = 40;
+            Regex.CacheSize = 50;
         }
 
         private void btnModFolder_Click(object sender, RoutedEventArgs e)
@@ -82,8 +79,8 @@ namespace FreeSpace_tstrings_generator
                 CheckDirectoryIsValid(destinationFolder, Localization.DestinationFolder);
 
                 List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
-                List<Xstr> lines = new List<Xstr>();
-                List<Xstr> duplicates = new List<Xstr>();
+                List<Xstr> lines = new();
+                List<Xstr> duplicates = new();
 
                 #region looking for xstr in each file
                 foreach (string file in filesList)
@@ -158,7 +155,7 @@ namespace FreeSpace_tstrings_generator
             }
         }
 
-        private void CreateFileForDuplicates(string startingID, List<Xstr> lines, List<Xstr> duplicates, string destinationFolder, ref int currentProgress, object sender)
+        private static void CreateFileForDuplicates(string startingID, List<Xstr> lines, List<Xstr> duplicates, string destinationFolder, ref int currentProgress, object sender)
         {
             // new ID = max ID + 1 to avoid duplicates
             int newId = SetNextID(startingID, lines);
@@ -262,7 +259,7 @@ namespace FreeSpace_tstrings_generator
                 string iterationFile = string.Empty;
                 string content = $"#Default{newLine}";
 
-                foreach (Xstr line in lines)
+                foreach (Xstr line in lines.OrderBy(x => x.Id))
                 {
                     // add the name of the file in comment
                     if (iterationFile != line.FileName)
@@ -399,9 +396,9 @@ namespace FreeSpace_tstrings_generator
             }
         }
 
-        private bool IsOnlyDigit(string text)
+        private static bool IsOnlyDigit(string text)
         {
-            return regexNotADigit.IsMatch(text);
+            return Regex.IsMatch(text, "[^0-9.-]+");
         }
 
         /// <summary>
@@ -900,28 +897,16 @@ namespace FreeSpace_tstrings_generator
                 CheckDirectoryIsValid(modFolder, Localization.ModFolder);
                 CheckDirectoryIsValid(destinationFolder, Localization.DestinationFolder);
 
-                List<string> filesList = GetFilesWithXstrFromFolder(modFolder);
+                XstrProcess xstrProcess = new(this, sender, modFolder, destinationFolder);
 
-                // Required to avoid thread access errors...
-                Dispatcher.Invoke(() =>
-                {
-                    pbGlobalProgress.Maximum = filesList.Count;
-                });
+                xstrProcess.ProcessCreditFiles();
+                xstrProcess.ProcessMainHallFiles();
+                xstrProcess.ProcessMedalsFile();
+                xstrProcess.ProcessShipFiles();
+                xstrProcess.ProcessWeaponFiles();
+                xstrProcess.ProcessMissionFiles();
 
-                ProcessMainHallFiles(filesList, modFolder, destinationFolder, ref currentProgress, sender);
-
-                ProcessMedalsFile(filesList, modFolder, destinationFolder, ref currentProgress, sender);
-
-                ProcessShipFiles(filesList, modFolder, destinationFolder, ref currentProgress, sender);
-
-                ProcessWeaponFiles(filesList, destinationFolder, ref currentProgress, sender);
-
-                ProcessMissionFiles(filesList, modFolder, destinationFolder, ref currentProgress, sender);
-
-                Dispatcher.Invoke(() =>
-                {
-                    (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
-                });
+                SetProgressToMax(sender);
 
                 watch.Stop();
                 ProcessComplete(watch.Elapsed);
@@ -934,640 +919,6 @@ namespace FreeSpace_tstrings_generator
             {
                 ToggleInputGrid();
             }
-        }
-
-        /// <summary>
-        /// Adds alt names with XSTR variables to medals
-        /// </summary>
-        /// <param name="filesList"></param>
-        /// <param name="modFolder"></param>
-        /// <param name="destinationFolder"></param>
-        /// <param name="currentProgress"></param>
-        /// <param name="sender"></param>
-        private void ProcessMedalsFile(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, object sender)
-        {
-            string medalsFile = filesList.FirstOrDefault(x => x.Contains("medals.tbl"));
-
-            if (medalsFile != null)
-            {
-                string sourceContent = File.ReadAllText(medalsFile);
-
-                string newContent = Regex.Replace(sourceContent, @"(\$Name:\s*(.*?)\r\n)(\$Bitmap)", new MatchEvaluator(GenerateAltNames), RegexOptions.Multiline);
-
-                if (sourceContent != newContent)
-                {
-                    CreateFileWithNewContent(medalsFile, modFolder, destinationFolder, newContent);
-                }
-
-                currentProgress++;
-                (sender as BackgroundWorker).ReportProgress(currentProgress);
-            }
-        }
-
-        /// <summary>
-        /// Adds XSTR variables to door descriptions of main halls
-        /// </summary>
-        /// <param name="filesList"></param>
-        /// <param name="modFolder"></param>
-        /// <param name="destinationFolder"></param>
-        /// <param name="currentProgress"></param>
-        /// <param name="sender"></param>
-        private void ProcessMainHallFiles(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, object sender)
-        {
-            #region Main hall => door descriptions
-            List<string> mainHallFiles = filesList.Where(x => x.Contains("-hall.tbm") || x.Contains("mainhall.tbl")).ToList();
-
-            // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-            Regex regexDoorDescription = new(@"\+Door description:\s*(((?!XSTR).)*)\r\n", RegexOptions.Multiline | RegexOptions.Compiled);
-
-            foreach (string file in mainHallFiles)
-            {
-                string sourceContent = File.ReadAllText(file);
-
-                string newContent = regexDoorDescription.Replace(sourceContent, new MatchEvaluator(GenerateDoorDescriptions));
-
-                if (sourceContent != newContent)
-                {
-                    CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
-                }
-
-                currentProgress++;
-                (sender as BackgroundWorker).ReportProgress(currentProgress);
-            }
-            #endregion
-        }
-
-        private void ProcessShipFiles(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, object sender)
-        {
-            List<string> shipFiles = filesList.Where(x => x.Contains("-shp.tbm") || x.Contains("ships.tbl")).ToList();
-
-            foreach (string file in shipFiles)
-            {
-                string sourceContent = File.ReadAllText(file);
-
-                string newContent = Regex.Replace(sourceContent, @"(\$Subsystem:\s+(.*?),.*?\r\n)(.*?)(?=\$Name|\$Subsystem:|#End)", new MatchEvaluator(GenerateSubsystems), RegexOptions.Singleline);
-
-                newContent = Regex.Replace(newContent, @"(\$Name:\s*(.*?)\r\n(?:\+nocreate\r\n)?)(((?!\$Alt Name).)*?\r\n)", new MatchEvaluator(GenerateAltNames), RegexOptions.Singleline);
-
-                CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
-
-                currentProgress++;
-                (sender as BackgroundWorker).ReportProgress(currentProgress);
-            }
-        }
-
-        private void ProcessWeaponFiles(List<string> filesList, string destinationFolder, ref int currentProgress, object sender)
-        {
-            List<string> weaponFiles = filesList.Where(x => x.Contains("-wep.tbm") || x.Contains("weapons.tbl")).ToList();
-            List<string> primaryNames = new();
-            List<string> secondaryNames = new();
-            // (?=...) => look ahead, select only before that part
-            Regex regexEntries = new(@"\$Name:\s*.*?(?=\$Name|#end|#End)", RegexOptions.Singleline | RegexOptions.Compiled);
-
-            foreach (string file in weaponFiles)
-            {
-                string content = File.ReadAllText(file);
-                Match primarySection = Regex.Match(content, "#Primary Weapons.*?(#end|#End)", RegexOptions.Singleline);
-                Match secondarySection = Regex.Match(content, "#Secondary Weapons.*?(#end|#End)", RegexOptions.Singleline);
-
-                if (primarySection.Success)
-                {
-                    MatchCollection primaries = regexEntries.Matches(primarySection.Value);
-
-                    primaryNames.AddRange(GetEntryNames(primaries));
-                }
-
-                if (secondarySection.Success)
-                {
-                    MatchCollection secondaries = regexEntries.Matches(secondarySection.Value);
-
-                    secondaryNames.AddRange(GetEntryNames(secondaries));
-                }
-
-                currentProgress++;
-                (sender as BackgroundWorker).ReportProgress(currentProgress);
-            }
-
-            // create new file containing weapons alt names
-            if (primaryNames.Count > 0 || secondaryNames.Count > 0)
-            {
-                string newWeaponsFileContent = string.Empty;
-
-                if (primaryNames.Count > 0)
-                {
-                    newWeaponsFileContent += GenerateFileContent("#Primary Weapons", primaryNames);
-                    // add a new line in case of a following secondary section
-                    newWeaponsFileContent += $"{newLine}{newLine}";
-                }
-
-                if (secondaryNames.Count > 0)
-                {
-                    newWeaponsFileContent += GenerateFileContent("#Secondary Weapons", secondaryNames);
-                }
-
-                CreateFileWithPath(Path.Combine(destinationFolder, "tables/new-wep.tbm"), newWeaponsFileContent);
-            }
-        }
-
-        private void ProcessMissionFiles(List<string> filesList, string modFolder, string destinationFolder, ref int currentProgress, object sender)
-        {
-            List<string> missionFiles = filesList.Where(x => x.Contains(".fs2")).ToList();
-
-            // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-            // ex: $Label: Alpha 1 ==> $Label: XSTR ("Alpha 1", -1)
-            Regex regexLabels = new(@"\$label:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline | RegexOptions.Compiled);
-
-            // ex: $Name: Psamtik   ==>     $Name: Psamtik
-            //     $Class.......    ==>     $Display Name: XSTR("Psamtik", -1)
-            //                      ==>     $Class......
-            Regex regexShipNames = new(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline | RegexOptions.Compiled);
-
-            foreach (string file in missionFiles)
-            {
-                string sourceContent = File.ReadAllText(file);
-
-                string newContent = regexLabels.Replace(sourceContent, new MatchEvaluator(GenerateLabels));
-
-                newContent = regexShipNames.Replace(newContent, new MatchEvaluator(GenerateShipNames));
-
-                newContent = ConvertShowSubtitleToShowSubtitleText(newContent);
-
-                newContent = ExtractShowSubtitleTextContentToMessages(newContent);
-
-                newContent = ConvertAltToVariables(newContent);
-
-                if (sourceContent != newContent)
-                {
-                    CreateFileWithNewContent(file, modFolder, destinationFolder, newContent);
-                }
-
-                currentProgress++;
-                (sender as BackgroundWorker).ReportProgress(currentProgress);
-            }
-        }
-
-        /// <summary>
-        /// Extract hardcoded strings from show-subtitle-text and put them into new messages so they can be translated
-        /// </summary>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        private static string ExtractShowSubtitleTextContentToMessages(string content)
-        {
-            // ex: ( show-subtitle-text     ==>     ( show-subtitle-text
-            //        "Europa, 2386"        ==>        "AutoGeneratedMessage1"
-            //                              ==>----------------------------------
-            //                              ==>     #Messages
-            //                              ==>     
-            //                              ==>     $Name: AutoGeneratedMessage1
-            //                              ==>     $Team: -1
-            //                              ==>     $MessageNew: XSTR("Europa, 2386", -1)
-            //                              ==>     $end_multi_text
-            //                              ==>     
-            //                              ==>     #Reinforcements
-            #region get all existing messages in the mission
-            string messagesSection = Regex.Match(content, @"#Messages.*#Reinforcements", RegexOptions.Singleline).Value;
-            MatchCollection messages = Regex.Matches(messagesSection, @"\$Name:\s*(.*?)(?=;|\r)", RegexOptions.Multiline);
-            List<string> allMessages = new List<string>();
-
-            string autoGeneratedMessage = "AutoGeneratedMessage";
-            int subtitleMessagesCount = 0;
-
-            foreach (Match match in messages)
-            {
-                allMessages.Add(match.Groups[1].Value);
-
-                // Check for existing AutoGeneratedMessage to increment the count in order to avoid duplications
-                if (match.Groups[1].Value.Contains(autoGeneratedMessage))
-                {
-                    int iteration = int.Parse(match.Groups[1].Value.Substring(autoGeneratedMessage.Length));
-
-                    if (iteration >= subtitleMessagesCount)
-                    {
-                        subtitleMessagesCount = iteration++;
-                    }
-                }
-            }
-            #endregion
-
-            MatchCollection subtitleTextResults = Regex.Matches(content, "(show-subtitle-text\\s*\r\n\\s*\")(.*?)\"", RegexOptions.Multiline);
-            string newMessages = string.Empty;
-
-            foreach (Match match in subtitleTextResults)
-            {
-                if (!allMessages.Contains(match.Groups[2].Value))
-                {
-                    subtitleMessagesCount++;
-
-                    content = content.Replace(match.Value, match.Groups[1].Value + autoGeneratedMessage + subtitleMessagesCount + "\"");
-
-                    newMessages += $"$Name: {autoGeneratedMessage}{subtitleMessagesCount}{newLine}" +
-                        $"$Team: -1{newLine}" +
-                        $"$MessageNew:  XSTR(\"{match.Groups[2].Value}\", -1){newLine}" +
-                        $"$end_multi_text{newLine}{newLine}";
-
-                    allMessages.Add(match.Groups[2].Value);
-                }
-            }
-
-            if (newMessages != string.Empty)
-            {
-                content = content.Replace("#Reinforcements", newMessages + "#Reinforcements");
-            }
-
-            return content;
-        }
-
-        /// <summary>
-        /// Convert ship alt names to sexp variables so that they can be translated via modify-variable-xstr sexp
-        /// </summary>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        private string ConvertAltToVariables(string content)
-        {
-            if (regexAlternateTypes.IsMatch(content))
-            {
-                #region alt from '#Objects' section
-                string objects = Regex.Match(content, @"#Objects.*#Wings", RegexOptions.Singleline).Value;
-                // ((?!\$Name).)* => all characters not containing \$Name
-                MatchCollection altShips = Regex.Matches(objects, @"\$Name:\s*(((?!\$Name).)*?)\s*(\r\n|;)((?!\$Name).)*?\$Alt:\s*(.*?)\s*\r\n", RegexOptions.Singleline);
-                #endregion
-
-                // Check at least one alt name is used before starting modifications
-                if (altShips.Count > 0)
-                {
-                    #region alt from '#Alternate Types' section
-                    string alternateTypes = regexAlternateTypes.Match(content).Value;
-                    // for unknown reason in this case \r case is captured, so we have to uncapture it
-                    // in some cases and Alt can have an empty value... 
-                    MatchCollection altTypes = Regex.Matches(alternateTypes, @"\$Alt:\s*(((?!\$Alt).)+)(?=\r)");
-                    #endregion
-
-                    List<Alt> altList = new();
-
-                    foreach (Match match in altTypes)
-                    {
-                        Alt alt = new Alt(match.Groups[1].Value);
-
-                        foreach (Match altShip in altShips)
-                        {
-                            if (altShip.Groups[5].Value == alt.DefaultValue)
-                            {
-                                alt.AddShip(altShip.Groups[1].Value);
-                            }
-                        }
-
-                        // some alt are not used for unknown reasons, so we dont keep them
-                        if (alt.Ships.Count > 0)
-                        {
-                            altList.Add(alt);
-                        }
-                    }
-
-                    // Remove the 'Alternate Types' section
-                    content = content.Replace(alternateTypes, string.Empty);
-                    // Remove all '$Alt' from '#Objects' section
-                    content = Regex.Replace(content, @"\$Alt:\s*.*?\r\n", string.Empty, RegexOptions.Singleline);
-
-                    content = AddVariablesToSexpVariablesSection(content, altList);
-
-                    content = AddEventToManageAltNames(content, altList);
-                }
-            }
-
-            return content;
-        }
-
-        private string AddVariablesToSexpVariablesSection(string content, List<Alt> altList)
-        {
-            // Create '#Sexp_variables' section if not exists
-            if (!content.Contains("#Sexp_variables"))
-            {
-                string beforeSexp = Regex.Match(content, @"(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline).Value;
-
-                string newSection = $"#Sexp_variables{newLine}{newLine}$Variables:{newLine}({newLine}){newLine}{newLine}{beforeSexp}";
-
-                content = content.Replace(beforeSexp, newSection);
-            }
-
-            string sexpVariablesSection = Regex.Match(content, @"#Sexp_variables.*?(#Fiction Viewer|#Command Briefing)", RegexOptions.Singleline).Value;
-            MatchCollection variableIds = Regex.Matches(sexpVariablesSection, @"\t\t(\d+)\t\t", RegexOptions.Multiline);
-
-            int variableId = 0;
-
-            // set the next variable id
-            foreach (Match match in variableIds)
-            {
-                int currentId = int.Parse(match.Groups[1].Value);
-
-                if (currentId >= variableId)
-                {
-                    variableId++;
-                }
-            }
-
-            string newSexpVariablesSection = string.Empty;
-
-            // here we add a new variable for each alt
-            foreach (Alt alt in altList)
-            {
-                alt.VariableName = "autoGenVar" + variableId;
-                newSexpVariablesSection += $"\t\t{variableId}\t\t\"{alt.VariableName}\"\t\t\"{alt.DefaultValue}\"\t\t\"string\"{newLine}";
-                variableId++;
-            }
-
-            string endOfVariables = Regex.Match(content, @"\)\r\n\r\n(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline).Value;
-
-            return content.Replace(endOfVariables, newSexpVariablesSection + endOfVariables);
-        }
-
-        private static string AddEventToManageAltNames(string content, List<Alt> altList)
-        {
-            // very unorthodox way to add the event but it allows me to manage the case when this event already exists in the original file
-            string eventForAltNamesTitle = "Auto generated event: alt names";
-            string eventEnd = $"){newLine}"
-                + $"+Name: {eventForAltNamesTitle}{newLine}"
-                + $"+Repeat Count: 1{newLine}"
-                + $"+Interval: 1{newLine}{newLine}";
-
-            if (!content.Contains(eventForAltNamesTitle))
-            {
-                string events = Regex.Match(content, @"#Events.*?\r\n\r\n", RegexOptions.Singleline).Value;
-
-                string eventBeginning = $"$Formula: ( when {newLine}"
-                    + $"   ( true ) {newLine}";
-
-                content = content.Replace(events, events + eventBeginning + eventEnd);
-            }
-
-            string newSexp = string.Empty;
-
-            foreach (Alt alt in altList)
-            {
-                newSexp += alt.ModifyVariableXstr() + alt.ShipChangeAltName();
-            }
-
-            return content.Replace(eventEnd, newSexp + eventEnd);
-        }
-
-        /// <summary>
-        /// Convert sexp show-subtitle to show-subtitle-text so they can be translated
-        /// </summary>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        private static string ConvertShowSubtitleToShowSubtitleText(string content)
-        {
-            MatchCollection subtitleResults = Regex.Matches(content, @"show-subtitle\s+.*?\)", RegexOptions.Singleline);
-
-            foreach (Match match in subtitleResults)
-            {
-                MatchCollection parameters = Regex.Matches(match.Value, @"(\s*)(.*?)(\s*\r\n)", RegexOptions.Multiline);
-
-                // Try not to accidentally convert image subtitle to text...
-                if (!string.IsNullOrWhiteSpace(parameters[3].Groups[2].Value.Trim('"')))
-                {
-                    Sexp sexp = new Sexp("show-subtitle-text", parameters[1].Groups[1].Value, parameters[1].Groups[3].Value);
-
-                    // text to display
-                    sexp.AddParameter(parameters[3].Groups[2].Value);
-                    // X position, from 0 to 100%
-                    sexp.AddParameter(ConvertXPositionFromAbsoluteToRelative(parameters[1].Groups[2].Value));
-                    // Y position, from 0 to 100%
-                    sexp.AddParameter(ConvertYPositionFromAbsoluteToRelative(parameters[2].Groups[2].Value));
-                    // Center horizontally?
-                    if (parameters.Count < 8)
-                    {
-                        sexp.AddParameter("( false )");
-                    }
-                    else
-                    {
-                        sexp.AddParameter(parameters[7].Groups[2].Value);
-                    }
-                    // Center vertically?
-                    if (parameters.Count < 9)
-                    {
-                        sexp.AddParameter("( false )");
-                    }
-                    else
-                    {
-                        sexp.AddParameter(parameters[8].Groups[2].Value);
-                    }
-                    // Time (in milliseconds) to be displayed
-                    sexp.AddParameter(parameters[4].Groups[2].Value);
-                    // Fade time (in milliseconds) (optional)
-                    if (parameters.Count > 6)
-                    {
-                        sexp.AddParameter(parameters[6].Groups[2].Value);
-                    }
-                    // Paragraph width, from 1 to 100% (optional; 0 uses default 200 pixels)
-                    if (parameters.Count > 9)
-                    {
-                        sexp.AddParameter(parameters[9].Groups[2].Value);
-                    }
-                    // Text red component (0-255) (optional)
-                    if (parameters.Count > 10)
-                    {
-                        sexp.AddParameter(parameters[10].Groups[2].Value);
-                    }
-                    // Text green component(0 - 255) (optional)
-                    if (parameters.Count > 11)
-                    {
-                        sexp.AddParameter(parameters[11].Groups[2].Value);
-                    }
-                    // Text blue component(0 - 255) (optional)
-                    if (parameters.Count > 12)
-                    {
-                        sexp.AddParameter(parameters[12].Groups[2].Value);
-                    }
-
-                    sexp.CloseFormula();
-
-                    content = content.Replace(match.Value, sexp.Formula);
-                }
-            }
-
-            return content;
-        }
-
-        private static string ConvertXPositionFromAbsoluteToRelative(string absolute)
-        {
-            // values determined testing the mission bp-09 of blue planet
-            double input = 900;
-            double output = 88;
-
-            return Convert.ToInt32(Math.Round(int.Parse(absolute) / input * output)).ToString();
-        }
-
-        private static string ConvertYPositionFromAbsoluteToRelative(string absolute)
-        {
-            // values determined testing the mission bp-09 of blue planet
-            double input = 500;
-            double output = 65;
-
-            return Convert.ToInt32(Math.Round(int.Parse(absolute) / input * output)).ToString();
-        }
-
-        /// <summary>
-        /// Generates content of a weapons alt name list
-        /// </summary>
-        /// <param name="sectionTitle"></param>
-        /// <param name="entryNames"></param>
-        /// <returns></returns>
-        private static string GenerateFileContent(string sectionTitle, List<string> entryNames)
-        {
-            string content = $"{sectionTitle}{newLine}";
-
-            foreach (string entry in entryNames)
-            {
-                content += $"{newLine}$Name: {entry}" +
-                $"{newLine}+nocreate" +
-                // remove @ and # alias from xstr
-                $"{newLine}$Alt Name: XSTR(\"{entry.Split("#")[0].Trim('@')}\", -1){newLine}";
-            }
-
-            content += $"{newLine}#End";
-            return content;
-        }
-
-        private List<string> GetEntryNames(MatchCollection allEntries)
-        {
-            List<string> nameList = new();
-
-            foreach (Match match in allEntries)
-            {
-                if (!match.Value.Contains("$Alt Name:"))
-                {
-                    Match name = regexName.Match(match.Value);
-
-                    if (name.Success)
-                    {
-                        // remove possible comments and @ from the name
-                        nameList.Add(name.Groups[1].Value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0]);
-                    }
-                }
-            }
-
-            return nameList;
-        }
-
-        /// <summary>
-        /// Replaces an hardcoded line with an XSTR variable
-        /// </summary>
-        /// <param name="marker">Marker identifying the line</param>
-        /// <param name="match">Groups[1] must be the XSTR value (comments will be removed)</param>
-        /// <returns></returns>
-        private static string ReplaceHardcodedValueWithXstr(string marker, Match match)
-        {
-            string[] values = match.Groups[1].Value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-
-            string value = values.Length == 0 ? "" : values[0];
-
-            string result = $"{marker}: XSTR(\"{value}\", -1){newLine}";
-
-            if (values.Length > 1)
-            {
-                result += $" ;{values[1]}";
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Adds a new line including an XSTR variable
-        /// </summary>
-        /// <param name="newMarker">Name of the new marker identifying the XSTR variable</param>
-        /// <param name="match">Groups[1]: first original line (including \r\n), Groups[2]: hardcoded value to be translated, Groups[3]: line after the hardcoded value</param>
-        /// <returns></returns>
-        private static string AddXstrLineToHardcodedValue(string newMarker, Match match)
-        {
-            string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-            string valueWithoutAlias = valueWithoutComment.Split('#', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-            return $"{match.Groups[1].Value}{newMarker}: XSTR(\"{valueWithoutAlias.Trim().TrimStart('@')}\", -1){newLine}{match.Groups[3].Value}";
-        }
-
-        private string GenerateDoorDescriptions(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr("+Door description", match);
-        }
-
-        private string GenerateLabels(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr("$label", match);
-        }
-
-        private string GenerateShipNames(Match match)
-        {
-            return AddXstrLineToHardcodedValue("$Display Name", match);
-        }
-
-        private string GenerateAltNames(Match match)
-        {
-            return AddXstrLineToHardcodedValue("$Alt Name", match);
-        }
-
-        private string GenerateSubsystems(Match match)
-        {
-            string newSubsystem = match.Value;
-            bool altNameAlreadyExisting = true;
-            bool altDamagePopupNameAlreadyExisting = true;
-
-            if (!match.Value.Contains("$Alt Subsystem Name:"))
-            {
-                altNameAlreadyExisting = false;
-                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));
-            }
-            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
-            {
-                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Subsystem Name:\s*(.*?)\r\n", new MatchEvaluator(ReplaceAltSubsystemName));
-            }
-
-            if (!match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
-            {
-                altDamagePopupNameAlreadyExisting = false;
-
-                // if existing, copy the alt name to damage popup name
-                if (altNameAlreadyExisting)
-                {
-                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name: XSTR\\(\"(.*?)\", -1\\)\\r\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
-                }
-                else
-                {
-                    // take 2 lines after subsystem to skip alt subsystem line
-                    newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n.*?\r\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
-                }
-            }
-            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
-            {
-                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Damage Popup Subsystem Name:(.*?)\r\n", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
-            }
-
-            // if alt damage popup name already existing but not alt name, then copy it to alt name 
-            if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
-            {
-                string newName = Regex.Match(newSubsystem, "\\$Alt Damage Popup Subsystem Name: XSTR\\(\"(.*?)\", -1\\)").Groups[1].Value;
-                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name: XSTR\\(\"(.*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");
-            }
-
-            return newSubsystem;
-        }
-
-        private string AddAltSubsystemName(Match match)
-        {
-            return AddXstrLineToHardcodedValue("$Alt Subsystem Name", match);
-        }
-
-        private string ReplaceAltSubsystemName(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr("$Alt Subsystem Name", match);
-        }
-
-        private string AddAltDamagePopupSubsystemName(Match match)
-        {
-            return AddXstrLineToHardcodedValue("$Alt Damage Popup Subsystem Name", match);
-        }
-
-        private string ReplaceAltDamagePopupSubsystemName(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr("$Alt Damage Popup Subsystem Name", match);
         }
 
         private void btnModFolderXSTR_Click(object sender, RoutedEventArgs e)
@@ -1588,6 +939,34 @@ namespace FreeSpace_tstrings_generator
             Dispatcher.Invoke(() =>
             {
                 mainWindow.IsEnabled = !mainWindow.IsEnabled;
+            });
+        }
+
+        public void SetMaxProgress(int maxProgress)
+        {
+            // Required to avoid thread access errors...
+            Dispatcher.Invoke(() =>
+            {
+                pbGlobalProgress.Maximum = maxProgress;
+            });
+        }
+
+        public void InitializeProgress(object sender)
+        {
+            (sender as BackgroundWorker).ReportProgress(0);
+        }
+
+        public void IncreaseProgress(object sender, int progress)
+        {
+            (sender as BackgroundWorker).ReportProgress(progress);
+        }
+        
+        public void SetProgressToMax(object sender)
+        {
+            // Required to avoid thread access errors...
+            Dispatcher.Invoke(() =>
+            {
+                (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
             });
         }
     }
