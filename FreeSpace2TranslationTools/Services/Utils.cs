@@ -7,12 +7,30 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Localization = FreeSpace2TranslationTools.Properties.Resources;
 
-namespace FreeSpace2TranslationTools.Utils
+namespace FreeSpace2TranslationTools.Services
 {
     public static class Utils
     {
+        public static Regex RegexXstr = new("XSTR\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex RegexNoAltNames = new(@"(\$Name:\s*(.*?)\r\n(?:\+nocreate\r\n)?)(((?!\$Alt Name).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex RegexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
+        public static Regex RegexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
+
+        public static IEnumerable<Match> GetAllXstrFromFile(FileInfo fileInfo, string fileContent)
+        {
+            MatchCollection resultsFromFile = RegexXstr.Matches(fileContent);
+            IEnumerable<Match> combinedResults = resultsFromFile.OfType<Match>().Where(m => m.Success);
+
+            // there is an additional specific format in fs2 files
+            if (fileInfo.Extension == ".fs2")
+            {
+                MatchCollection modifyResults = Regex.Matches(fileContent, "\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
+
+                combinedResults = resultsFromFile.OfType<Match>().Concat(modifyResults.OfType<Match>()).Where(m => m.Success);
+            }
+
+            return combinedResults;
+        }
 
         public static List<string> GetFilesWithXstrFromFolder(string folderPath)
         {
@@ -44,7 +62,7 @@ namespace FreeSpace2TranslationTools.Utils
             CreateFileWithPath(filePath, content);
         }
 
-        private static void CreateFileWithPath(string filePath, string content)
+        public static void CreateFileWithPath(string filePath, string content)
         {
             string destDirectoryPath = Path.GetDirectoryName(filePath);
 
@@ -52,6 +70,24 @@ namespace FreeSpace2TranslationTools.Utils
             Directory.CreateDirectory(destDirectoryPath);
 
             File.WriteAllText(filePath, content);
+        }
+
+        public static string ReplaceContentWithNewXstr(string content, Xstr lineToModify)
+        {
+            string newLine = string.Empty;
+
+            if (lineToModify.FullLine.Contains("modify-variable-xstr"))
+            {
+                newLine = RegexModifyXstr.Replace(lineToModify.FullLine,
+                    m => $"{m.Groups[1].Value}{lineToModify.Id}{m.Groups[3].Value}");
+            }
+            else
+            {
+                newLine = RegexXstr.Replace(lineToModify.FullLine,
+                    m => $"XSTR({m.Groups[1].Value}, {lineToModify.Id})");
+            }
+
+            return content.Replace(lineToModify.FullLine, newLine);
         }
     }
 }

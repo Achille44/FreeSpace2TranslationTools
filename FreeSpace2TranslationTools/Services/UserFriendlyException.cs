@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FreeSpace2TranslationTools.Utils
+namespace FreeSpace2TranslationTools.Services
 {
     public class UserFriendlyException: Exception
     {

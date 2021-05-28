@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace FreeSpace2TranslationTools.Utils
+namespace FreeSpace2TranslationTools.Services
 {
-    class Xstr
+    public class Xstr
     {
         public int Id { get; set; }
         public string Text { get; set; }

@@ -6,9 +6,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace FreeSpace2TranslationTools.Utils
+namespace FreeSpace2TranslationTools.Services
 {
-    public class XstrProcess
+    public class XstrManager
     {
         public MainWindow Parent { get; set; }
         public object Sender { get; set; }
@@ -17,7 +17,7 @@ namespace FreeSpace2TranslationTools.Utils
         public List<string> FilesList { get; set; }
         public int CurrentProgress { get; set; }
 
-        public XstrProcess(MainWindow parent, object sender, string modFolder, string destinationFolder)
+        public XstrManager(MainWindow parent, object sender, string modFolder, string destinationFolder)
         {
             Parent = parent;
             Sender = sender;

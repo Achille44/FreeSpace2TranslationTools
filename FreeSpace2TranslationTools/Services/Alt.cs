@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FreeSpace2TranslationTools.Utils
+namespace FreeSpace2TranslationTools.Services
 {
     class Alt
     {
@@ -13,7 +13,7 @@ namespace FreeSpace2TranslationTools.Utils
         public Alt (string defaultValue)
         {
             DefaultValue = defaultValue;
-            Ships = new List<string>();
+            Ships = new ();
         }
 
         /// <summary>
