@@ -698,12 +698,7 @@ namespace FreeSpace2TranslationTools
 
                 XstrManager xstrManager = new(this, sender, modFolder, destinationFolder);
 
-                xstrManager.ProcessCreditFiles();
-                xstrManager.ProcessMainHallFiles();
-                xstrManager.ProcessMedalsFile();
-                xstrManager.ProcessShipFiles();
-                xstrManager.ProcessWeaponFiles();
-                xstrManager.ProcessMissionFiles();
+                xstrManager.LaunchXstrProcess();
 
                 SetProgressToMax(sender);
 

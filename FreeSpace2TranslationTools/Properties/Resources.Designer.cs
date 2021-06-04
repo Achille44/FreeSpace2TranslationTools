@@ -187,6 +187,15 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à hud gauges.
+        /// </summary>
+        public static string HudGauges {
+            get {
+                return ResourceManager.GetString("HudGauges", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Include.
         /// </summary>
         public static string Include {
@@ -372,6 +381,15 @@ namespace FreeSpace2TranslationTools.Properties {
         public static string ProcessComplete {
             get {
                 return ResourceManager.GetString("ProcessComplete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à rank.
+        /// </summary>
+        public static string Rank {
+            get {
+                return ResourceManager.GetString("Rank", resourceCulture);
             }
         }
         

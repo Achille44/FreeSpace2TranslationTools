@@ -12,15 +12,20 @@
   <ItemGroup>
     <None Remove="Images\credits.png" />
     <None Remove="Images\helpIcon.png" />
+    <None Remove="Images\hud gauges.png" />
     <None Remove="Images\mainhall.png" />
     <None Remove="Images\medals.png" />
     <None Remove="Images\missions.png" />
+    <None Remove="Images\rank.png" />
     <None Remove="Images\ships.png" />
     <None Remove="Images\weapons.png" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Images\credits.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\hud gauges.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\mainhall.png">
@@ -30,6 +35,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\helpIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\rank.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\weapons.png">

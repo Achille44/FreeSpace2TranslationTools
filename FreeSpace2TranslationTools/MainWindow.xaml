@@ -34,6 +34,13 @@
                                 </StackPanel>
                             </TextBlock.ToolTip>
                         </TextBlock>
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.HudGauges}">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/hud gauges.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
                         <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.MainHall}">
                             <TextBlock.ToolTip>
                                 <StackPanel>
@@ -52,6 +59,13 @@
                             <TextBlock.ToolTip>
                                 <StackPanel>
                                     <Image Source="/Images/missions.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.Rank}">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/rank.png" />
                                 </StackPanel>
                             </TextBlock.ToolTip>
                         </TextBlock>

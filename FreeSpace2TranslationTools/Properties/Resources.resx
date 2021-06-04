@@ -159,6 +159,9 @@
   <data name="GenerateTstringsTitle" xml:space="preserve">
     <value>Generate tstrings.tbl</value>
   </data>
+  <data name="HudGauges" xml:space="preserve">
+    <value>hud gauges</value>
+  </data>
   <data name="Include" xml:space="preserve">
     <value>Include</value>
   </data>
@@ -221,6 +224,9 @@
   </data>
   <data name="ProcessComplete" xml:space="preserve">
     <value>Process Complete!</value>
+  </data>
+  <data name="Rank" xml:space="preserve">
+    <value>rank</value>
   </data>
   <data name="Seconds" xml:space="preserve">
     <value>seconds</value>

@@ -13,7 +13,7 @@ namespace FreeSpace2TranslationTools.Services
     {
         public static Regex RegexXstr = new("XSTR\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         // don't select entries in comment...
-        public static Regex RegexNoAltNames = new(@"([^;]\$Name:\s*(.*?)\r\n(?:\+nocreate\r\n)?)(((?!\$Alt Name).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
+        public static Regex RegexNoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:\+nocreate\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex RegexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex RegexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
 

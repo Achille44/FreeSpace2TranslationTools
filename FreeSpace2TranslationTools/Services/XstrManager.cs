@@ -32,6 +32,20 @@ namespace FreeSpace2TranslationTools.Services
         }
 
         #region public methods
+
+        public void LaunchXstrProcess()
+        {
+            ProcessCreditFiles();
+            ProcessHudGaugeFiles();
+            ProcessMainHallFiles();
+            ProcessMedalsFile();
+            ProcessRankFile();
+            ProcessShipFiles();
+            ProcessWeaponFiles();
+            ProcessMissionFiles();
+        }
+        #endregion
+
         /// <summary>
         /// Replace all hardcoded credit lines with XSTR
         /// </summary>
@@ -40,7 +54,7 @@ namespace FreeSpace2TranslationTools.Services
         /// <param name="destinationFolder"></param>
         /// <param name="currentProgress"></param>
         /// <param name="sender"></param>
-        public void ProcessCreditFiles()
+        private void ProcessCreditFiles()
         {
             List<string> creditFiles = FilesList.Where(x => x.Contains("-crd.tbm") || x.Contains("credits.tbl")).ToList();
 
@@ -48,7 +62,26 @@ namespace FreeSpace2TranslationTools.Services
             {
                 string sourceContent = File.ReadAllText(file);
 
-                string newContent = Regex.Replace(sourceContent, @"^((?!XSTR).+?\r\n)", new MatchEvaluator(GenerateCredits), RegexOptions.Multiline);
+                string newContent = Regex.Replace(sourceContent, @"(^)((?!XSTR).*)\r\n", new MatchEvaluator(GenerateCredits));
+
+                if (sourceContent != newContent)
+                {
+                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
+                }
+
+                Parent.IncreaseProgress(Sender, CurrentProgress++);
+            }
+        }
+
+        private void ProcessHudGaugeFiles()
+        {
+            List<string> creditFiles = FilesList.Where(x => x.EndsWith("-hdg.tbm") || x.EndsWith("hud gauges.tbl")).ToList();
+
+            foreach (string file in creditFiles)
+            {
+                string sourceContent = File.ReadAllText(file);
+
+                string newContent = Regex.Replace(sourceContent, @"(.*?Header Text: )((?!XSTR).*)\r\n", new MatchEvaluator(GenerateHudGauges));
 
                 if (sourceContent != newContent)
                 {
@@ -67,7 +100,7 @@ namespace FreeSpace2TranslationTools.Services
         /// <param name="destinationFolder"></param>
         /// <param name="currentProgress"></param>
         /// <param name="sender"></param>
-        public void ProcessMedalsFile()
+        private void ProcessMedalsFile()
         {
             string medalsFile = FilesList.FirstOrDefault(x => x.Contains("medals.tbl"));
 
@@ -94,12 +127,12 @@ namespace FreeSpace2TranslationTools.Services
         /// <param name="destinationFolder"></param>
         /// <param name="currentProgress"></param>
         /// <param name="sender"></param>
-        public void ProcessMainHallFiles()
+        private void ProcessMainHallFiles()
         {
             List<string> mainHallFiles = FilesList.Where(x => x.Contains("-hall.tbm") || x.Contains("mainhall.tbl")).ToList();
 
-            // all door descriptions without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-            Regex regexDoorDescription = new(@"\+Door description:\s*(((?!XSTR).)*)\r\n", RegexOptions.Multiline | RegexOptions.Compiled);
+            // all door descriptions without XSTR variable
+            Regex regexDoorDescription = new(@"(.*\+Door description:\s*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
 
             foreach (string file in mainHallFiles)
             {
@@ -116,7 +149,26 @@ namespace FreeSpace2TranslationTools.Services
             }
         }
 
-        public void ProcessShipFiles()
+        private void ProcessRankFile()
+        {
+            string medalsFile = FilesList.FirstOrDefault(x => x.Contains("rank.tbl"));
+
+            if (medalsFile != null)
+            {
+                string sourceContent = File.ReadAllText(medalsFile);
+
+                string newContent = Regex.Replace(sourceContent, @"(.*\$Name:\s*)(.*?)\r\n", new MatchEvaluator(GenerateRanks));
+
+                if (sourceContent != newContent)
+                {
+                    Utils.CreateFileWithNewContent(medalsFile, ModFolder, DestinationFolder, newContent);
+                }
+
+                Parent.IncreaseProgress(Sender, CurrentProgress++);
+            }
+        }
+
+        private void ProcessShipFiles()
         {
             List<string> shipFiles = FilesList.Where(x => x.Contains("-shp.tbm") || x.Contains("ships.tbl")).ToList();
 
@@ -132,13 +184,16 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = sourceContent.Replace(shipsEntries, newContent);
 
-                Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
+                if (sourceContent != newContent)
+                {
+                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
+                }
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
         }
 
-        public void ProcessWeaponFiles()
+        private void ProcessWeaponFiles()
         {
             List<string> weaponFiles = FilesList.Where(x => x.Contains("-wep.tbm") || x.Contains("weapons.tbl")).ToList();
             List<string> primaryNames = new();
@@ -161,19 +216,22 @@ namespace FreeSpace2TranslationTools.Services
                     }
                 }
 
-                Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
+                if (sourceContent != newContent)
+                {
+                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
+                }
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
         }
 
-        public void ProcessMissionFiles()
+        private void ProcessMissionFiles()
         {
             List<string> missionFiles = FilesList.Where(x => x.Contains(".fs2")).ToList();
 
             // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-            // ex: $Label: Alpha 1 ==> $Label: XSTR ("Alpha 1", -1)
-            Regex regexLabels = new(@"\$label:\s*(((?!XSTR).)*)\r", RegexOptions.Multiline | RegexOptions.Compiled);
+            // ex: $Label: Alpha 1 ==> $Label: XSTR("Alpha 1", -1)
+            Regex regexLabels = new(@"(.*\$label:\s*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
 
             // ex: $Name: Psamtik   ==>     $Name: Psamtik
             //     $Class.......    ==>     $Display Name: XSTR("Psamtik", -1)
@@ -202,7 +260,6 @@ namespace FreeSpace2TranslationTools.Services
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
         } 
-        #endregion
 
         private string GenerateSubsystems(Match match)
         {
@@ -217,7 +274,7 @@ namespace FreeSpace2TranslationTools.Services
             }
             else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
             {
-                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Subsystem Name:\s*(.*?)\r\n", new MatchEvaluator(ReplaceAltSubsystemName));
+                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Subsystem Name:\s*)(.*)\r\n", new MatchEvaluator(ReplaceAltSubsystemName));
             }
 
             if (!match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
@@ -227,7 +284,7 @@ namespace FreeSpace2TranslationTools.Services
                 // if existing, copy the alt name to damage popup name
                 if (altNameAlreadyExisting)
                 {
-                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name: XSTR\\(\"(.*?)\", -1\\)\\r\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name:.*XSTR\\(\"(.*?)\", -1\\)\\r\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
                 }
                 else
                 {
@@ -237,14 +294,15 @@ namespace FreeSpace2TranslationTools.Services
             }
             else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
             {
-                newSubsystem = Regex.Replace(newSubsystem, @"\$Alt Damage Popup Subsystem Name:(.*?)\r\n", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
+                // [ \t] because \s includes \r and \n
+                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Damage Popup Subsystem Name:[ \t]*)(.*)\r\n", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
             }
 
             // if alt damage popup name already existing but not alt name, then copy it to alt name 
             if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
             {
-                string newName = Regex.Match(newSubsystem, "\\$Alt Damage Popup Subsystem Name: XSTR\\(\"(.*?)\", -1\\)").Groups[1].Value;
-                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name: XSTR\\(\"(.*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");
+                string newName = Regex.Match(newSubsystem, "\\$Alt Damage Popup Subsystem Name:.*XSTR\\(\"(.*?)\", -1\\)").Groups[1].Value;
+                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:.*XSTR\\(\"(.*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");
             }
 
             return newSubsystem;
@@ -257,7 +315,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private string ReplaceAltSubsystemName(Match match)
         {
-            return ReplaceHardcodedValueWithXstr("$Alt Subsystem Name: ", match);
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string AddAltDamagePopupSubsystemName(Match match)
@@ -267,12 +325,22 @@ namespace FreeSpace2TranslationTools.Services
 
         private string ReplaceAltDamagePopupSubsystemName(Match match)
         {
-            return ReplaceHardcodedValueWithXstr("$Alt Damage Popup Subsystem Name: ", match);
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateCredits(Match match)
         {
-            return ReplaceHardcodedValueWithXstr("", match);
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+        }
+
+        private string GenerateHudGauges(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+        }
+
+        private string GenerateRanks(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateAltNames(Match match)
@@ -282,7 +350,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private string GenerateDoorDescriptions(Match match)
         {
-            return ReplaceHardcodedValueWithXstr("+Door description: ", match);
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateTechTitle(Match match)
@@ -292,7 +360,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private string GenerateLabels(Match match)
         {
-            return ReplaceHardcodedValueWithXstr("$label: ", match);
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateShipNames(Match match)
@@ -303,21 +371,32 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Replaces an hardcoded line with an XSTR variable
         /// </summary>
-        /// <param name="marker">Marker identifying the line</param>
-        /// <param name="match">Groups[1] must be the XSTR value (comments will be removed)</param>
+        /// <param name="originalMatch"></param>
+        /// <param name="beginningOfLine"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        private string ReplaceHardcodedValueWithXstr(string marker, Match match)
+        private string ReplaceHardcodedValueWithXstr(string originalMatch, string beginningOfLine, string value)
         {
-            string[] values = match.Groups[1].Value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-            string value = values.Length == 0 ? "" : values[0].Replace("\"", "$quote");
-            string result = $"{marker}XSTR(\"{value}\", -1){Environment.NewLine}";
-
-            if (values.Length > 1)
+            // if this is a comment or if it's already XSTR, then don't touch it and return the original match
+            if (beginningOfLine.Contains(";") || value.Contains("XSTR"))
             {
-                result += $" ;{values[1]}";
+                return originalMatch;
             }
+            else
+            {
+                string[] values = value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
+                string sanatizedValue = values.Length == 0 ? "" : values[0].Replace("\"", "$quote");
+                string result = $"{beginningOfLine}XSTR(\"{sanatizedValue}\", -1)";
 
-            return result;
+                if (values.Length > 1)
+                {
+                    result += $" ;{values[1]}";
+                }
+
+                result += Environment.NewLine;
+
+                return result;
+            }
         }
 
         /// <summary>
@@ -328,9 +407,17 @@ namespace FreeSpace2TranslationTools.Services
         /// <returns></returns>
         private string AddXstrLineToHardcodedValue(string newMarker, Match match)
         {
-            string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-            string valueWithoutAlias = valueWithoutComment.Split('#', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-            return $"{match.Groups[1].Value}{newMarker}: XSTR(\"{valueWithoutAlias.Trim().TrimStart('@')}\", -1){Environment.NewLine}{match.Groups[3].Value}";
+            // if marker already present, then don't touch anything
+            if (match.Value.Contains(newMarker))
+            {
+                return match.Value;
+            }
+            else
+            {
+                string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0];
+                string valueWithoutAlias = valueWithoutComment.Split('#', 2, StringSplitOptions.RemoveEmptyEntries)[0];
+                return $"{match.Groups[1].Value}{newMarker}: XSTR(\"{valueWithoutAlias.Trim().TrimStart('@')}\", -1){Environment.NewLine}{match.Groups[3].Value}";
+            }
         }
 
         /// <summary>
