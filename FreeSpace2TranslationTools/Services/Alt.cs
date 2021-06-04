@@ -4,17 +4,21 @@ using System.Text;
 
 namespace FreeSpace2TranslationTools.Services
 {
-    class Alt
+    public class Alt : MissionVariable
     {
-        public string VariableName { get; set; }
-        public string DefaultValue { get; set; }
         public List<string> Ships { get; set; }
 
-        public Alt (string defaultValue)
+        public Alt(string defaultValue) : base(defaultValue)
         {
-            DefaultValue = defaultValue;
-            Ships = new ();
+            //DefaultValue = defaultValue;
+            Ships = new();
         }
+
+        //public Alt(MissionVariable variable) : base (variable.DefaultValue)
+        //{
+        //    VariableName = variable.VariableName;
+        //    Ships = new();
+        //}
 
         /// <summary>
         /// adds a ship using this alt
@@ -23,21 +27,6 @@ namespace FreeSpace2TranslationTools.Services
         public void AddShip(string name)
         {
             Ships.Add(name);
-        }
-
-        /// <summary>
-        /// returns the modify-variable-xstr sexp
-        /// </summary>
-        /// <returns></returns>
-        public string ModifyVariableXstr()
-        {
-            string result = $"   ( modify-variable-xstr {Environment.NewLine}"
-                + $"      \"@{VariableName}[{DefaultValue}]\" {Environment.NewLine}"
-                + $"      \"{DefaultValue}\" {Environment.NewLine}"
-                + $"      -1 {Environment.NewLine}"
-                + $"   ){Environment.NewLine}";
-
-            return result;
         }
 
         /// <summary>
