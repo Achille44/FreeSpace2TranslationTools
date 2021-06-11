@@ -215,6 +215,13 @@ namespace FreeSpace2TranslationTools.Services
 
                         newContent = newContent.Replace(weapon.Value, newEntry);
                     }
+
+                    if (!weapon.Value.Contains("+Title:") && weapon.Value.Contains("+Description:"))
+                    {
+                        string newEntry = Regex.Replace(weapon.Value, @"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Description:)", new MatchEvaluator(GenerateTitle), RegexOptions.Singleline);
+
+                        newContent = newContent.Replace(weapon.Value, newEntry);
+                    }
                 }
 
                 if (sourceContent != newContent)
@@ -359,6 +366,10 @@ namespace FreeSpace2TranslationTools.Services
         private string GenerateTechTitle(Match match)
         {
             return AddXstrLineToHardcodedValue("\t+Tech Title", match);
+        }
+        private string GenerateTitle(Match match)
+        {
+            return AddXstrLineToHardcodedValue("\t+Title", match);
         }
 
         private string GenerateLabels(Match match)
