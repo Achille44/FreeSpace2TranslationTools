@@ -322,32 +322,45 @@ namespace FreeSpace2TranslationTools
                     pbGlobalProgress.Maximum = matchesInNewOriginal.Count;
                 });
 
+                MatchCollection matchesInOldOriginal = regexXstrInTstrings.Matches(oldOriginalContent);
+                List<Xstr> oldOriginalXstrList = new();
+
+                foreach (Match match in matchesInOldOriginal)
+                {
+                    Xstr xstr = new(int.Parse(match.Groups[1].Value), match.Groups[2].Value, match.Value);
+
+                    oldOriginalXstrList.Add(xstr);
+                }
+
+                MatchCollection matchesInOldTranslated = regexXstrInTstrings.Matches(oldTranslatedContent);
+                List<Xstr> oldTranslatedXstrList = new();
+
+                foreach (Match match in matchesInOldTranslated)
+                {
+                    Xstr xstr = new(int.Parse(match.Groups[1].Value), match.Groups[2].Value, match.Value);
+
+                    oldTranslatedXstrList.Add(xstr);
+                }
+
                 foreach (Match match in matchesInNewOriginal)
                 {
                     currentProgress++;
                     (sender as BackgroundWorker).ReportProgress(currentProgress);
 
-                    if (int.TryParse(match.Groups[1].Value, out int id))
+                    Xstr xstrOldOriginal = oldOriginalXstrList.FirstOrDefault(x => x.Text == match.Groups[2].Value);
+
+                    if (xstrOldOriginal != null)
                     {
-                        Regex regexOldOriginal = new(string.Format("\\n(\\d+), ({0})", Regex.Escape(match.Groups[2].Value)), RegexOptions.Singleline);
+                        Xstr xstrOldTranslated = oldTranslatedXstrList.FirstOrDefault(x => x.Id == xstrOldOriginal.Id);
 
-                        Match matchInOldOriginal = regexOldOriginal.Match(oldOriginalContent);
-
-                        if (matchInOldOriginal.Success)
+                        if (xstrOldTranslated != null)
                         {
-                            Regex regexOldTranslated = new(string.Format("\\n{0}, (\".*?\")", Regex.Escape(matchInOldOriginal.Groups[1].Value)), RegexOptions.Singleline);
+                            newTranslatedContent = newTranslatedContent.Replace(match.Groups[2].Value.Insert(1, marker), xstrOldTranslated.Text);
 
-                            Match matchInOldTranslated = regexOldTranslated.Match(oldTranslatedContent);
-
-                            if (matchInOldTranslated.Success)
-                            {
-                                newTranslatedContent = newTranslatedContent.Replace(match.Groups[2].Value.Insert(1, marker), matchInOldTranslated.Groups[1].Value);
-                            }
+                            oldTranslatedXstrList.Remove(xstrOldTranslated);
                         }
-                    }
-                    else
-                    {
-                        throw new Exception();
+
+                        oldOriginalXstrList.Remove(xstrOldOriginal);
                     }
                 }
 
@@ -754,7 +767,7 @@ namespace FreeSpace2TranslationTools
         {
             (sender as BackgroundWorker).ReportProgress(progress);
         }
-        
+
         public void SetProgressToMax(object sender)
         {
             // Required to avoid thread access errors...
