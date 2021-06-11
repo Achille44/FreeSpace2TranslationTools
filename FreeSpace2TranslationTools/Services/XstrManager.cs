@@ -209,18 +209,21 @@ namespace FreeSpace2TranslationTools.Services
 
                 foreach (Match weapon in weapons)
                 {
-                    if (!weapon.Value.Contains("+Tech Title:") && weapon.Value.Contains("+Tech Description:"))
+                    if (weapon.Value.Contains("+nocreate"))
                     {
-                        string newEntry = Regex.Replace(weapon.Value, @"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Tech Anim:|\s*\+Tech Description:)", new MatchEvaluator(GenerateTechTitle), RegexOptions.Singleline);
+                        if (!weapon.Value.Contains("+Tech Title:") && weapon.Value.Contains("+Tech Description:"))
+                        {
+                            string newEntry = Regex.Replace(weapon.Value, @"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Tech Anim:|\s*\+Tech Description:)", new MatchEvaluator(GenerateTechTitle), RegexOptions.Singleline);
 
-                        newContent = newContent.Replace(weapon.Value, newEntry);
-                    }
+                            newContent = newContent.Replace(weapon.Value, newEntry);
+                        }
 
-                    if (!weapon.Value.Contains("+Title:") && weapon.Value.Contains("+Description:"))
-                    {
-                        string newEntry = Regex.Replace(weapon.Value, @"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Description:)", new MatchEvaluator(GenerateTitle), RegexOptions.Singleline);
+                        if (!weapon.Value.Contains("+Title:") && weapon.Value.Contains("+Description:"))
+                        {
+                            string newEntry = Regex.Replace(weapon.Value, @"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Description:)", new MatchEvaluator(GenerateTitle), RegexOptions.Singleline);
 
-                        newContent = newContent.Replace(weapon.Value, newEntry);
+                            newContent = newContent.Replace(weapon.Value, newEntry);
+                        }
                     }
                 }
 
