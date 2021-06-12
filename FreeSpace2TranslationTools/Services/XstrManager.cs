@@ -36,6 +36,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public void LaunchXstrProcess()
         {
+            ProcessCampaignFiles();
             ProcessCreditFiles();
             ProcessHudGaugeFiles();
             ProcessMainHallFiles();
@@ -46,6 +47,25 @@ namespace FreeSpace2TranslationTools.Services
             ProcessMissionFiles();
         }
         #endregion
+
+        private void ProcessCampaignFiles()
+        {
+            List<string> campaignFiles = FilesList.Where(x => x.EndsWith(".fc2")).ToList();
+
+            foreach (string file in campaignFiles)
+            {
+                string sourceContent = File.ReadAllText(file);
+
+                string newContent = Regex.Replace(sourceContent, @"(.*?\$Name: )((?!XSTR).*)\r\n", new MatchEvaluator(GenerateCampaignNames));
+
+                if (sourceContent != newContent)
+                {
+                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
+                }
+
+                Parent.IncreaseProgress(Sender, CurrentProgress++);
+            }
+        }
 
         /// <summary>
         /// Replace all hardcoded credit lines with XSTR
@@ -337,6 +357,11 @@ namespace FreeSpace2TranslationTools.Services
         }
 
         private string ReplaceAltDamagePopupSubsystemName(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+        }
+
+        private string GenerateCampaignNames(Match match)
         {
             return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }

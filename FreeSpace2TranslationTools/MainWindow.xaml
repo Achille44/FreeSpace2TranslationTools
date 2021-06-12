@@ -27,6 +27,13 @@
                         <TextBlock Style="{StaticResource LongTextBlock}" Text="{x:Static p:Resources.CreateMissingXstrDescription}" />
                     </WrapPanel>
                     <WrapPanel Grid.Row="1">
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.Campaign}">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/campaign.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
                         <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.Credits}">
                             <TextBlock.ToolTip>
                                 <StackPanel>

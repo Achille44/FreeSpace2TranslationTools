@@ -123,6 +123,9 @@
   <data name="Browse" xml:space="preserve">
     <value>Browse...</value>
   </data>
+  <data name="Campaign" xml:space="preserve">
+    <value>campaigns</value>
+  </data>
   <data name="CheckBoxManageDuplicates" xml:space="preserve">
     <value>Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder). Almost mandatory if original files only contain '-1' as ID.</value>
   </data>

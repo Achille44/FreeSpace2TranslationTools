@@ -79,6 +79,15 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à campaigns.
+        /// </summary>
+        public static string Campaign {
+            get {
+                return ResourceManager.GetString("Campaign", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder). Almost mandatory if original files only contain &apos;-1&apos; as ID..
         /// </summary>
         public static string CheckBoxManageDuplicates {
