@@ -203,6 +203,9 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = Utils.RegexNoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
 
+                // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
+                newContent = Regex.Replace(newContent, @"(\$Name:(?:(?!\$Name:).)*?\r\n)([ \t]*\+Length:[ \t]*)([^\r]*?)(\r\n)", new MatchEvaluator(GenerateShipLength), RegexOptions.Singleline);
+
                 newContent = sourceContent.Replace(shipsEntries, newContent);
 
                 if (sourceContent != newContent)
@@ -374,6 +377,19 @@ namespace FreeSpace2TranslationTools.Services
         private string GenerateHudGauges(Match match)
         {
             return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+        }
+
+        private string GenerateShipLength(Match match)
+        {
+            if (match.Groups[1].Value.Contains("$thruster:"))
+            {
+                return match.Value;
+            }
+            else
+            {
+                // don't send groups[1] content in the parameters, otherwise the method will check for a ';' in every line
+                return match.Groups[1].Value + ReplaceHardcodedValueWithXstr(match.Groups[2].Value + match.Groups[3].Value + match.Groups[4].Value, match.Groups[2].Value, match.Groups[3].Value);
+            }
         }
 
         private string GenerateRanks(Match match)
