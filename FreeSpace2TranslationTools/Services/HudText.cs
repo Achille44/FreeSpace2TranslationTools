@@ -10,15 +10,9 @@ namespace FreeSpace2TranslationTools.Services
     {
         public string BeginningOfSexp { get; set; }
         public string EndOfSexp { get; set; }
-        public string OriginalSexp { get; private set; }
-        public string NewSexp
-        {
-            get { return "@" + VariableName + "[" + DefaultValue + "]"; }
-        }
 
         public HudText(string beginningOfSexp, string defaultValue, string endOfSexp) : base(defaultValue)
         {
-            OriginalSexp = beginningOfSexp + defaultValue + endOfSexp;
             BeginningOfSexp = beginningOfSexp;
             EndOfSexp = endOfSexp;
         }

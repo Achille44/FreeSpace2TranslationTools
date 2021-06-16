@@ -10,6 +10,7 @@ namespace FreeSpace2TranslationTools.Services
     {
         public string VariableName { get; set; }
         public string DefaultValue { get; set; }
+        public string NewSexp => "@" + VariableName + "[" + DefaultValue + "]";
 
         public MissionVariable(string defaultValue)
         {
