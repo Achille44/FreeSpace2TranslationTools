@@ -10,6 +10,7 @@ namespace FreeSpace2TranslationTools.Services
     {
         public string BeginningOfSexp { get; set; }
         public string EndOfSexp { get; set; }
+        public new string NewSexp => "@" + VariableName + "[" + DefaultValue + "]";
 
         public HudText(string beginningOfSexp, string defaultValue, string endOfSexp) : base(defaultValue)
         {
