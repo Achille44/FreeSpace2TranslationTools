@@ -782,7 +782,7 @@ namespace FreeSpace2TranslationTools.Services
         private string AddEventToManageTranslations(string content, string newSexp)
         {
             // very unorthodox way to add the event but it allows me to manage the case when this event already exists in the original file
-            string eventForAltNamesTitle = "Auto generated event for translations";
+            string eventForAltNamesTitle = "Manage translation variables";
             string eventEnd = $"){Environment.NewLine}"
                 + $"+Name: {eventForAltNamesTitle}{Environment.NewLine}"
                 + $"+Repeat Count: 1{Environment.NewLine}"
