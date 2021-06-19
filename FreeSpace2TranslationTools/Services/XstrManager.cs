@@ -278,7 +278,9 @@ namespace FreeSpace2TranslationTools.Services
 
                 string newContent = regexLabels.Replace(sourceContent, new MatchEvaluator(GenerateLabels));
 
-                newContent = Regex.Replace(newContent, @"(.*\$Jump Node Name:\s*)(.*?)\r\n", new MatchEvaluator(GenerateJumpNodeNames));
+                newContent = Regex.Replace(newContent, @"(.*\$Jump Node Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateJumpNodeNames));
+
+                newContent = Regex.Replace(newContent, @"(.*\$Callsign:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateCallSigns));
 
                 newContent = regexShipNames.Replace(newContent, new MatchEvaluator(GenerateShipNames));
 
@@ -364,6 +366,11 @@ namespace FreeSpace2TranslationTools.Services
         }
 
         private string ReplaceAltDamagePopupSubsystemName(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+        }
+
+        private string GenerateCallSigns(Match match)
         {
             return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
