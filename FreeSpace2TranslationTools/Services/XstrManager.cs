@@ -839,7 +839,7 @@ namespace FreeSpace2TranslationTools.Services
         /// <returns></returns>
         private string ConvertHardcodedHudTextToVariables(string content)
         {
-            MatchCollection textMatches = Regex.Matches(content, "(\\( hud-set-text.*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            MatchCollection textMatches = Regex.Matches(content, "(\\( (?:hud-set-text|hud-set-directive).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
             List<HudText> hudTextList = new();
 
