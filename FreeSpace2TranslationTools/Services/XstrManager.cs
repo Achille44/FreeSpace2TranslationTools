@@ -83,7 +83,7 @@ namespace FreeSpace2TranslationTools.Services
             {
                 string sourceContent = File.ReadAllText(file);
 
-                string newContent = Regex.Replace(sourceContent, @"(^)((?!XSTR).+?)\r\n", new MatchEvaluator(GenerateCredits), RegexOptions.Multiline);
+                string newContent = Regex.Replace(sourceContent, @"(^)((?!(XSTR|\$|#End|#end)).+?)\r\n", new MatchEvaluator(GenerateCredits), RegexOptions.Multiline);
 
                 if (sourceContent != newContent)
                 {
