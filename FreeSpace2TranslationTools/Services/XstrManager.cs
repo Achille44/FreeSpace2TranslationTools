@@ -129,7 +129,7 @@ namespace FreeSpace2TranslationTools.Services
             {
                 string sourceContent = File.ReadAllText(medalsFile);
 
-                string newContent = Regex.Replace(sourceContent, @"(\$Name:\s*(.*?)\r\n)(\$Bitmap)", new MatchEvaluator(GenerateAltNames), RegexOptions.Multiline);
+                string newContent = Regex.Replace(sourceContent, @"(\$Name:[ \t]*(.*?)\r\n)([^\r]*\$Bitmap)", new MatchEvaluator(GenerateAltNames), RegexOptions.Multiline);
 
                 if (sourceContent != newContent)
                 {
