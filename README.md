@@ -21,3 +21,7 @@ If a mod you translated received an update with modified/new content, you might 
 ## How does it work?
 
 Regex, regex, regex, and more regex...
+
+## How to get involved?
+
+If you find bugs or have ideas to improve this program, you can create an issue on this project, or send a message to the dedicated HLP forum topic: https://www.hard-light.net/forums/index.php?topic=97658.0.
