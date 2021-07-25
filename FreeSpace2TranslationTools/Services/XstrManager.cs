@@ -17,6 +17,7 @@ namespace FreeSpace2TranslationTools.Services
         public string DestinationFolder { get; set; }
         public List<string> FilesList { get; set; }
         public int CurrentProgress { get; set; }
+        public List<Weapon> Weapons { get; set; }
 
         public XstrManager(MainWindow parent, object sender, string modFolder, string destinationFolder)
         {
@@ -25,6 +26,7 @@ namespace FreeSpace2TranslationTools.Services
             ModFolder = modFolder;
             DestinationFolder = destinationFolder;
             CurrentProgress = 0;
+            Weapons = new List<Weapon>();
 
             FilesList = Utils.GetFilesWithXstrFromFolder(modFolder);
 
@@ -42,8 +44,8 @@ namespace FreeSpace2TranslationTools.Services
             ProcessMainHallFiles();
             ProcessMedalsFile();
             ProcessRankFile();
-            ProcessShipFiles();
             ProcessWeaponFiles();
+            ProcessShipFiles();
             ProcessMissionFiles();
         }
         #endregion
@@ -248,6 +250,38 @@ namespace FreeSpace2TranslationTools.Services
                             newContent = newContent.Replace(weapon.Value, newEntry);
                         }
                     }
+
+                    // Here we save weapons to use them in ships files for subsystems
+                    if (weapon.Value.Contains("$Flags:"))
+                    {
+                        string name = Regex.Match(weapon.Value, @"\$Name:[ \t]*([^\r]*)").Groups[1].Value.Trim();
+
+                        if (!Weapons.Any(w => w.Name == name))
+                        {
+                            string type = "Laser turret";
+
+                            string flags = Regex.Match(weapon.Value, "\\$Flags:(.*?)\"[ \t]*\\)").Value;
+
+                            if (flags.Contains("beam"))
+                            {
+                                type = "Beam turret";
+                            }
+                            else if (flags.Contains("Flak"))
+                            {
+                                type = "Flak turret";
+                            }
+                            else if (flags.Contains("Bomb"))
+                            {
+                                type = "Missile lnchr";
+                            }
+                            else if (flags.Contains("Ballistic"))
+                            {
+                                type = "Turret";
+                            }
+
+                            Weapons.Add(new Weapon(name, type));
+                        }
+                    }
                 }
 
                 if (sourceContent != newContent)
@@ -301,7 +335,7 @@ namespace FreeSpace2TranslationTools.Services
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
-        } 
+        }
 
         private string GenerateSubsystems(Match match)
         {
@@ -345,6 +379,27 @@ namespace FreeSpace2TranslationTools.Services
             {
                 string newName = Regex.Match(newSubsystem, "\\$Alt Damage Popup Subsystem Name:.*XSTR\\(\"(.*?)\", -1\\)").Groups[1].Value;
                 newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:.*XSTR\\(\"(.*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");
+            }
+            // if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name 
+            else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default SBanks:"))
+            {
+                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Subsystem Name: XSTR(\"Missile lnchr\", -1)");
+                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Damage Popup Subsystem Name: XSTR(\"Missile lnchr\", -1)");
+            }
+            // if there is neither alt name nor alt damage popup, then check if this is gun turret (PBanks key word) to set a custom alt name 
+            else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default PBanks:"))
+            {
+                string turretType = "Turret";
+                string defaultPBank = Regex.Match(match.Value, "\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"").Groups[1].Value;
+                Weapon defaultWeapon = Weapons.FirstOrDefault(w => w.Name == defaultPBank);
+
+                if (defaultWeapon != null)
+                {
+                    turretType = defaultWeapon.Type;
+                }
+
+                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{turretType}\", -1)");
+                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretType}\", -1)");
             }
 
             return newSubsystem;
