@@ -19,6 +19,8 @@ namespace FreeSpace2TranslationTools.Services
         public int CurrentProgress { get; set; }
         public List<Weapon> Weapons { get; set; }
 
+        public List<Ship> Ships { get; set; }
+
         public XstrManager(MainWindow parent, object sender, string modFolder, string destinationFolder)
         {
             Parent = parent;
@@ -27,6 +29,7 @@ namespace FreeSpace2TranslationTools.Services
             DestinationFolder = destinationFolder;
             CurrentProgress = 0;
             Weapons = new List<Weapon>();
+            Ships = new List<Ship>();
 
             FilesList = Utils.GetFilesWithXstrFromFolder(modFolder);
 
@@ -44,6 +47,7 @@ namespace FreeSpace2TranslationTools.Services
             ProcessMainHallFiles();
             ProcessMedalsFile();
             ProcessRankFile();
+            // Weapons must be treated before ships!
             ProcessWeaponFiles();
             ProcessShipFiles();
             ProcessMissionFiles();
@@ -193,22 +197,57 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessShipFiles()
         {
-            List<string> shipFiles = FilesList.Where(x => x.Contains("-shp.tbm") || x.Contains("ships.tbl")).ToList();
+            // Start with ships.tbl
+            List<string> shipFiles = FilesList.Where(x => x.Contains("ships.tbl")).ToList();
+            shipFiles.AddRange(FilesList.Where(x => x.Contains("-shp.tbm")).ToList());
 
             foreach (string file in shipFiles)
             {
                 string sourceContent = File.ReadAllText(file);
+                string shipSection = Regex.Match(sourceContent, @"#Ship Classes.*?(#End|#end)", RegexOptions.Singleline).Value;
+                string newContent = shipSection;
+                MatchCollection shipEntries = Regex.Matches(shipSection, @"\n\$Name:.*?(?=\n\$Name|#end|#End)", RegexOptions.Singleline);
 
-                string shipsEntries = Regex.Match(sourceContent, @"#Ship Classes.*?(#End|#end)", RegexOptions.Singleline).Value;
+                foreach (Match shipEntry in shipEntries)
+                {
+                    string newEntry = shipEntry.Value;
+                    string shipName = Utils.SanitizeName(Regex.Match(shipEntry.Value, @"\$Name:([^\r]*)").Groups[1].Value);
 
-                string newContent = Regex.Replace(shipsEntries, @"(\$Subsystem:\s+(.*?),.*?\r\n)(.*?)(?=\$Name|\$Subsystem:|#End)", new MatchEvaluator(GenerateSubsystems), RegexOptions.Singleline);
+                    if (!Ships.Any(s => s.Name == shipName))
+                    {
+                        newEntry = Utils.RegexNoAltNames.Replace(newEntry, new MatchEvaluator(GenerateAltNames));
+                        Ships.Add(new Ship { Name = shipName });
+                    }
 
-                newContent = Utils.RegexNoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
+                    Ship ship = Ships.FirstOrDefault(s => s.Name == shipName);
+
+                    MatchCollection subsystems = Regex.Matches(newEntry, @"(\$Subsystem:\s+(.*?),.*?\r\n)(.*?)(?=\r|\$Subsystem:)", RegexOptions.Singleline);
+
+                    foreach (Match subsystem in subsystems)
+                    {
+                        string subsystemName = subsystem.Groups[2].Value.Trim();
+
+                        if (!ship.Subsystems.Any(s => s.Name == subsystemName))
+                        {
+                            ship.Subsystems.Add(new Subsystem { Name = subsystemName });
+                            newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem));
+                        }
+                    }
+
+                    if (newEntry != shipEntry.Value)
+                    {
+                        newContent = newContent.Replace(shipEntry.Value, newEntry);
+                    }
+                }
+
+                //string newContent = Regex.Replace(shipSection, @"(\$Subsystem:\s+(.*?),.*?\r\n)(.*?)(?=\$Name|\$Subsystem:|#End)", new MatchEvaluator(GenerateSubsystems), RegexOptions.Singleline);
+
+                //newContent = Utils.RegexNoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
 
                 // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
                 newContent = Regex.Replace(newContent, @"(\$Name:(?:(?!\$Name:).)*?\r\n)([ \t]*\+Length:[ \t]*)([^\r]*?)(\r\n)", new MatchEvaluator(GenerateShipLength), RegexOptions.Singleline);
 
-                newContent = sourceContent.Replace(shipsEntries, newContent);
+                newContent = sourceContent.Replace(shipSection, newContent);
 
                 if (sourceContent != newContent)
                 {

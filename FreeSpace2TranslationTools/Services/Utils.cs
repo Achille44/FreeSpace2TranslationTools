@@ -14,6 +14,7 @@ namespace FreeSpace2TranslationTools.Services
         public static Regex RegexXstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         // don't select entries in comment...
         public static Regex RegexNoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
+        //public static Regex RegexNoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex RegexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex RegexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
 
@@ -89,6 +90,18 @@ namespace FreeSpace2TranslationTools.Services
             }
 
             return content.Replace(lineToModify.FullLine, newLine);
+        }
+
+
+        /// <summary>
+        /// Removes comments, alias and spaces from a name
+        /// </summary>
+        /// <param name="rawName"></param>
+        /// <returns></returns>
+        public static string SanitizeName(string rawName)
+        {
+            return rawName.Split(';')[0].Trim();
+            //return rawName.Split(';')[0].Split('#')[0].Trim().TrimStart('@');
         }
     }
 }
