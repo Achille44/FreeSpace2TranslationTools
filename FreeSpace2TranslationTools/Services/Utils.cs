@@ -98,10 +98,16 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         /// <param name="rawName"></param>
         /// <returns></returns>
-        public static string SanitizeName(string rawName)
+        public static string SanitizeName(string rawName, bool fullSanatizing = false)
         {
-            return rawName.Split(';')[0].Trim();
-            //return rawName.Split(';')[0].Split('#')[0].Trim().TrimStart('@');
+            if (fullSanatizing)
+            {
+                return rawName.Split(';')[0].Split('#')[0].Trim().TrimStart('@');
+            }
+            else
+            {
+                return rawName.Split(';')[0].Trim();
+            }
         }
     }
 }

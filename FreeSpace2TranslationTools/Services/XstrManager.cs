@@ -18,8 +18,8 @@ namespace FreeSpace2TranslationTools.Services
         public List<string> FilesList { get; set; }
         public int CurrentProgress { get; set; }
         public List<Weapon> Weapons { get; set; }
-
         public List<Ship> Ships { get; set; }
+        public ModFile FileInProgress { get; set; }
 
         public XstrManager(MainWindow parent, object sender, string modFolder, string destinationFolder)
         {
@@ -30,6 +30,7 @@ namespace FreeSpace2TranslationTools.Services
             CurrentProgress = 0;
             Weapons = new List<Weapon>();
             Ships = new List<Ship>();
+            FileInProgress = new ModFile();
 
             FilesList = Utils.GetFilesWithXstrFromFolder(modFolder);
 
@@ -347,6 +348,8 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (string file in missionFiles)
             {
+                FileInProgress = new ModFile();
+
                 string sourceContent = File.ReadAllText(file);
 
                 string newContent = regexLabels.Replace(sourceContent, new MatchEvaluator(GenerateLabels));
@@ -366,6 +369,8 @@ namespace FreeSpace2TranslationTools.Services
                 newContent = ConvertHardcodedHudTextToVariables(newContent);
 
                 newContent = ConvertSpecialMessageSendersToVariables(newContent);
+
+                newContent = ConvertJumpNodeReferencesToVariables(newContent);
 
                 if (sourceContent != newContent)
                 {
@@ -486,7 +491,15 @@ namespace FreeSpace2TranslationTools.Services
 
         private string GenerateJumpNodeNames(Match match)
         {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+            string newName = ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+
+            // if the jump node has already been translated, then don't add it to the list
+            if (match.Value != newName)
+            {
+                FileInProgress.JumpNodes.Add(Utils.SanitizeName(match.Groups[2].Value, true));
+            }
+
+            return newName;
         }
 
         private string GenerateShipLength(Match match)
@@ -1017,6 +1030,46 @@ namespace FreeSpace2TranslationTools.Services
             }
 
             return content;
+        }
+
+        private string ConvertJumpNodeReferencesToVariables(string content)
+        {
+            if (FileInProgress.JumpNodes.Count > 0)
+            {
+                List<MissionVariable> variableList = new();
+
+                foreach (string jumpNode in FileInProgress.JumpNodes)
+                {
+                    // find all references outside XSTR
+                    MatchCollection jumpNodeReferences = Regex.Matches(content, $"(?<=\\( depart-node-delay.*?\\d+ \r\n[ \t]*)\"{jumpNode}\"", RegexOptions.Singleline);
+                    //MatchCollection jumpNodeReferences = Regex.Matches(content, $"[^XSTR(][ \t]*\"{jumpNode}\"", RegexOptions.Multiline);
+
+                    if (jumpNodeReferences.Count > 0)
+                    {
+                        variableList.Add(new(jumpNode));
+                    }
+                }
+
+                if (variableList.Count > 0)
+                {
+                    content = AddVariablesToSexpVariablesSection(content, variableList);
+                    string newSexp = PrepareNewSexpForVariables(variableList);
+                    content = AddEventToManageTranslations(content, newSexp);
+
+                    foreach (MissionVariable variable in variableList)
+                    {
+                        // (?<=...) => look behind
+                        content = Regex.Replace(content, $"(?<=\\( depart-node-delay.*?\\d+ \r\n[ \t]*)\"{variable.DefaultValue}\"", variable.NewSexp, RegexOptions.Singleline);
+                    }
+                }
+
+                return content;
+
+            }
+            else
+            {
+                return content;
+            }
         }
     }
 }
