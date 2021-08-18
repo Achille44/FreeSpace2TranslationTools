@@ -48,7 +48,7 @@ namespace FreeSpace2TranslationTools.Services
             ProcessMainHallFiles();
             ProcessMedalsFile();
             ProcessRankFile();
-            // Weapons must be treated before ships!
+            // Weapons must be treated before ships because of the way ship turrets are treated!
             ProcessWeaponFiles();
             ProcessShipFiles();
             ProcessMissionFiles();
@@ -371,6 +371,8 @@ namespace FreeSpace2TranslationTools.Services
                 newContent = ConvertSpecialMessageSendersToVariables(newContent);
 
                 newContent = ConvertJumpNodeReferencesToVariables(newContent);
+
+                newContent = ConvertAltArgumentsToVariables(newContent);
 
                 if (sourceContent != newContent)
                 {
@@ -1006,9 +1008,7 @@ namespace FreeSpace2TranslationTools.Services
             if (variableList.Count > 0)
             {
                 content = AddVariablesToSexpVariablesSection(content, variableList);
-
                 string newSexp = PrepareNewSexpForVariables(variableList);
-
                 content = AddEventToManageTranslations(content, newSexp);
 
                 foreach (Match message in messageMatches)
@@ -1070,6 +1070,46 @@ namespace FreeSpace2TranslationTools.Services
             {
                 return content;
             }
+        }
+
+        private string ConvertAltArgumentsToVariables(string content)
+        {
+            MatchCollection randomArguments = Regex.Matches(content, "when-argument[ \\t\\r\\n]*\\([ \\t]*random-multiple-of([^\\(]*?)\\)[ \\t\\r\\n]*\\([^\\(]*?\\)[ \\t\\r\\n]*\\([ \\t]*ship-change-alt-name[ \\t\\r\\n]*\"<argument>\"", RegexOptions.Singleline);
+            List<MissionVariable> variableList = new();
+
+            foreach (Match match in randomArguments)
+            {
+                MatchCollection arguments = Regex.Matches(match.Groups[1].Value, "\"([^\\r]*)\"", RegexOptions.Multiline);
+
+                foreach (Match argument in arguments)
+                {
+                    if (!argument.Groups[1].Value.StartsWith("@", StringComparison.InvariantCulture))
+                    {
+                        variableList.Add(new MissionVariable(argument.Groups[1].Value));
+                    }
+                }
+            }
+
+            if (variableList.Count > 0)
+            {
+                content = AddVariablesToSexpVariablesSection(content, variableList);
+                string newSexp = PrepareNewSexpForVariables(variableList);
+                content = AddEventToManageTranslations(content, newSexp);
+
+                foreach (Match match in randomArguments)
+                {
+                    string arguments = match.Value;
+
+                    foreach (MissionVariable variable in variableList)
+                    {
+                        arguments = arguments.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                    }
+
+                    content = content.Replace(match.Value, arguments);
+                }
+            }
+
+            return content;
         }
     }
 }

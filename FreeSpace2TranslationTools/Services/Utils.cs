@@ -92,7 +92,6 @@ namespace FreeSpace2TranslationTools.Services
             return content.Replace(lineToModify.FullLine, newLine);
         }
 
-
         /// <summary>
         /// Removes comments, alias and spaces from a name
         /// </summary>
