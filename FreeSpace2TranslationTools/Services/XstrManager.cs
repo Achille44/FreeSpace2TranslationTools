@@ -222,7 +222,7 @@ namespace FreeSpace2TranslationTools.Services
 
                     Ship ship = Ships.FirstOrDefault(s => s.Name == shipName);
 
-                    MatchCollection subsystems = Regex.Matches(newEntry, @"(\$Subsystem:\s+(.*?),.*?\r\n)(.*?)(?=\r|\$Subsystem:)", RegexOptions.Singleline);
+                    MatchCollection subsystems = Regex.Matches(newEntry, @"(\$Subsystem:[ \t]*([^\r]*?),[^\r]*?\r\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Singleline);
 
                     foreach (Match subsystem in subsystems)
                     {
@@ -232,6 +232,11 @@ namespace FreeSpace2TranslationTools.Services
                         {
                             ship.Subsystems.Add(new Subsystem { Name = subsystemName });
                             newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem));
+                        }
+                        // in this case the subsystem has already been treated in another file, so just replace hardcoded values with XSTR
+                        else
+                        {
+                            newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem, true));
                         }
                     }
 
@@ -383,69 +388,72 @@ namespace FreeSpace2TranslationTools.Services
             }
         }
 
-        private string GenerateSubsystems(Match match)
+        private string GenerateSubsystems(Match match, bool replaceOnly = false)
         {
             string newSubsystem = match.Value;
             bool altNameAlreadyExisting = true;
             bool altDamagePopupNameAlreadyExisting = true;
 
-            if (!match.Value.Contains("$Alt Subsystem Name:"))
+            if (!replaceOnly && !match.Value.Contains("$Alt Subsystem Name:"))
             {
                 altNameAlreadyExisting = false;
-                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));
+                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\r\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));
             }
-            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
+            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:[ \t]*XSTR"))
             {
-                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Subsystem Name:\s*)(.*)\r\n", new MatchEvaluator(ReplaceAltSubsystemName));
+                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Subsystem Name:[ \t]*)(.*)\r\n", new MatchEvaluator(ReplaceAltSubsystemName));
             }
 
-            if (!match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
+            if (!replaceOnly && !match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
             {
                 altDamagePopupNameAlreadyExisting = false;
 
                 // if existing, copy the alt name to damage popup name
                 if (altNameAlreadyExisting)
                 {
-                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name:.*XSTR\\(\"(.*?)\", -1\\)\\r\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)\\r\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
                 }
                 else
                 {
                     // take 2 lines after subsystem to skip alt subsystem line
-                    newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:\s*(.*?),.*?\r\n.*?\r\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                    newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\r\n.*?\r\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
                 }
             }
-            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:\s*XSTR"))
+            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:[ \t]*XSTR"))
             {
                 // [ \t] because \s includes \r and \n
                 newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Damage Popup Subsystem Name:[ \t]*)(.*)\r\n", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
             }
 
-            // if alt damage popup name already existing but not alt name, then copy it to alt name 
-            if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
+            if (!replaceOnly)
             {
-                string newName = Regex.Match(newSubsystem, "\\$Alt Damage Popup Subsystem Name:.*XSTR\\(\"(.*?)\", -1\\)").Groups[1].Value;
-                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:.*XSTR\\(\"(.*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");
-            }
-            // if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name 
-            else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default SBanks:"))
-            {
-                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Subsystem Name: XSTR(\"Missile lnchr\", -1)");
-                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Damage Popup Subsystem Name: XSTR(\"Missile lnchr\", -1)");
-            }
-            // if there is neither alt name nor alt damage popup, then check if this is gun turret (PBanks key word) to set a custom alt name 
-            else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default PBanks:"))
-            {
-                string turretType = "Turret";
-                string defaultPBank = Regex.Match(match.Value, "\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"").Groups[1].Value;
-                Weapon defaultWeapon = Weapons.FirstOrDefault(w => w.Name == defaultPBank);
-
-                if (defaultWeapon != null)
+                // if alt damage popup name already existing but not alt name, then copy it to alt name 
+                if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
                 {
-                    turretType = defaultWeapon.Type;
+                    string newName = Regex.Match(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)").Groups[1].Value;
+                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");
                 }
+                // if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name 
+                else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default SBanks:"))
+                {
+                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Subsystem Name: XSTR(\"Missile lnchr\", -1)");
+                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Damage Popup Subsystem Name: XSTR(\"Missile lnchr\", -1)");
+                }
+                // if there is neither alt name nor alt damage popup, then check if this is gun turret (PBanks key word) to set a custom alt name 
+                else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default PBanks:"))
+                {
+                    string turretType = "Turret";
+                    string defaultPBank = Regex.Match(match.Value, "\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"").Groups[1].Value;
+                    Weapon defaultWeapon = Weapons.FirstOrDefault(w => w.Name == defaultPBank);
 
-                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{turretType}\", -1)");
-                newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretType}\", -1)");
+                    if (defaultWeapon != null)
+                    {
+                        turretType = defaultWeapon.Type;
+                    }
+
+                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{turretType}\", -1)");
+                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretType}\", -1)");
+                }
             }
 
             return newSubsystem;
@@ -576,7 +584,10 @@ namespace FreeSpace2TranslationTools.Services
                     result += $" ;{values[1]}";
                 }
 
-                result += Environment.NewLine;
+                //if (originalMatch.EndsWith("\r\n"))
+                //{
+                    result += Environment.NewLine;
+                //}
 
                 return result;
             }
