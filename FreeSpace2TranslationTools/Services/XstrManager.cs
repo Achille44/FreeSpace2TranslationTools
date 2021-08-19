@@ -212,7 +212,7 @@ namespace FreeSpace2TranslationTools.Services
                 foreach (Match shipEntry in shipEntries)
                 {
                     string newEntry = shipEntry.Value;
-                    string shipName = Utils.SanitizeName(Regex.Match(shipEntry.Value, @"\$Name:([^\r]*)").Groups[1].Value);
+                    string shipName = Utils.SanitizeName(Regex.Match(shipEntry.Value, @"\$Name:(.*)$", RegexOptions.Multiline).Groups[1].Value);
 
                     if (!Ships.Any(s => s.Name == shipName))
                     {
@@ -222,11 +222,11 @@ namespace FreeSpace2TranslationTools.Services
 
                     Ship ship = Ships.FirstOrDefault(s => s.Name == shipName);
 
-                    MatchCollection subsystems = Regex.Matches(newEntry, @"(\$Subsystem:[ \t]*([^\r]*?),[^\r]*?\r\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Singleline);
+                    MatchCollection subsystems = Regex.Matches(newEntry, @"(\$Subsystem:[ \t]*([^\r\n]*?),[^\r\n]*?\r?\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Singleline);
 
                     foreach (Match subsystem in subsystems)
                     {
-                        string subsystemName = subsystem.Groups[2].Value.Trim();
+                        string subsystemName = subsystem.Groups[2].Value.Trim().ToLower();
 
                         if (!ship.Subsystems.Any(s => s.Name == subsystemName))
                         {
@@ -397,11 +397,11 @@ namespace FreeSpace2TranslationTools.Services
             if (!replaceOnly && !match.Value.Contains("$Alt Subsystem Name:"))
             {
                 altNameAlreadyExisting = false;
-                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\r\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));
+                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));
             }
             else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:[ \t]*XSTR"))
             {
-                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Subsystem Name:[ \t]*)(.*)\r\n", new MatchEvaluator(ReplaceAltSubsystemName));
+                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Subsystem Name:[ \t]*)(.*)\r?\n", new MatchEvaluator(ReplaceAltSubsystemName));
             }
 
             if (!replaceOnly && !match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
@@ -411,18 +411,18 @@ namespace FreeSpace2TranslationTools.Services
                 // if existing, copy the alt name to damage popup name
                 if (altNameAlreadyExisting)
                 {
-                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)\\r\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)\\r?\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
                 }
                 else
                 {
                     // take 2 lines after subsystem to skip alt subsystem line
-                    newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\r\n.*?\r\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                    newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\n.*?\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
                 }
             }
             else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:[ \t]*XSTR"))
             {
                 // [ \t] because \s includes \r and \n
-                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Damage Popup Subsystem Name:[ \t]*)(.*)\r\n", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
+                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Damage Popup Subsystem Name:[ \t]*)(.*)\r?\n", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
             }
 
             if (!replaceOnly)
@@ -451,8 +451,8 @@ namespace FreeSpace2TranslationTools.Services
                         turretType = defaultWeapon.Type;
                     }
 
-                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{turretType}\", -1)");
-                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretType}\", -1)");
+                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{turretType}\", -1)");
+                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretType}\", -1)");
                 }
             }
 
@@ -584,10 +584,14 @@ namespace FreeSpace2TranslationTools.Services
                     result += $" ;{values[1]}";
                 }
 
-                //if (originalMatch.EndsWith("\r\n"))
-                //{
-                    result += Environment.NewLine;
-                //}
+                if (originalMatch.EndsWith("\r\n"))
+                {
+                    result += "\r\n";
+                }
+                else if (originalMatch.EndsWith("\n"))
+                {
+                    result += "\n";
+                }
 
                 return result;
             }
