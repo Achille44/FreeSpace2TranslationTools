@@ -109,7 +109,7 @@ namespace FreeSpace2TranslationTools.Services
             {
                 string sourceContent = File.ReadAllText(file);
 
-                string newContent = Regex.Replace(sourceContent, @"(.*?Header Text: )((?!XSTR).*)\r\n", new MatchEvaluator(GenerateHudGauges));
+                string newContent = Regex.Replace(sourceContent, @"(.*?Text:[ \t]*)((?!XSTR).*)\r?\n", new MatchEvaluator(GenerateHudGauges));
 
                 if (sourceContent != newContent)
                 {
@@ -377,7 +377,8 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = ConvertJumpNodeReferencesToVariables(newContent);
 
-                newContent = ConvertAltArgumentsToVariables(newContent);
+                // the following method is too specific so not used anymore
+                //newContent = ConvertAltArgumentsToVariables(newContent);
 
                 if (sourceContent != newContent)
                 {
@@ -577,6 +578,13 @@ namespace FreeSpace2TranslationTools.Services
             {
                 string[] values = value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
                 string sanatizedValue = values.Length == 0 ? "" : values[0].Replace("\"", "$quote");
+
+                // in case no value, keep original
+                if (sanatizedValue == "")
+                {
+                    return originalMatch;
+                }
+
                 string result = $"{beginningOfLine}XSTR(\"{sanatizedValue}\", -1)";
 
                 if (values.Length > 1)
@@ -1002,7 +1010,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private string ConvertSpecialMessageSendersToVariables(string content)
         {
-            MatchCollection messageMatches = Regex.Matches(content, @"\( send-message.*?\r\n[ \t]*\)\r\n", RegexOptions.Singleline);
+            MatchCollection messageMatches = Regex.Matches(content, @"\( (send-random-message|send-message).*?\r?\n[ \t]*\)\r?\n", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
 
             foreach (Match message in messageMatches)
