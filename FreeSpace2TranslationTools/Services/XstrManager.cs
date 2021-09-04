@@ -359,8 +359,6 @@ namespace FreeSpace2TranslationTools.Services
 
                 string newContent = regexLabels.Replace(sourceContent, new MatchEvaluator(GenerateLabels));
 
-                newContent = Regex.Replace(newContent, @"(.*\$Jump Node Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateJumpNodeNames));
-
                 newContent = Regex.Replace(newContent, @"(.*\$Callsign:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateCallSigns));
 
                 newContent = regexShipNames.Replace(newContent, new MatchEvaluator(GenerateShipNames));
@@ -375,6 +373,7 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = ConvertSpecialMessageSendersToVariables(newContent);
 
+                newContent = Regex.Replace(newContent, @"(.*\$Jump Node Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateJumpNodeNames));
                 newContent = ConvertJumpNodeReferencesToVariables(newContent);
 
                 // the following method is too specific so not used anymore
@@ -1060,12 +1059,15 @@ namespace FreeSpace2TranslationTools.Services
             if (FileInProgress.JumpNodes.Count > 0)
             {
                 List<MissionVariable> variableList = new();
+                // don't take variables section
+                string fromObjectToWaypoints = "#Objects.*#Waypoints";
+                string originalContent = Regex.Match(content, fromObjectToWaypoints, RegexOptions.Singleline).Value;
 
                 foreach (string jumpNode in FileInProgress.JumpNodes)
                 {
                     // find all references outside XSTR
-                    MatchCollection jumpNodeReferences = Regex.Matches(content, $"(?<=\\( depart-node-delay.*?\\d+ \r\n[ \t]*)\"{jumpNode}\"", RegexOptions.Singleline);
-                    //MatchCollection jumpNodeReferences = Regex.Matches(content, $"[^XSTR(][ \t]*\"{jumpNode}\"", RegexOptions.Multiline);
+                    //MatchCollection jumpNodeReferences = Regex.Matches(content, $"(?<=\\( (depart-node-delay.*?\\d+|show-jumpnode|hide-jumpnode) \r\n[ \t]*)\"{jumpNode}\"", RegexOptions.Singleline);
+                    MatchCollection jumpNodeReferences = Regex.Matches(originalContent, $"(?<=\\([ \t]*(depart-node-delay|show-jumpnode|hide-jumpnode)[^\\(]*)\"{jumpNode}\"", RegexOptions.Singleline);
 
                     if (jumpNodeReferences.Count > 0)
                     {
@@ -1078,12 +1080,17 @@ namespace FreeSpace2TranslationTools.Services
                     content = AddVariablesToSexpVariablesSection(content, variableList);
                     string newSexp = PrepareNewSexpForVariables(variableList);
                     content = AddEventToManageTranslations(content, newSexp);
+                    originalContent = Regex.Match(content, fromObjectToWaypoints, RegexOptions.Singleline).Value;
+                    string newContent = originalContent;
 
                     foreach (MissionVariable variable in variableList)
                     {
                         // (?<=...) => look behind
-                        content = Regex.Replace(content, $"(?<=\\( depart-node-delay.*?\\d+ \r\n[ \t]*)\"{variable.DefaultValue}\"", variable.NewSexp, RegexOptions.Singleline);
+                        //content = Regex.Replace(content, $"(?<=\\( (depart-node-delay.*?\\d+|show-jumpnode|hide-jumpnode) \r\n[ \t]*)\"{variable.DefaultValue}\"", variable.NewSexp, RegexOptions.Singleline);
+                        newContent = Regex.Replace(newContent, $"(?<=\\([ \t]*(depart-node-delay|show-jumpnode|hide-jumpnode)[^\\(]*)\"{variable.DefaultValue}\"", variable.NewSexp, RegexOptions.Singleline);
                     }
+
+                    content = content.Replace(originalContent, newContent);
                 }
 
                 return content;
