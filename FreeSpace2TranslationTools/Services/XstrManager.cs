@@ -444,7 +444,7 @@ namespace FreeSpace2TranslationTools.Services
                 {
                     string turretType = "Turret";
                     string defaultPBank = Regex.Match(match.Value, "\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"").Groups[1].Value;
-                    Weapon defaultWeapon = Weapons.FirstOrDefault(w => w.Name == defaultPBank);
+                    Weapon defaultWeapon = Weapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
 
                     if (defaultWeapon != null)
                     {
@@ -632,7 +632,7 @@ namespace FreeSpace2TranslationTools.Services
         /// <returns></returns>
         private string ConvertShowSubtitleToShowSubtitleText(string content)
         {
-            MatchCollection subtitleResults = Regex.Matches(content, @"show-subtitle\s+.*?\)", RegexOptions.Singleline);
+            MatchCollection subtitleResults = Regex.Matches(content, @"show-subtitle\s+.*?\r\n[ \t]+\)", RegexOptions.Singleline);
 
             foreach (Match match in subtitleResults)
             {
