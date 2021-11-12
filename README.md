@@ -6,7 +6,7 @@ Set of tools to help to translate FreeSpace 2 and its mods.
 
 The main problem with existing FS mods is that most of them are not ready to be translated as is, because the support and interest for translations in this game has been low in the last 20 years.
 So in most cases, the original mod files need to be modified in order to be able to translate them in a convenient way.
-This is the main goal of this program.
+This is the main goal of this program. So basically it's an Internationalization tool for FS mods.
 
 ## What does it do?
 
@@ -16,7 +16,7 @@ Then, all XSTR variables are extracted to one or two plain files (tstrings.tbl a
 
 From here you can start to manually translate these files.
 
-If a mod you translated received an update with modified/new content, you might want to adapt you translation without starting again from scratch, so there is a feature to help you updating your translations.
+If a mod you translated received an update with modified/new content, you might want to adapt your translation without starting again from scratch, so there is a feature to help you updating your translations.
 
 ## How does it work?
 
