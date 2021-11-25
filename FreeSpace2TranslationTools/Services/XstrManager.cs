@@ -1062,12 +1062,13 @@ namespace FreeSpace2TranslationTools.Services
                 // don't take variables section
                 string fromObjectToWaypoints = "#Objects.*#Waypoints";
                 string originalContent = Regex.Match(content, fromObjectToWaypoints, RegexOptions.Singleline).Value;
+                string jumpNodesSexp = "depart-node-delay|show-jumpnode|hide-jumpnode|set-jumpnode-color|set-jumpnode-name|set-jumpnode-model";
 
                 foreach (string jumpNode in FileInProgress.JumpNodes)
                 {
                     // find all references outside XSTR
                     //MatchCollection jumpNodeReferences = Regex.Matches(content, $"(?<=\\( (depart-node-delay.*?\\d+|show-jumpnode|hide-jumpnode) \r\n[ \t]*)\"{jumpNode}\"", RegexOptions.Singleline);
-                    MatchCollection jumpNodeReferences = Regex.Matches(originalContent, $"(?<=\\([ \t]*(depart-node-delay|show-jumpnode|hide-jumpnode)[^\\(]*)\"{jumpNode}\"", RegexOptions.Singleline);
+                    MatchCollection jumpNodeReferences = Regex.Matches(originalContent, $"(?<=\\([ \t]*({jumpNodesSexp})[^\\(]*)\"{jumpNode}\"", RegexOptions.Singleline);
 
                     if (jumpNodeReferences.Count > 0)
                     {
@@ -1087,7 +1088,7 @@ namespace FreeSpace2TranslationTools.Services
                     {
                         // (?<=...) => look behind
                         //content = Regex.Replace(content, $"(?<=\\( (depart-node-delay.*?\\d+|show-jumpnode|hide-jumpnode) \r\n[ \t]*)\"{variable.DefaultValue}\"", variable.NewSexp, RegexOptions.Singleline);
-                        newContent = Regex.Replace(newContent, $"(?<=\\([ \t]*(depart-node-delay|show-jumpnode|hide-jumpnode)[^\\(]*)\"{variable.DefaultValue}\"", variable.NewSexp, RegexOptions.Singleline);
+                        newContent = Regex.Replace(newContent, $"(?<=\\([ \t]*({jumpNodesSexp})[^\\(]*)\"{variable.DefaultValue}\"", variable.NewSexp, RegexOptions.Singleline);
                     }
 
                     content = content.Replace(originalContent, newContent);
