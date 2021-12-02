@@ -226,17 +226,21 @@ namespace FreeSpace2TranslationTools.Services
 
                     foreach (Match subsystem in subsystems)
                     {
-                        string subsystemName = subsystem.Groups[2].Value.Trim().ToLower();
+                        // some subsystems are not visible so don't translate them
+                        if (!subsystem.Value.Contains("untargetable") && !subsystem.Value.Contains("afterburner"))
+                        {
+                            string subsystemName = subsystem.Groups[2].Value.Trim().ToLower();
 
-                        if (!ship.Subsystems.Any(s => s.Name == subsystemName))
-                        {
-                            ship.Subsystems.Add(new Subsystem { Name = subsystemName });
-                            newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem));
-                        }
-                        // in this case the subsystem has already been treated in another file, so just replace hardcoded values with XSTR
-                        else
-                        {
-                            newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem, true));
+                            if (!ship.Subsystems.Any(s => s.Name == subsystemName))
+                            {
+                                ship.Subsystems.Add(new Subsystem { Name = subsystemName });
+                                newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem));
+                            }
+                            // in this case the subsystem has already been treated in another file, so just replace hardcoded values with XSTR
+                            else
+                            {
+                                newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem, true));
+                            }
                         }
                     }
 
@@ -439,20 +443,28 @@ namespace FreeSpace2TranslationTools.Services
                     newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Subsystem Name: XSTR(\"Missile lnchr\", -1)");
                     newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Damage Popup Subsystem Name: XSTR(\"Missile lnchr\", -1)");
                 }
-                // if there is neither alt name nor alt damage popup, then check if this is gun turret (PBanks key word) to set a custom alt name 
-                else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default PBanks:"))
+                // if there is neither alt name nor alt damage popup, then check if this is gun turret ("PBanks" or "$Turret Reset Delay" key words) to set a custom alt name 
+                else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting)
                 {
-                    string turretType = "Turret";
-                    string defaultPBank = Regex.Match(match.Value, "\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"").Groups[1].Value;
-                    Weapon defaultWeapon = Weapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
-
-                    if (defaultWeapon != null)
+                    if (match.Value.Contains("$Default PBanks:"))
                     {
-                        turretType = defaultWeapon.Type;
-                    }
+                        string turretType = "Turret";
+                        string defaultPBank = Regex.Match(match.Value, "\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"").Groups[1].Value;
+                        Weapon defaultWeapon = Weapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
 
-                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{turretType}\", -1)");
-                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretType}\", -1)");
+                        if (defaultWeapon != null)
+                        {
+                            turretType = defaultWeapon.Type;
+                        }
+
+                        newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{turretType}\", -1)");
+                        newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretType}\", -1)");
+                    }
+                    else if (match.Value.Contains("$Turret Reset Delay"))
+                    {
+                        newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"Turret\", -1)");
+                        newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"Turret\", -1)");
+                    }
                 }
             }
 
