@@ -924,7 +924,7 @@ namespace FreeSpace2TranslationTools.Services
                 variableId++;
             }
 
-            string endOfVariables = Regex.Match(content, @"\)\r\n\r\n(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline).Value;
+            string endOfVariables = Regex.Match(content, @"\)\r\n\r\n(#Fiction Viewer|#Command Briefing|#Cutscenes)", RegexOptions.Multiline).Value;
 
             return content.Replace(endOfVariables, newSexpVariablesSection + endOfVariables);
         }

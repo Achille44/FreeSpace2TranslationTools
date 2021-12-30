@@ -57,7 +57,6 @@ namespace FreeSpace2TranslationTools.Services
             #endregion
 
             CreateTstringsFile();
-
         }
         #endregion
 
@@ -66,7 +65,9 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void FetchXstr()
         {
-            foreach (string file in FilesList)
+            List<string> compatibleFiles = FilesList.Where(x => !x.Contains("-lcl.tbm") && !x.Contains("-tlc.tbm") && !x.Contains("strings.tbl")).ToList();
+
+            foreach (string file in compatibleFiles)
             {
                 FileInfo fileInfo = new(file);
                 string fileContent = File.ReadAllText(file);
@@ -84,12 +85,12 @@ namespace FreeSpace2TranslationTools.Services
                         string text = match.Groups[1].Value;
 
                         // if id not existing, add a new line
-                        if (id > 0 && !Lines.Any(x => x.Id == id))
+                        if (id >= 0 && !Lines.Any(x => x.Id == id))
                         {
                             Lines.Add(new Xstr(id, text, fileInfo));
                         }
                         // if id already existing but value is different, then put it in another list that will be treated separately
-                        else if (ManageDuplicates && (id <= 0 || Lines.First(x => x.Id == id).Text != text))
+                        else if (ManageDuplicates && (id < 0 || Lines.First(x => x.Id == id).Text != text))
                         {
                             Duplicates.Add(new Xstr(id, text, fileInfo, match.Value));
                         }
