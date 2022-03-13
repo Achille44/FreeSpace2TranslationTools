@@ -24,7 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Images\campaign.png" />
+    <Resource Include="Images\campaign.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\credits.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
@@ -79,5 +81,5 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-
+	
 </Project>

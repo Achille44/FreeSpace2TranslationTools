@@ -44,6 +44,7 @@ namespace FreeSpace2TranslationTools.Services
         {
             ProcessCampaignFiles();
             ProcessCreditFiles();
+            ProcessCutscenesFile();
             ProcessHudGaugeFiles();
             ProcessMainHallFiles();
             ProcessMedalsFile();
@@ -77,11 +78,6 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Replace all hardcoded credit lines with XSTR
         /// </summary>
-        /// <param name="filesList"></param>
-        /// <param name="modFolder"></param>
-        /// <param name="destinationFolder"></param>
-        /// <param name="currentProgress"></param>
-        /// <param name="sender"></param>
         private void ProcessCreditFiles()
         {
             List<string> creditFiles = FilesList.Where(x => x.Contains("-crd.tbm") || x.Contains("credits.tbl")).ToList();
@@ -95,6 +91,28 @@ namespace FreeSpace2TranslationTools.Services
                 if (sourceContent != newContent)
                 {
                     Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
+                }
+
+                Parent.IncreaseProgress(Sender, CurrentProgress++);
+            }
+        }
+
+        /// <summary>
+        /// Replace all hardcoded cutscene lines with XSTR
+        /// </summary>
+        private void ProcessCutscenesFile()
+        {
+            string cutscenesFile = FilesList.FirstOrDefault(x => x.Contains("cutscenes.tbl"));
+
+            if (cutscenesFile != null)
+            {
+                string sourceContent = File.ReadAllText(cutscenesFile);
+
+                string newContent = Regex.Replace(sourceContent, @"(\$Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateCutscenes));
+
+                if (sourceContent != newContent)
+                {
+                    Utils.CreateFileWithNewContent(cutscenesFile, ModFolder, DestinationFolder, newContent);
                 }
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
@@ -123,11 +141,6 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Adds alt names with XSTR variables to medals
         /// </summary>
-        /// <param name="filesList"></param>
-        /// <param name="modFolder"></param>
-        /// <param name="destinationFolder"></param>
-        /// <param name="currentProgress"></param>
-        /// <param name="sender"></param>
         private void ProcessMedalsFile()
         {
             string medalsFile = FilesList.FirstOrDefault(x => x.Contains("medals.tbl"));
@@ -253,6 +266,8 @@ namespace FreeSpace2TranslationTools.Services
                 //string newContent = Regex.Replace(shipSection, @"(\$Subsystem:\s+(.*?),.*?\r\n)(.*?)(?=\$Name|\$Subsystem:|#End)", new MatchEvaluator(GenerateSubsystems), RegexOptions.Singleline);
 
                 //newContent = Utils.RegexNoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
+
+                newContent = Regex.Replace(newContent, @"(\+Tech Description:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateShipDescription));
 
                 // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
                 newContent = Regex.Replace(newContent, @"(\$Name:(?:(?!\$Name:|\$Thruster).)*?\r\n)([ \t]*\+Length:[ \t]*)([^\r]*?)(\r\n)", new MatchEvaluator(GenerateShipLength), RegexOptions.Singleline);
@@ -506,6 +521,11 @@ namespace FreeSpace2TranslationTools.Services
             return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
+        private string GenerateCutscenes(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+        }
+
         private string GenerateHudGauges(Match match)
         {
             return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
@@ -535,6 +555,20 @@ namespace FreeSpace2TranslationTools.Services
                 // don't send groups[1] content in the parameters, otherwise the method will check for a ';' in every line
                 return match.Groups[1].Value + ReplaceHardcodedValueWithXstr(match.Groups[2].Value + match.Groups[3].Value + match.Groups[4].Value, match.Groups[2].Value, match.Groups[3].Value);
             }
+        }
+
+        private string GenerateShipDescription(Match match)
+        {
+            string result = ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+
+            // if $end_multi_text is part of the original line, we have to exlude it from XSTR and put it on a new line
+            if (result.Contains("$end_multi_text"))
+            {
+                result = result.Replace("$end_multi_text", "");
+                result += "$end_multi_text\r\n";
+            }
+
+            return result;
         }
 
         private string GenerateRanks(Match match)
@@ -581,7 +615,7 @@ namespace FreeSpace2TranslationTools.Services
         private string ReplaceHardcodedValueWithXstr(string originalMatch, string beginningOfLine, string value)
         {
             // if this is a comment or if it's already XSTR, then don't touch it and return the original match
-            if (beginningOfLine.Contains(";") || value.Contains("XSTR"))
+            if (beginningOfLine.Contains(';') || value.Contains("XSTR"))
             {
                 return originalMatch;
             }
@@ -787,7 +821,8 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (Match match in subtitleTextResults)
             {
-                if (!allMessages.Contains(match.Groups[2].Value))
+                // skip already existing messages and cases with variables
+                if (!allMessages.Contains(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@"))
                 {
                     subtitleMessagesCount++;
 
