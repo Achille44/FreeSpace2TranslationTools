@@ -121,7 +121,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessHudGaugeFiles()
         {
-            List<string> creditFiles = FilesList.Where(x => x.EndsWith("-hdg.tbm") || x.EndsWith("hud gauges.tbl")).ToList();
+            List<string> creditFiles = FilesList.Where(x => x.EndsWith("-hdg.tbm") || x.EndsWith("hud_gauges.tbl")).ToList();
 
             foreach (string file in creditFiles)
             {
@@ -294,6 +294,11 @@ namespace FreeSpace2TranslationTools.Services
                 string sourceContent = File.ReadAllText(file);
 
                 string newContent = Utils.RegexNoAltNames.Replace(sourceContent, new MatchEvaluator(GenerateAltNames));
+
+                newContent = Regex.Replace(newContent, @"(\+Title:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateWeaponTitle));
+
+                newContent = Regex.Replace(newContent, @"(\+Description:[ \t]*)(.*?)\r\n(?=\$end_multi_text)", new MatchEvaluator(GenerateWeaponDescription), RegexOptions.Singleline);
+
                 MatchCollection weapons = Regex.Matches(newContent, @"\$Name:\s*.*?(?=\$Name|#end|#End)", RegexOptions.Singleline);
 
                 foreach (Match weapon in weapons)
@@ -394,6 +399,8 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = Regex.Replace(newContent, @"(.*\$Jump Node Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateJumpNodeNames));
                 newContent = ConvertJumpNodeReferencesToVariables(newContent);
+
+                newContent = ConvertNavpointsToVariables(newContent);
 
                 // the following method is too specific so not used anymore
                 //newContent = ConvertAltArgumentsToVariables(newContent);
@@ -528,7 +535,15 @@ namespace FreeSpace2TranslationTools.Services
 
         private string GenerateHudGauges(Match match)
         {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+            // Always Show Text is a boolean, so don't treat this case
+            if (match.Value.Contains("Always Show Text"))
+            {
+                return match.Value;
+            }
+            else
+            {
+                return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+            }
         }
 
         private string GenerateJumpNodeNames(Match match)
@@ -569,6 +584,16 @@ namespace FreeSpace2TranslationTools.Services
             }
 
             return result;
+        }
+
+        private string GenerateWeaponDescription(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+        }
+
+        private string GenerateWeaponTitle(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateRanks(Match match)
@@ -1148,6 +1173,38 @@ namespace FreeSpace2TranslationTools.Services
             {
                 return content;
             }
+        }
+
+        private string ConvertNavpointsToVariables(string content)
+        {
+            List<MissionVariable> variableList = new();
+
+            MatchCollection navSexpMatches = Regex.Matches(content, "(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav).*?\"(.*?)\"", RegexOptions.Singleline);
+
+            foreach (Match navSexp in navSexpMatches)
+            {
+                if (!variableList.Any(v => v.DefaultValue == navSexp.Groups[2].Value) && !navSexp.Groups[2].Value.StartsWith('@'))
+                {
+                    variableList.Add(new MissionVariable(navSexp.Groups[2].Value));
+                }
+            }
+
+            if (variableList.Count > 0)
+            {
+                content = AddVariablesToSexpVariablesSection(content, variableList);
+                string newSexp = PrepareNewSexpForVariables(variableList);
+                content = AddEventToManageTranslations(content, newSexp);
+
+                foreach (Match navSexp in navSexpMatches)
+                {
+                    MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == navSexp.Groups[2].Value);
+
+                    string newNavSexp = navSexp.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                    content = content.Replace(navSexp.Value, newNavSexp);
+                }
+            }
+
+            return content;
         }
 
         private string ConvertAltArgumentsToVariables(string content)

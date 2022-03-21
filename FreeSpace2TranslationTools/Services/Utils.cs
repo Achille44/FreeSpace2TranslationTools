@@ -39,7 +39,7 @@ namespace FreeSpace2TranslationTools.Services
             List<string> result = new();
 
             // First we look for tables, then we look for missions, to try to follow the translation conventions... and to avoid token problems in tables
-            string[] tablesExtensions = new[] { ".tbl", ".tbm" };
+            string[] tablesExtensions = new[] { ".tbl", ".tbm", ".cpp" };
             string[] missionsExtensions = new[] { ".fc2", ".fs2" };
 
             result.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
