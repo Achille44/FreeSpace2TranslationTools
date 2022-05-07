@@ -11,12 +11,19 @@ namespace FreeSpace2TranslationTools.Services
 {
     public static class Utils
     {
-        public static Regex RegexXstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
+        // REGEX HELP
+        // (?=) : Postivie lookahead. Matches a group after the main expression without including it in the result
+
+        private static Regex regexXstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         // don't select entries in comment...
-        public static Regex RegexNoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
-        //public static Regex RegexNoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
-        public static Regex RegexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
-        public static Regex RegexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static Regex regexNoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static Regex regexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static Regex regexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
+
+        public static Regex RegexModifyXstr { get => regexModifyXstr; set => regexModifyXstr = value; }
+        public static Regex RegexAlternateTypes { get => regexAlternateTypes; set => regexAlternateTypes = value; }
+        public static Regex RegexNoAltNames { get => regexNoAltNames; set => regexNoAltNames = value; }
+        public static Regex RegexXstr { get => regexXstr; set => regexXstr = value; }
 
         public static IEnumerable<Match> GetAllXstrFromFile(FileInfo fileInfo, string fileContent)
         {

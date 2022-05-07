@@ -293,7 +293,9 @@ namespace FreeSpace2TranslationTools.Services
             {
                 string sourceContent = File.ReadAllText(file);
 
-                string newContent = Utils.RegexNoAltNames.Replace(sourceContent, new MatchEvaluator(GenerateAltNames));
+                string newContent = Regex.Replace(sourceContent, @"([^;]\$Alt Name:[ \t]*)((?!XSTR).*)\r\n", new MatchEvaluator(ReplaceAltNames));
+
+                newContent = Utils.RegexNoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
 
                 newContent = Regex.Replace(newContent, @"(\+Title:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateWeaponTitle));
 
@@ -604,6 +606,10 @@ namespace FreeSpace2TranslationTools.Services
         private string GenerateAltNames(Match match)
         {
             return AddXstrLineToHardcodedValue("$Alt Name", match);
+        }
+        private string ReplaceAltNames(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateDoorDescriptions(Match match)
