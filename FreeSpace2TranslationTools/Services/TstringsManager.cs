@@ -14,14 +14,14 @@ namespace FreeSpace2TranslationTools.Services
         public object Sender { get; set; }
         public string ModFolder { get; set; }
         public string DestinationFolder { get; set; }
-        public List<string> FilesList { get; set; }
+        public List<GameFile> FilesList { get; set; }
         public List<Xstr> Lines { get; set; }
         public List<Xstr> Duplicates { get; set; }
         public bool ManageDuplicates { get; set; }
         public string StartingID { get; set; }
         public int CurrentProgress { get; set; }
 
-        public TstringsManager(MainWindow parent, object sender, string modFolder, string destinationFolder, bool manageDuplicates, string startingID = "")
+        public TstringsManager(MainWindow parent, object sender, string modFolder, string destinationFolder, bool manageDuplicates, List<GameFile> filesList, string startingID = "")
         {
             Parent = parent;
             Sender = sender;
@@ -33,7 +33,7 @@ namespace FreeSpace2TranslationTools.Services
             Lines = new();
             Duplicates = new();
 
-            FilesList = Utils.GetFilesWithXstrFromFolder(modFolder);
+            FilesList = filesList;
 
             Parent.InitializeProgress(Sender);
             Parent.SetMaxProgress(FilesList.Count);
@@ -56,6 +56,14 @@ namespace FreeSpace2TranslationTools.Services
             }
             #endregion
 
+            foreach (GameFile file in FilesList)
+            {
+                if (file.Modified)
+                {
+                    Utils.CreateFileWithNewContent(file.Name, ModFolder, DestinationFolder, file.Content);
+                }
+            }
+
             CreateTstringsFile();
         }
         #endregion
@@ -65,14 +73,13 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void FetchXstr()
         {
-            List<string> compatibleFiles = FilesList.Where(x => !x.Contains("-lcl.tbm") && !x.Contains("-tlc.tbm") && !x.Contains("strings.tbl")).ToList();
+            List<GameFile> compatibleFiles = FilesList.Where(x => !x.Name.Contains("-lcl.tbm") && !x.Name.Contains("-tlc.tbm") && !x.Name.Contains("strings.tbl")).ToList();
 
-            foreach (string file in compatibleFiles)
+            foreach (GameFile file in compatibleFiles)
             {
-                FileInfo fileInfo = new(file);
-                string fileContent = File.ReadAllText(file);
+                FileInfo fileInfo = new(file.Name);
 
-                IEnumerable<Match> combinedResults = Utils.GetAllXstrFromFile(fileInfo, fileContent);
+                IEnumerable<Match> combinedResults = Utils.GetAllXstrFromFile(fileInfo, file.Content);
 
                 foreach (Match match in combinedResults)
                 {
@@ -182,11 +189,6 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Creates table and mission files with new IDs
         /// </summary>
-        /// <param name="duplicates"></param>
-        /// <param name="modFolder"></param>
-        /// <param name="destinationFolder"></param>
-        /// <param name="currentProgress"></param>
-        /// <param name="sender"></param>
         private void CreateModFilesWithNewIds()
         {
             Duplicates = Duplicates.OrderBy(x => x.FileName).ToList();
@@ -194,15 +196,18 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (string sourceFile in filesToModify)
             {
+                GameFile gameFile = FilesList.FirstOrDefault(file => file.Name == sourceFile);
+
                 string fileName = Path.GetFileName(sourceFile);
-                string fileContent = File.ReadAllText(sourceFile);
+                string newContent = gameFile.Content;
 
                 foreach (Xstr lineToModify in Duplicates.Where(x => x.FileName == fileName))
                 {
-                    fileContent = Utils.ReplaceContentWithNewXstr(fileContent, lineToModify);
+                    newContent = Utils.ReplaceContentWithNewXstr(newContent, lineToModify);
                 }
 
-                Utils.CreateFileWithNewContent(sourceFile, ModFolder, DestinationFolder, fileContent);
+                gameFile.SaveContent(newContent);
+
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }

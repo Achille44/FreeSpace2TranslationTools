@@ -15,13 +15,13 @@ namespace FreeSpace2TranslationTools.Services
         public object Sender { get; set; }
         public string ModFolder { get; set; }
         public string DestinationFolder { get; set; }
-        public List<string> FilesList { get; set; }
+        public List<GameFile> FilesList { get; set; }
         public int CurrentProgress { get; set; }
         public List<Weapon> Weapons { get; set; }
         public List<Ship> Ships { get; set; }
         public ModFile FileInProgress { get; set; }
 
-        public XstrManager(MainWindow parent, object sender, string modFolder, string destinationFolder)
+        public XstrManager(MainWindow parent, object sender, string modFolder, string destinationFolder, List<GameFile> filesList)
         {
             Parent = parent;
             Sender = sender;
@@ -32,7 +32,7 @@ namespace FreeSpace2TranslationTools.Services
             Ships = new List<Ship>();
             FileInProgress = new ModFile();
 
-            FilesList = Utils.GetFilesWithXstrFromFolder(modFolder);
+            FilesList = filesList;
 
             Parent.InitializeProgress(Sender);
             Parent.SetMaxProgress(FilesList.Count);
@@ -58,18 +58,13 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessCampaignFiles()
         {
-            List<string> campaignFiles = FilesList.Where(x => x.EndsWith(".fc2")).ToList();
+            List<GameFile> campaignFiles = FilesList.Where(x => x.Name.EndsWith(".fc2")).ToList();
 
-            foreach (string file in campaignFiles)
+            foreach (GameFile file in campaignFiles)
             {
-                string sourceContent = File.ReadAllText(file);
+                string newContent = Regex.Replace(file.Content, @"(.*?\$Name: )((?!XSTR).*)\r\n", new MatchEvaluator(GenerateCampaignNames));
 
-                string newContent = Regex.Replace(sourceContent, @"(.*?\$Name: )((?!XSTR).*)\r\n", new MatchEvaluator(GenerateCampaignNames));
-
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
-                }
+                file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -80,18 +75,13 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void ProcessCreditFiles()
         {
-            List<string> creditFiles = FilesList.Where(x => x.Contains("-crd.tbm") || x.Contains("credits.tbl")).ToList();
+            List<GameFile> creditFiles = FilesList.Where(x => x.Name.Contains("-crd.tbm") || x.Name.Contains("credits.tbl")).ToList();
 
-            foreach (string file in creditFiles)
+            foreach (GameFile file in creditFiles)
             {
-                string sourceContent = File.ReadAllText(file);
+                string newContent = Regex.Replace(file.Content, @"(^)((?!(XSTR|\$|#End|#end)).+?)\r\n", new MatchEvaluator(GenerateCredits), RegexOptions.Multiline);
 
-                string newContent = Regex.Replace(sourceContent, @"(^)((?!(XSTR|\$|#End|#end)).+?)\r\n", new MatchEvaluator(GenerateCredits), RegexOptions.Multiline);
-
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
-                }
+                file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -102,18 +92,13 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void ProcessCutscenesFile()
         {
-            string cutscenesFile = FilesList.FirstOrDefault(x => x.Contains("cutscenes.tbl"));
+            GameFile cutscenesFile = FilesList.FirstOrDefault(x => x.Name.Contains("cutscenes.tbl"));
 
             if (cutscenesFile != null)
             {
-                string sourceContent = File.ReadAllText(cutscenesFile);
+                string newContent = Regex.Replace(cutscenesFile.Content, @"(\$Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateCutscenes));
 
-                string newContent = Regex.Replace(sourceContent, @"(\$Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateCutscenes));
-
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(cutscenesFile, ModFolder, DestinationFolder, newContent);
-                }
+                cutscenesFile.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -121,18 +106,13 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessHudGaugeFiles()
         {
-            List<string> creditFiles = FilesList.Where(x => x.EndsWith("-hdg.tbm") || x.EndsWith("hud_gauges.tbl")).ToList();
+            List<GameFile> creditFiles = FilesList.Where(x => x.Name.EndsWith("-hdg.tbm") || x.Name.EndsWith("hud_gauges.tbl")).ToList();
 
-            foreach (string file in creditFiles)
+            foreach (GameFile file in creditFiles)
             {
-                string sourceContent = File.ReadAllText(file);
+                string newContent = Regex.Replace(file.Content, @"(.*?Text:[ \t]*)((?!XSTR).*)\r?\n", new MatchEvaluator(GenerateHudGauges));
 
-                string newContent = Regex.Replace(sourceContent, @"(.*?Text:[ \t]*)((?!XSTR).*)\r?\n", new MatchEvaluator(GenerateHudGauges));
-
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
-                }
+                file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -143,18 +123,13 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void ProcessMedalsFile()
         {
-            string medalsFile = FilesList.FirstOrDefault(x => x.Contains("medals.tbl"));
+            GameFile medalsFile = FilesList.FirstOrDefault(x => x.Name.Contains("medals.tbl"));
 
             if (medalsFile != null)
             {
-                string sourceContent = File.ReadAllText(medalsFile);
+                string newContent = Regex.Replace(medalsFile.Content, @"(\$Name:[ \t]*(.*?)\r\n)([^\r]*\$Bitmap)", new MatchEvaluator(GenerateAltNames), RegexOptions.Multiline);
 
-                string newContent = Regex.Replace(sourceContent, @"(\$Name:[ \t]*(.*?)\r\n)([^\r]*\$Bitmap)", new MatchEvaluator(GenerateAltNames), RegexOptions.Multiline);
-
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(medalsFile, ModFolder, DestinationFolder, newContent);
-                }
+                medalsFile.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -170,21 +145,16 @@ namespace FreeSpace2TranslationTools.Services
         /// <param name="sender"></param>
         private void ProcessMainHallFiles()
         {
-            List<string> mainHallFiles = FilesList.Where(x => x.Contains("-hall.tbm") || x.Contains("mainhall.tbl")).ToList();
+            List<GameFile> mainHallFiles = FilesList.Where(x => x.Name.Contains("-hall.tbm") || x.Name.Contains("mainhall.tbl")).ToList();
 
             // all door descriptions without XSTR variable
             Regex regexDoorDescription = new(@"(.*\+Door description:\s*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
 
-            foreach (string file in mainHallFiles)
+            foreach (GameFile file in mainHallFiles)
             {
-                string sourceContent = File.ReadAllText(file);
+                string newContent = regexDoorDescription.Replace(file.Content, new MatchEvaluator(GenerateDoorDescriptions));
 
-                string newContent = regexDoorDescription.Replace(sourceContent, new MatchEvaluator(GenerateDoorDescriptions));
-
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
-                }
+                file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -192,18 +162,13 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessRankFile()
         {
-            string medalsFile = FilesList.FirstOrDefault(x => x.Contains("rank.tbl"));
+            GameFile rankFile = FilesList.FirstOrDefault(x => x.Name.Contains("rank.tbl"));
 
-            if (medalsFile != null)
+            if (rankFile != null)
             {
-                string sourceContent = File.ReadAllText(medalsFile);
+                string newContent = Regex.Replace(rankFile.Content, @"(.*\$Name:\s*)(.*?)\r\n", new MatchEvaluator(GenerateRanks));
 
-                string newContent = Regex.Replace(sourceContent, @"(.*\$Name:\s*)(.*?)\r\n", new MatchEvaluator(GenerateRanks));
-
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(medalsFile, ModFolder, DestinationFolder, newContent);
-                }
+                rankFile.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -212,13 +177,12 @@ namespace FreeSpace2TranslationTools.Services
         private void ProcessShipFiles()
         {
             // Start with ships.tbl
-            List<string> shipFiles = FilesList.Where(x => x.Contains("ships.tbl")).ToList();
-            shipFiles.AddRange(FilesList.Where(x => x.Contains("-shp.tbm")).ToList());
+            List<GameFile> shipFiles = FilesList.Where(x => x.Name.Contains("ships.tbl")).ToList();
+            shipFiles.AddRange(FilesList.Where(x => x.Name.Contains("-shp.tbm")).ToList());
 
-            foreach (string file in shipFiles)
+            foreach (GameFile file in shipFiles)
             {
-                string sourceContent = File.ReadAllText(file);
-                string shipSection = Regex.Match(sourceContent, @"#Ship Classes.*?(#End|#end)", RegexOptions.Singleline).Value;
+                string shipSection = Regex.Match(file.Content, @"#Ship Classes.*?(#End|#end)", RegexOptions.Singleline).Value;
                 string newContent = shipSection;
                 MatchCollection shipEntries = Regex.Matches(shipSection, @"\n\$Name:.*?(?=\n\$Name|#end|#End)", RegexOptions.Singleline);
 
@@ -263,21 +227,14 @@ namespace FreeSpace2TranslationTools.Services
                     }
                 }
 
-                //string newContent = Regex.Replace(shipSection, @"(\$Subsystem:\s+(.*?),.*?\r\n)(.*?)(?=\$Name|\$Subsystem:|#End)", new MatchEvaluator(GenerateSubsystems), RegexOptions.Singleline);
-
-                //newContent = Utils.RegexNoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
-
                 newContent = Regex.Replace(newContent, @"(\+Tech Description:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateShipDescription));
 
                 // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
                 newContent = Regex.Replace(newContent, @"(\$Name:(?:(?!\$Name:|\$Thruster).)*?\r\n)([ \t]*\+Length:[ \t]*)([^\r]*?)(\r\n)", new MatchEvaluator(GenerateShipLength), RegexOptions.Singleline);
 
-                newContent = sourceContent.Replace(shipSection, newContent);
+                newContent = file.Content.Replace(shipSection, newContent);
 
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
-                }
+                file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -285,15 +242,13 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessWeaponFiles()
         {
-            List<string> weaponFiles = FilesList.Where(x => x.Contains("-wep.tbm") || x.Contains("weapons.tbl")).ToList();
+            List<GameFile> weaponFiles = FilesList.Where(x => x.Name.Contains("-wep.tbm") || x.Name.Contains("weapons.tbl")).ToList();
             List<string> primaryNames = new();
             List<string> secondaryNames = new();
 
-            foreach (string file in weaponFiles)
+            foreach (GameFile file in weaponFiles)
             {
-                string sourceContent = File.ReadAllText(file);
-
-                string newContent = Regex.Replace(sourceContent, @"([^;]\$Alt Name:[ \t]*)((?!XSTR).*)\r\n", new MatchEvaluator(ReplaceAltNames));
+                string newContent = Regex.Replace(file.Content, @"([^;]\$Alt Name:[ \t]*)((?!XSTR).*)\r\n", new MatchEvaluator(ReplaceAltNames));
 
                 newContent = Utils.RegexNoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
 
@@ -355,10 +310,7 @@ namespace FreeSpace2TranslationTools.Services
                     }
                 }
 
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
-                }
+                file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -366,7 +318,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessMissionFiles()
         {
-            List<string> missionFiles = FilesList.Where(x => x.Contains(".fs2")).ToList();
+            List<GameFile> missionFiles = FilesList.Where(x => x.Name.Contains(".fs2")).ToList();
 
             // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
             // ex: $Label: Alpha 1 ==> $Label: XSTR("Alpha 1", -1)
@@ -377,13 +329,11 @@ namespace FreeSpace2TranslationTools.Services
             //                      ==>     $Class......
             Regex regexShipNames = new(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline | RegexOptions.Compiled);
 
-            foreach (string file in missionFiles)
+            foreach (GameFile file in missionFiles)
             {
                 FileInProgress = new ModFile();
 
-                string sourceContent = File.ReadAllText(file);
-
-                string newContent = regexLabels.Replace(sourceContent, new MatchEvaluator(GenerateLabels));
+                string newContent = regexLabels.Replace(file.Content, new MatchEvaluator(GenerateLabels));
 
                 newContent = Regex.Replace(newContent, @"(.*\$Callsign:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateCallSigns));
 
@@ -407,10 +357,7 @@ namespace FreeSpace2TranslationTools.Services
                 // the following method is too specific so not used anymore
                 //newContent = ConvertAltArgumentsToVariables(newContent);
 
-                if (sourceContent != newContent)
-                {
-                    Utils.CreateFileWithNewContent(file, ModFolder, DestinationFolder, newContent);
-                }
+                file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }

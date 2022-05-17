@@ -133,13 +133,16 @@
     <value>Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder)</value>
   </data>
   <data name="CreateMissingXstrDescription" xml:space="preserve">
-    <value>This functionality replaces hard coded strings with XSTR variables in the following mod files:</value>
+    <value>This functionality replaces hard coded strings with XSTR variables in the mod files listed below, then creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder.</value>
   </data>
   <data name="CreateMissingXstrTitle" xml:space="preserve">
-    <value>Create missing XSTR</value>
+    <value>Generate tstrings with missing XSTR</value>
   </data>
   <data name="Credits" xml:space="preserve">
     <value>credits</value>
+  </data>
+  <data name="Cutscenes" xml:space="preserve">
+    <value>cutscenes</value>
   </data>
   <data name="DestinationFile" xml:space="preserve">
     <value>Destination file</value>
@@ -155,12 +158,6 @@
   </data>
   <data name="Generate" xml:space="preserve">
     <value>Generate</value>
-  </data>
-  <data name="GenerateTstringsDescription" xml:space="preserve">
-    <value>This functionality creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder.</value>
-  </data>
-  <data name="GenerateTstringsTitle" xml:space="preserve">
-    <value>Generate tstrings.tbl</value>
   </data>
   <data name="HudGauges" xml:space="preserve">
     <value>hud gauges</value>

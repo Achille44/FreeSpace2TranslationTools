@@ -12,7 +12,7 @@ namespace FreeSpace2TranslationTools.Services
     public static class Utils
     {
         // REGEX HELP
-        // (?=) : Postivie lookahead. Matches a group after the main expression without including it in the result
+        // (?=) : Positive lookahead. Matches a group after the main expression without including it in the result
 
         private static Regex regexXstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         // don't select entries in comment...
@@ -41,26 +41,32 @@ namespace FreeSpace2TranslationTools.Services
             return combinedResults;
         }
 
-        public static List<string> GetFilesWithXstrFromFolder(string folderPath)
+        public static List<GameFile> GetFilesWithXstrFromFolder(string folderPath)
         {
-            List<string> result = new();
+            List<string> files = new();
+            List<GameFile> gameFiles = new();
 
             // First we look for tables, then we look for missions, to try to follow the translation conventions... and to avoid token problems in tables
             string[] tablesExtensions = new[] { ".tbl", ".tbm", ".cpp" };
             string[] missionsExtensions = new[] { ".fc2", ".fs2" };
 
-            result.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
+            files.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
                 .Where(f => tablesExtensions.Contains(Path.GetExtension(f))).ToList());
 
-            result.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
+            files.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
                 .Where(f => missionsExtensions.Contains(Path.GetExtension(f))).ToList());
 
-            if (result.Count == 0)
+            if (files.Count == 0)
             {
                 throw new UserFriendlyException(Localization.NoValidFileInFolder);
             }
 
-            return result;
+            foreach (string file in files)
+            {
+                gameFiles.Add(new GameFile(file));
+            }
+
+            return gameFiles;
         }
 
         public static void CreateFileWithNewContent(string sourceFile, string modFolder, string destinationFolder, string content)

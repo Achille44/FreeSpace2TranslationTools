@@ -22,15 +22,24 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
                         <TextBlock Style="{StaticResource LongTextBlock}" Text="{x:Static p:Resources.CreateMissingXstrDescription}" />
                     </WrapPanel>
                     <WrapPanel Grid.Row="1">
-                        <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.Campaign}">
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.Campaign}" Cursor="Help">
                             <TextBlock.ToolTip>
                                 <StackPanel>
                                     <Image Source="/Images/campaign.png" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource TextBlockLink}" Text="{x:Static p:Resources.Cutscenes}" Cursor="Help">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <Image Source="/Images/cutscenes.png" />
                                 </StackPanel>
                             </TextBlock.ToolTip>
                         </TextBlock>
@@ -115,57 +124,16 @@
                         <Button x:Name="btnDestinationFolderXSTR" Content="{x:Static p:Resources.Browse}" Click="btnDestinationFolderXSTR_Click" Grid.Row="1" Grid.Column="2" />
                     </Grid>
                     <WrapPanel Grid.Row="3">
-                        <Button x:Name="btnCreateXstr" Content="{x:Static p:Resources.Generate}" Click="btnCreateXstr_Click" Style="{StaticResource ValidationButton}" />
-                    </WrapPanel>
-                </Grid>
-            </TabItem>
-            <TabItem Header="{x:Static p:Resources.GenerateTstringsTitle}">
-                <Grid Background="#FFE5E5E5">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <WrapPanel Grid.Row="0">
-                        <TextBlock Text="{x:Static p:Resources.GenerateTstringsDescription}" Style="{StaticResource LongTextBlock}" />
-                    </WrapPanel>
-                    <Grid Grid.Row="1">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal">
-                            <Label Content="{x:Static p:Resources.ModFolder}" />
-                            <Image Source="/Images/helpIcon.png" ToolTip="{x:Static p:Resources.ModFolderTooltip}" />
-                        </StackPanel>
-                        <TextBox Name="tbModFolder" TextWrapping="Wrap" Grid.Column="1" AllowDrop="True" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
-                        <Button Name="btnModFolder" Content="{x:Static p:Resources.Browse}" Click="btnModFolder_Click" Grid.Column="2" />
-                        <StackPanel Grid.Row="1" Orientation="Horizontal">
-                            <Label Content="{x:Static p:Resources.DestinationFolder}" />
-                            <Image Source="/Images/helpIcon.png" ToolTip="{x:Static p:Resources.DestinationFolderTooltip}" />
-                        </StackPanel>
-                        <TextBox x:Name="tbDestinationFolder" Text="" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
-                        <Button x:Name="btnDestinationFolder" Content="{x:Static p:Resources.Browse}" Click="btnDestinationFolder_Click" Grid.Row="1" Grid.Column="2" />
-                    </Grid>
-                    <WrapPanel Grid.Row="2">
                         <CheckBox x:Name="cbManageDuplicates" Checked="cbManageDuplicates_Checked" Unchecked="cbManageDuplicates_Unchecked">
                             <TextBlock Style="{StaticResource TextInCB}" Text="{x:Static p:Resources.CheckBoxManageDuplicates}" />
                         </CheckBox>
                     </WrapPanel>
-                    <WrapPanel Grid.Row="3">
+                    <WrapPanel Grid.Row="4">
                         <TextBox x:Name="tbStartingID" Style="{StaticResource SmallTextBox}" PreviewTextInput="OnlyDigits_PreviewTextInput" DataObject.Pasting="OnlyDigits_Pasting" IsEnabled="False" />
                         <TextBlock Style="{StaticResource LongTextBlock}" Text="{x:Static p:Resources.StartingIdDescription}" />
                     </WrapPanel>
-                    <WrapPanel Grid.Row="4">
-                        <Button x:Name="btnGenerate" Content="{x:Static p:Resources.Generate}" Click="btnGenerate_Click" Style="{StaticResource ValidationButton}" />
+                    <WrapPanel Grid.Row="5">
+                        <Button x:Name="btnCreateXstr" Content="{x:Static p:Resources.Generate}" Click="btnCreateXstr_Click" Style="{StaticResource ValidationButton}" />
                     </WrapPanel>
                 </Grid>
             </TabItem>

@@ -28,73 +28,7 @@ namespace FreeSpace2TranslationTools
         {
             InitializeComponent();
             // Default cache is 15
-            Regex.CacheSize = 50;
-        }
-
-        private void btnModFolder_Click(object sender, RoutedEventArgs e)
-        {
-            ChooseLocation(Localization.ModFolder, true, tbModFolder);
-        }
-
-        private void btnDestinationFolder_Click(object sender, RoutedEventArgs e)
-        {
-            ChooseLocation(Localization.DestinationFolder, true, tbDestinationFolder);
-        }
-
-        private void btnGenerate_Click(object sender, RoutedEventArgs e)
-        {
-            BackgroundWorker worker = new();
-            worker.WorkerReportsProgress = true;
-            worker.DoWork += GenerateTstrings;
-            worker.ProgressChanged += WorkerProgressChanged;
-            worker.RunWorkerAsync();
-        }
-
-        private void GenerateTstrings(object sender, DoWorkEventArgs e)
-        {
-            ToggleInputGrid();
-
-            try
-            {
-                Stopwatch watch = Stopwatch.StartNew();
-
-                int currentProgress = 0;
-                (sender as BackgroundWorker).ReportProgress(currentProgress);
-
-                string modFolder = string.Empty;
-                string destinationFolder = string.Empty;
-                string startingID = string.Empty;
-                bool manageDuplicates = false;
-
-                Dispatcher.Invoke(() =>
-                {
-                    modFolder = tbModFolder.Text;
-                    destinationFolder = tbDestinationFolder.Text;
-                    manageDuplicates = cbManageDuplicates.IsChecked ?? false;
-                    startingID = tbStartingID.Text;
-                });
-
-                CheckDirectoryIsValid(modFolder, Localization.ModFolder);
-                CheckDirectoryIsValid(destinationFolder, Localization.DestinationFolder);
-
-                TstringsManager tstringsManager = new(this, sender, modFolder, destinationFolder, manageDuplicates, startingID);
-
-                tstringsManager.ProcessTstrings();
-
-                SetProgressToMax(sender);
-
-                watch.Stop();
-
-                ProcessComplete(watch.Elapsed);
-            }
-            catch (Exception ex)
-            {
-                ManageException(ex);
-            }
-            finally
-            {
-                ToggleInputGrid();
-            }
+            Regex.CacheSize = 100;
         }
 
         private void btnTranslationSource_Click(object sender, RoutedEventArgs e)
@@ -699,20 +633,28 @@ namespace FreeSpace2TranslationTools
 
                 string modFolder = string.Empty;
                 string destinationFolder = string.Empty;
+                string startingID = string.Empty;
+                bool manageDuplicates = false;
 
                 Dispatcher.Invoke(() =>
                 {
                     modFolder = tbModFolderXSTR.Text;
                     destinationFolder = tbDestinationFolderXSTR.Text;
+                    manageDuplicates = cbManageDuplicates.IsChecked ?? false;
+                    startingID = tbStartingID.Text;
                 });
 
                 CheckDirectoryIsValid(modFolder, Localization.ModFolder);
                 CheckDirectoryIsValid(destinationFolder, Localization.DestinationFolder);
 
-                XstrManager xstrManager = new(this, sender, modFolder, destinationFolder);
+                List<GameFile> filesList = Utils.GetFilesWithXstrFromFolder(modFolder);
 
+                XstrManager xstrManager = new(this, sender, modFolder, destinationFolder, filesList);
                 xstrManager.LaunchXstrProcess();
+                SetProgressToMax(sender);
 
+                TstringsManager tstringsManager = new(this, sender, modFolder, destinationFolder, manageDuplicates, filesList, startingID);
+                tstringsManager.ProcessTstrings();
                 SetProgressToMax(sender);
 
                 watch.Stop();

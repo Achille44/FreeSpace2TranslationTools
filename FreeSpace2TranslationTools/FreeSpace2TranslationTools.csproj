@@ -13,6 +13,7 @@
   <ItemGroup>
     <None Remove="Images\campaign.png" />
     <None Remove="Images\credits.png" />
+    <None Remove="Images\cutscenes.png" />
     <None Remove="Images\helpIcon.png" />
     <None Remove="Images\hud gauges.png" />
     <None Remove="Images\mainhall.png" />
@@ -28,6 +29,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\credits.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\cutscenes.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\hud gauges.png">

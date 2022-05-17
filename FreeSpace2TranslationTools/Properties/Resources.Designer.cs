@@ -106,7 +106,7 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à This functionality replaces hard coded strings with XSTR variables in the following mod files:.
+        ///   Recherche une chaîne localisée semblable à This functionality replaces hard coded strings with XSTR variables in the mod files listed below, then creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder..
         /// </summary>
         public static string CreateMissingXstrDescription {
             get {
@@ -115,7 +115,7 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Create missing XSTR.
+        ///   Recherche une chaîne localisée semblable à Generate tstrings with missing XSTR.
         /// </summary>
         public static string CreateMissingXstrTitle {
             get {
@@ -129,6 +129,15 @@ namespace FreeSpace2TranslationTools.Properties {
         public static string Credits {
             get {
                 return ResourceManager.GetString("Credits", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à cutscenes.
+        /// </summary>
+        public static string Cutscenes {
+            get {
+                return ResourceManager.GetString("Cutscenes", resourceCulture);
             }
         }
         
@@ -174,24 +183,6 @@ namespace FreeSpace2TranslationTools.Properties {
         public static string Generate {
             get {
                 return ResourceManager.GetString("Generate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à This functionality creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder..
-        /// </summary>
-        public static string GenerateTstringsDescription {
-            get {
-                return ResourceManager.GetString("GenerateTstringsDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Generate tstrings.tbl.
-        /// </summary>
-        public static string GenerateTstringsTitle {
-            get {
-                return ResourceManager.GetString("GenerateTstringsTitle", resourceCulture);
             }
         }
         
