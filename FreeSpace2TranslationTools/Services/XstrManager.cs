@@ -354,6 +354,8 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = ConvertNavpointsToVariables(newContent);
 
+                newContent = ConvertHardcodedSubsystemNamesToVariables(newContent);
+
                 // the following method is too specific so not used anymore
                 //newContent = ConvertAltArgumentsToVariables(newContent);
 
@@ -1154,6 +1156,42 @@ namespace FreeSpace2TranslationTools.Services
 
                     string newNavSexp = navSexp.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
                     content = content.Replace(navSexp.Value, newNavSexp);
+                }
+            }
+
+            return content;
+        }
+
+        private string ConvertHardcodedSubsystemNamesToVariables(string content)
+        {
+            MatchCollection subsystemMatches = Regex.Matches(content, "(\\( (?:change-subsystem-name).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            List<MissionVariable> variableList = new();
+
+            foreach (Match match in subsystemMatches)
+            {
+                // Only treat sexp not using variables
+                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                {
+                    variableList.Add(new MissionVariable(match.Groups[2].Value));
+                }
+            }
+
+            if (variableList.Count > 0)
+            {
+                content = AddVariablesToSexpVariablesSection(content, variableList);
+                string newSexp = PrepareNewSexpForVariables(variableList);
+                content = AddEventToManageTranslations(content, newSexp);
+
+                // let's cycle again to catch all sexps that could have different conditions or space/tab count...
+                foreach (Match match in subsystemMatches)
+                {
+                    if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                    {
+                        MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
+
+                        string newSubsystemSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                        content = content.Replace(match.Value, newSubsystemSexp);
+                    }
                 }
             }
 
