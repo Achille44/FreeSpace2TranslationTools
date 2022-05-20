@@ -356,9 +356,6 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = ConvertHardcodedSubsystemNamesToVariables(newContent);
 
-                // the following method is too specific so not used anymore
-                //newContent = ConvertAltArgumentsToVariables(newContent);
-
                 file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
@@ -1064,6 +1061,8 @@ namespace FreeSpace2TranslationTools.Services
                 {
                     MatchCollection specialSenderMatches = Regex.Matches(message.Value, "\"(#.*?)\"");
 
+                    string currentMessage = message.Value;
+
                     // in case of send-message-list, there can be several special senders
                     foreach (Match specialSender in specialSenderMatches)
                     {
@@ -1071,8 +1070,10 @@ namespace FreeSpace2TranslationTools.Services
                         {
                             MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == specialSender.Groups[1].Value);
 
-                            string newMessage = message.Value.Replace(specialSender.Value, variable.NewSexp);
-                            content = content.Replace(message.Value, newMessage);
+                            string newMessage = currentMessage.Replace(specialSender.Value, variable.NewSexp);
+                            content = content.Replace(currentMessage, newMessage);
+                            // once the currentMessage has been replaced in the original content, the newMessage becomes the currentMessage
+                            currentMessage = newMessage;
                         }
                     }
                 }
@@ -1192,46 +1193,6 @@ namespace FreeSpace2TranslationTools.Services
                         string newSubsystemSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
                         content = content.Replace(match.Value, newSubsystemSexp);
                     }
-                }
-            }
-
-            return content;
-        }
-
-        private string ConvertAltArgumentsToVariables(string content)
-        {
-            MatchCollection randomArguments = Regex.Matches(content, "when-argument[ \\t\\r\\n]*\\([ \\t]*random-multiple-of([^\\(]*?)\\)[ \\t\\r\\n]*\\([^\\(]*?\\)[ \\t\\r\\n]*\\([ \\t]*ship-change-alt-name[ \\t\\r\\n]*\"<argument>\"", RegexOptions.Singleline);
-            List<MissionVariable> variableList = new();
-
-            foreach (Match match in randomArguments)
-            {
-                MatchCollection arguments = Regex.Matches(match.Groups[1].Value, "\"([^\\r]*)\"", RegexOptions.Multiline);
-
-                foreach (Match argument in arguments)
-                {
-                    if (!argument.Groups[1].Value.StartsWith("@", StringComparison.InvariantCulture))
-                    {
-                        variableList.Add(new MissionVariable(argument.Groups[1].Value));
-                    }
-                }
-            }
-
-            if (variableList.Count > 0)
-            {
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-                string newSexp = PrepareNewSexpForVariables(variableList);
-                content = AddEventToManageTranslations(content, newSexp);
-
-                foreach (Match match in randomArguments)
-                {
-                    string arguments = match.Value;
-
-                    foreach (MissionVariable variable in variableList)
-                    {
-                        arguments = arguments.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
-                    }
-
-                    content = content.Replace(match.Value, arguments);
                 }
             }
 
