@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FreeSpace2TranslationTools.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -14,47 +15,41 @@ namespace FreeSpace2TranslationTools.Services
         // REGEX HELP
         // (?=) : Positive lookahead. Matches a group after the main expression without including it in the result
 
-        private static Regex regexXstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex regexXstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         // don't select entries in comment...
-        private static Regex regexNoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
-        private static Regex regexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
-        private static Regex regexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex regexNoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex regexAlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex regexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex regexShowIcon = new(@"(SHOWICON.+xstrid=)(-?\d+)(.*$)", RegexOptions.Compiled);
+        private static readonly Regex regexMsgXstr = new("(\".*?\" )(-?\\d+)", RegexOptions.Compiled);
 
-        public static Regex RegexModifyXstr { get => regexModifyXstr; set => regexModifyXstr = value; }
-        public static Regex RegexAlternateTypes { get => regexAlternateTypes; set => regexAlternateTypes = value; }
-        public static Regex RegexNoAltNames { get => regexNoAltNames; set => regexNoAltNames = value; }
-        public static Regex RegexXstr { get => regexXstr; set => regexXstr = value; }
-
-        public static IEnumerable<Match> GetAllXstrFromFile(FileInfo fileInfo, string fileContent)
-        {
-            MatchCollection resultsFromFile = RegexXstr.Matches(fileContent);
-            IEnumerable<Match> combinedResults = resultsFromFile.OfType<Match>().Where(m => m.Success);
-
-            // there is an additional specific format in fs2 files
-            if (fileInfo.Extension == ".fs2")
-            {
-                MatchCollection modifyResults = Regex.Matches(fileContent, "\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
-
-                combinedResults = resultsFromFile.OfType<Match>().Concat(modifyResults.OfType<Match>()).Where(m => m.Success);
-            }
-
-            return combinedResults;
-        }
+        public static Regex RegexAlternateTypes { get => regexAlternateTypes; }
+        public static Regex RegexNoAltNames { get => regexNoAltNames; }
+        public static Regex RegexXstr { get => regexXstr;}
 
         public static List<GameFile> GetFilesWithXstrFromFolder(string folderPath)
         {
             List<string> files = new();
             List<GameFile> gameFiles = new();
 
-            // First we look for tables, then we look for missions, to try to follow the translation conventions... and to avoid token problems in tables
-            string[] tablesExtensions = new[] { ".tbl", ".tbm", ".cpp" };
+            // First we look for tables, then modular tables (so that original tbl have less chance to see their ID changed in case of duplicates),
+            // then we look for missions, to try to follow the translation conventions... and to avoid token problems in tables
+            string[] tablesExtensions = new[] { ".tbl" };
+            string[] modularTablesExtensions = new[] { ".tbm", ".cpp" };
             string[] missionsExtensions = new[] { ".fc2", ".fs2" };
+            string[] fictionExtensions = new[] { Constants.FICTION_EXTENSION };
 
             files.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
                 .Where(f => tablesExtensions.Contains(Path.GetExtension(f))).ToList());
 
             files.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
+                .Where(f => modularTablesExtensions.Contains(Path.GetExtension(f))).ToList());
+
+            files.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
                 .Where(f => missionsExtensions.Contains(Path.GetExtension(f))).ToList());
+
+            files.AddRange(Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories)
+                .Where(f => fictionExtensions.Contains(Path.GetExtension(f))).ToList());
 
             if (files.Count == 0)
             {
@@ -93,13 +88,23 @@ namespace FreeSpace2TranslationTools.Services
 
             if (lineToModify.FullLine.Contains("modify-variable-xstr"))
             {
-                newLine = RegexModifyXstr.Replace(lineToModify.FullLine,
-                    m => $"{m.Groups[1].Value}{lineToModify.Id}{m.Groups[3].Value}");
+                newLine = regexModifyXstr.Replace(lineToModify.FullLine,
+                    match => $"{match.Groups[1].Value}{lineToModify.Id}{match.Groups[3].Value}");
+            }
+            else if (lineToModify.FullLine.StartsWith("XSTR"))
+            {
+                newLine = RegexXstr.Replace(lineToModify.FullLine,
+                    match => $"XSTR({match.Groups[1].Value}, {lineToModify.Id})");
+            }
+            else if (lineToModify.FullLine.StartsWith(VisualNovel.SHOWICON_MARKER))
+            {
+                newLine = regexShowIcon.Replace(lineToModify.FullLine,
+                    match => $"{match.Groups[1].Value}{lineToModify.Id}{match.Groups[3].Value}");
             }
             else
             {
-                newLine = RegexXstr.Replace(lineToModify.FullLine,
-                    m => $"XSTR({m.Groups[1].Value}, {lineToModify.Id})");
+                newLine = regexMsgXstr.Replace(lineToModify.FullLine,
+                    match => $"{match.Groups[1].Value}{lineToModify.Id}");
             }
 
             return content.Replace(lineToModify.FullLine, newLine);
@@ -108,8 +113,6 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Removes comments, alias and spaces from a name
         /// </summary>
-        /// <param name="rawName"></param>
-        /// <returns></returns>
         public static string SanitizeName(string rawName, bool fullSanatizing = false)
         {
             if (fullSanatizing)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FreeSpace2TranslationTools.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -15,7 +16,7 @@ namespace FreeSpace2TranslationTools.Services
         public object Sender { get; set; }
         public string ModFolder { get; set; }
         public string DestinationFolder { get; set; }
-        public List<GameFile> FilesList { get; set; }
+        public List<GameFile> Files { get; set; }
         public int CurrentProgress { get; set; }
         public List<Weapon> Weapons { get; set; }
         public List<Ship> Ships { get; set; }
@@ -32,10 +33,10 @@ namespace FreeSpace2TranslationTools.Services
             Ships = new List<Ship>();
             FileInProgress = new ModFile();
 
-            FilesList = filesList;
+            Files = filesList;
 
             Parent.InitializeProgress(Sender);
-            Parent.SetMaxProgress(FilesList.Count);
+            Parent.SetMaxProgress(Files.Count);
         }
 
         #region public methods
@@ -53,12 +54,13 @@ namespace FreeSpace2TranslationTools.Services
             ProcessWeaponFiles();
             ProcessShipFiles();
             ProcessMissionFiles();
+            ProcessVisualNovelFiles();
         }
         #endregion
 
         private void ProcessCampaignFiles()
         {
-            List<GameFile> campaignFiles = FilesList.Where(x => x.Name.EndsWith(".fc2")).ToList();
+            List<GameFile> campaignFiles = Files.Where(x => x.Name.EndsWith(".fc2")).ToList();
 
             foreach (GameFile file in campaignFiles)
             {
@@ -75,7 +77,7 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void ProcessCreditFiles()
         {
-            List<GameFile> creditFiles = FilesList.Where(x => x.Name.Contains("-crd.tbm") || x.Name.Contains("credits.tbl")).ToList();
+            List<GameFile> creditFiles = Files.Where(x => x.Name.Contains("-crd.tbm") || x.Name.Contains("credits.tbl")).ToList();
 
             foreach (GameFile file in creditFiles)
             {
@@ -92,7 +94,7 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void ProcessCutscenesFile()
         {
-            GameFile cutscenesFile = FilesList.FirstOrDefault(x => x.Name.Contains("cutscenes.tbl"));
+            GameFile cutscenesFile = Files.FirstOrDefault(x => x.Name.Contains("cutscenes.tbl"));
 
             if (cutscenesFile != null)
             {
@@ -106,7 +108,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessHudGaugeFiles()
         {
-            List<GameFile> creditFiles = FilesList.Where(x => x.Name.EndsWith("-hdg.tbm") || x.Name.EndsWith("hud_gauges.tbl")).ToList();
+            List<GameFile> creditFiles = Files.Where(x => x.Name.EndsWith("-hdg.tbm") || x.Name.EndsWith("hud_gauges.tbl")).ToList();
 
             foreach (GameFile file in creditFiles)
             {
@@ -123,7 +125,7 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void ProcessMedalsFile()
         {
-            GameFile medalsFile = FilesList.FirstOrDefault(x => x.Name.Contains("medals.tbl"));
+            GameFile medalsFile = Files.FirstOrDefault(x => x.Name.Contains("medals.tbl"));
 
             if (medalsFile != null)
             {
@@ -145,7 +147,7 @@ namespace FreeSpace2TranslationTools.Services
         /// <param name="sender"></param>
         private void ProcessMainHallFiles()
         {
-            List<GameFile> mainHallFiles = FilesList.Where(x => x.Name.Contains("-hall.tbm") || x.Name.Contains("mainhall.tbl")).ToList();
+            List<GameFile> mainHallFiles = Files.Where(x => x.Name.Contains("-hall.tbm") || x.Name.Contains("mainhall.tbl")).ToList();
 
             // all door descriptions without XSTR variable
             Regex regexDoorDescription = new(@"(.*\+Door description:\s*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
@@ -162,7 +164,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessRankFile()
         {
-            GameFile rankFile = FilesList.FirstOrDefault(x => x.Name.Contains("rank.tbl"));
+            GameFile rankFile = Files.FirstOrDefault(x => x.Name.Contains("rank.tbl"));
 
             if (rankFile != null)
             {
@@ -177,8 +179,8 @@ namespace FreeSpace2TranslationTools.Services
         private void ProcessShipFiles()
         {
             // Start with ships.tbl
-            List<GameFile> shipFiles = FilesList.Where(x => x.Name.Contains("ships.tbl")).ToList();
-            shipFiles.AddRange(FilesList.Where(x => x.Name.Contains("-shp.tbm")).ToList());
+            List<GameFile> shipFiles = Files.Where(x => x.Name.Contains("ships.tbl")).ToList();
+            shipFiles.AddRange(Files.Where(x => x.Name.Contains("-shp.tbm")).ToList());
 
             foreach (GameFile file in shipFiles)
             {
@@ -242,7 +244,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessWeaponFiles()
         {
-            List<GameFile> weaponFiles = FilesList.Where(x => x.Name.Contains("-wep.tbm") || x.Name.Contains("weapons.tbl")).ToList();
+            List<GameFile> weaponFiles = Files.Where(x => x.Name.Contains("-wep.tbm") || x.Name.Contains("weapons.tbl")).ToList();
             List<string> primaryNames = new();
             List<string> secondaryNames = new();
 
@@ -318,7 +320,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessMissionFiles()
         {
-            List<GameFile> missionFiles = FilesList.Where(x => x.Name.Contains(".fs2")).ToList();
+            List<GameFile> missionFiles = Files.Where(x => x.Name.Contains(".fs2")).ToList();
 
             // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
             // ex: $Label: Alpha 1 ==> $Label: XSTR("Alpha 1", -1)
@@ -362,13 +364,32 @@ namespace FreeSpace2TranslationTools.Services
             }
         }
 
+        private void ProcessVisualNovelFiles()
+        {
+            GameFile[] visualNovels = Files.Where(file => file.Name.Contains(Constants.FICTION_FOLDER) && file.Name.EndsWith(Constants.FICTION_EXTENSION)).ToArray();
+
+            foreach (GameFile file in visualNovels)
+            {
+                try
+                {
+                    VisualNovel visualNovel = new(file.Content);
+
+                    file.SaveContent(visualNovel.GetInternationalizedContent());
+                }
+                catch (WrongFileFormatException)
+                {
+                    continue;
+                }
+            }
+        }
+
         private string GenerateSubsystems(Match match, bool replaceOnly = false)
         {
             string newSubsystem = match.Value;
             bool altNameAlreadyExisting = true;
             bool altDamagePopupNameAlreadyExisting = true;
 
-            if (!replaceOnly && !match.Value.Contains("$Alt Subsystem Name:") &&!match.Value.Contains("$Alt Subsystem name:"))
+            if (!replaceOnly && !match.Value.Contains("$Alt Subsystem Name:") && !match.Value.Contains("$Alt Subsystem name:"))
             {
                 altNameAlreadyExisting = false;
                 newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));

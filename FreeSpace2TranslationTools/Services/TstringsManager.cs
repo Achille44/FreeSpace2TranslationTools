@@ -79,7 +79,7 @@ namespace FreeSpace2TranslationTools.Services
             {
                 FileInfo fileInfo = new(file.Name);
 
-                IEnumerable<Match> combinedResults = Utils.GetAllXstrFromFile(fileInfo, file.Content);
+                IEnumerable<Match> combinedResults = GetAllXstrFromFile(fileInfo, file.Content);
 
                 foreach (Match match in combinedResults)
                 {
@@ -244,6 +244,31 @@ namespace FreeSpace2TranslationTools.Services
                 content += $"{Environment.NewLine}#End";
                 Utils.CreateFileWithPath(Path.Combine(DestinationFolder, "tables/tstrings.tbl"), content);
             }
+        }
+
+        private static IEnumerable<Match> GetAllXstrFromFile(FileInfo fileInfo, string fileContent)
+        {
+            MatchCollection resultsFromFile = Utils.RegexXstr.Matches(fileContent);
+            IEnumerable<Match> combinedResults = resultsFromFile.OfType<Match>().Where(m => m.Success);
+
+            // there is an additional specific format in fs2 files
+            if (fileInfo.Extension == ".fs2")
+            {
+                MatchCollection modifyResults = Regex.Matches(fileContent, "\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
+
+                combinedResults = combinedResults.Concat(modifyResults.OfType<Match>()).Where(match => match.Success);
+            }
+            else if (fileInfo.FullName.Contains(Constants.FICTION_FOLDER) && fileInfo.Extension == Constants.FICTION_EXTENSION)
+            {
+                MatchCollection showIconLines = Regex.Matches(fileContent, "SHOWICON.+?text=(\".+?\").+?xstrid=(-?\\d+)");
+
+                MatchCollection msgXstrLines = Regex.Matches(fileContent, "(?<=MSGXSTR.+)(\".+?\") (-?\\d+)");
+
+                combinedResults = combinedResults.Concat(showIconLines.OfType<Match>()).Where(match => match.Success)
+                    .Concat(msgXstrLines.OfType<Match>()).Where(match => match.Success);
+            }
+
+            return combinedResults;
         }
     }
 }

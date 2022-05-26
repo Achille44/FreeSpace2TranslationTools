@@ -1,4 +1,5 @@
-﻿using FreeSpace2TranslationTools.Services;
+﻿using FreeSpace2TranslationTools.Exceptions;
+using FreeSpace2TranslationTools.Services;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
@@ -634,26 +635,26 @@ namespace FreeSpace2TranslationTools
                 string modFolder = string.Empty;
                 string destinationFolder = string.Empty;
                 string startingID = string.Empty;
-                bool manageDuplicates = false;
+                bool duplicatesMustBeManaged = false;
 
                 Dispatcher.Invoke(() =>
                 {
                     modFolder = tbModFolderXSTR.Text;
                     destinationFolder = tbDestinationFolderXSTR.Text;
-                    manageDuplicates = cbManageDuplicates.IsChecked ?? false;
+                    duplicatesMustBeManaged = cbManageDuplicates.IsChecked ?? false;
                     startingID = tbStartingID.Text;
                 });
 
                 CheckDirectoryIsValid(modFolder, Localization.ModFolder);
                 CheckDirectoryIsValid(destinationFolder, Localization.DestinationFolder);
 
-                List<GameFile> filesList = Utils.GetFilesWithXstrFromFolder(modFolder);
+                List<GameFile> files = Utils.GetFilesWithXstrFromFolder(modFolder);
 
-                XstrManager xstrManager = new(this, sender, modFolder, destinationFolder, filesList);
+                XstrManager xstrManager = new(this, sender, modFolder, destinationFolder, files);
                 xstrManager.LaunchXstrProcess();
                 SetProgressToMax(sender);
 
-                TstringsManager tstringsManager = new(this, sender, modFolder, destinationFolder, manageDuplicates, filesList, startingID);
+                TstringsManager tstringsManager = new(this, sender, modFolder, destinationFolder, duplicatesMustBeManaged, files, startingID);
                 tstringsManager.ProcessTstrings();
                 SetProgressToMax(sender);
 
