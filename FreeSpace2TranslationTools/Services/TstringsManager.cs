@@ -10,18 +10,18 @@ namespace FreeSpace2TranslationTools.Services
 {
     public class TstringsManager
     {
-        public MainWindow Parent { get; set; }
-        public object Sender { get; set; }
-        public string ModFolder { get; set; }
-        public string DestinationFolder { get; set; }
-        public List<GameFile> FilesList { get; set; }
-        public List<Xstr> Lines { get; set; }
-        public List<Xstr> Duplicates { get; set; }
-        public bool ManageDuplicates { get; set; }
-        public string StartingID { get; set; }
-        public int CurrentProgress { get; set; }
+        private MainWindow Parent { get; set; }
+        private object Sender { get; set; }
+        private string ModFolder { get; set; }
+        private string DestinationFolder { get; set; }
+        private IReadOnlyCollection<GameFile> Files { get; set; }
+        private List<IXstr> Lines { get; set; }
+        private List<IXstr> Duplicates { get; set; }
+        private bool ManageDuplicates { get; set; }
+        private string StartingID { get; set; }
+        private int CurrentProgress { get; set; }
 
-        public TstringsManager(MainWindow parent, object sender, string modFolder, string destinationFolder, bool manageDuplicates, List<GameFile> filesList, string startingID = "")
+        public TstringsManager(MainWindow parent, object sender, string modFolder, string destinationFolder, bool manageDuplicates, List<GameFile> files, string startingID = "")
         {
             Parent = parent;
             Sender = sender;
@@ -33,10 +33,10 @@ namespace FreeSpace2TranslationTools.Services
             Lines = new();
             Duplicates = new();
 
-            FilesList = filesList;
+            Files = files;
 
             Parent.InitializeProgress(Sender);
-            Parent.SetMaxProgress(FilesList.Count);
+            Parent.SetMaxProgress(Files.Count);
         }
 
         #region public methods
@@ -56,12 +56,9 @@ namespace FreeSpace2TranslationTools.Services
             }
             #endregion
 
-            foreach (GameFile file in FilesList)
+            foreach (GameFile file in Files)
             {
-                if (file.Modified)
-                {
-                    Utils.CreateFileWithNewContent(file.Name, ModFolder, DestinationFolder, file.Content);
-                }
+                file.CreateFileWithNewContent(ModFolder, DestinationFolder);
             }
 
             CreateTstringsFile();
@@ -73,43 +70,28 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void FetchXstr()
         {
-            List<GameFile> compatibleFiles = FilesList.Where(x => !x.Name.Contains("-lcl.tbm") && !x.Name.Contains("-tlc.tbm") && !x.Name.Contains("strings.tbl")).ToList();
+            List<GameFile> compatibleFiles = Files.Where(x => !x.Name.Contains("-lcl.tbm") && !x.Name.Contains("-tlc.tbm") && !x.Name.Contains("strings.tbl")).ToList();
 
             foreach (GameFile file in compatibleFiles)
             {
-                FileInfo fileInfo = new(file.Name);
+                IEnumerable<IXstr> xstrs = file.GetAllXstr();
 
-                IEnumerable<Match> combinedResults = GetAllXstrFromFile(fileInfo, file.Content);
-
-                foreach (Match match in combinedResults)
+                foreach (IXstr xstr in xstrs)
                 {
-                    //match.Groups[0] => entire line
-                    //match.Groups[1] => text
-                    //match.Groups[2] => id
-
-                    if (int.TryParse(match.Groups[2].Value, out int id))
+                    // if id not existing, add a new line
+                    if (xstr.Id >= 0 && !Lines.Any(x => x.Id == xstr.Id))
                     {
-                        string text = match.Groups[1].Value;
-
-                        // if id not existing, add a new line
-                        if (id >= 0 && !Lines.Any(x => x.Id == id))
-                        {
-                            Lines.Add(new Xstr(id, text, fileInfo));
-                        }
-                        // if id already existing but value is different, then put it in another list that will be treated separately
-                        else if (ManageDuplicates && (id < 0 || Lines.First(x => x.Id == id).Text != text))
-                        {
-                            Duplicates.Add(new Xstr(id, text, fileInfo, match.Value));
-                        }
+                        Lines.Add(xstr);
                     }
-                    else
+                    // if id already existing but value is different, then put it in another list that will be treated separately
+                    else if (ManageDuplicates && (xstr.Id < 0 || Lines.First(x => x.Id == xstr.Id).Text != xstr.Text))
                     {
-                        throw new Exception();
+                        Duplicates.Add(xstr);
                     }
                 }
             }
 
-            int maxProgress = Lines.Count + (ManageDuplicates ? FilesList.Count + Duplicates.Count : 0);
+            int maxProgress = Lines.Count + (ManageDuplicates ? Files.Count + Duplicates.Count : 0);
             Parent.SetMaxProgress(maxProgress);
         }
 
@@ -121,9 +103,9 @@ namespace FreeSpace2TranslationTools.Services
             string currentFile = string.Empty;
             string tstringsModifiedContent = $"#Default{Environment.NewLine}";
 
-            foreach (Xstr duplicate in Duplicates)
+            foreach (IXstr duplicate in Duplicates)
             {
-                Xstr originalXstr = Lines.FirstOrDefault(x => x.Text == duplicate.Text);
+                IXstr originalXstr = Lines.FirstOrDefault(x => x.Text == duplicate.Text);
 
                 // if duplicated text exists in another xstr in the original file, then copy its ID
                 if (originalXstr != null)
@@ -134,7 +116,7 @@ namespace FreeSpace2TranslationTools.Services
                 // if there is another duplicate with the same text, we can reuse the same ID to avoid new duplicates in the new file
                 else if (tstringsModifiedContent.Contains(duplicate.Text))
                 {
-                    Xstr result = Duplicates.FirstOrDefault(x => x.Treated && x.Text == duplicate.Text);
+                    IXstr result = Duplicates.FirstOrDefault(x => x.Treated && x.Text == duplicate.Text);
 
                     if (result != null)
                     {
@@ -167,7 +149,7 @@ namespace FreeSpace2TranslationTools.Services
 
             tstringsModifiedContent += $"{Environment.NewLine}#End";
 
-            Utils.CreateFileWithPath(Path.Combine(DestinationFolder, "tables/tstringsModified-tlc.tbm"), tstringsModifiedContent);
+            FileManager.CreateFileWithPath(Path.Combine(DestinationFolder, "tables/tstringsModified-tlc.tbm"), tstringsModifiedContent);
         }
 
         private int SetNextID()
@@ -192,22 +174,21 @@ namespace FreeSpace2TranslationTools.Services
         private void CreateModFilesWithNewIds()
         {
             Duplicates = Duplicates.OrderBy(x => x.FileName).ToList();
-            List<string> filesToModify = Duplicates.Select(x => x.FilePath).Distinct().ToList();
+            IReadOnlyCollection<string> filesToModify = Duplicates.Select(x => x.FilePath).Distinct().ToList();
 
             foreach (string sourceFile in filesToModify)
             {
-                GameFile gameFile = FilesList.FirstOrDefault(file => file.Name == sourceFile);
+                GameFile gameFile = Files.FirstOrDefault(file => file.Name == sourceFile);
 
                 string fileName = Path.GetFileName(sourceFile);
                 string newContent = gameFile.Content;
 
-                foreach (Xstr lineToModify in Duplicates.Where(x => x.FileName == fileName))
+                foreach (IXstr xstr in Duplicates.Where(x => x.FileName == fileName))
                 {
-                    newContent = Utils.ReplaceContentWithNewXstr(newContent, lineToModify);
+                    newContent = xstr.ReplaceContentWithNewXstrId(newContent);
                 }
 
                 gameFile.SaveContent(newContent);
-
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
@@ -216,10 +197,6 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Creates the tstrings.tbl file with original IDs
         /// </summary>
-        /// <param name="lines"></param>
-        /// <param name="destinationFolder"></param>
-        /// <param name="currentProgress"></param>
-        /// <param name="sender"></param>
         private void CreateTstringsFile()
         {
             if (Lines.Count > 0)
@@ -242,33 +219,8 @@ namespace FreeSpace2TranslationTools.Services
                 }
 
                 content += $"{Environment.NewLine}#End";
-                Utils.CreateFileWithPath(Path.Combine(DestinationFolder, "tables/tstrings.tbl"), content);
+                FileManager.CreateFileWithPath(Path.Combine(DestinationFolder, "tables/tstrings.tbl"), content);
             }
-        }
-
-        private static IEnumerable<Match> GetAllXstrFromFile(FileInfo fileInfo, string fileContent)
-        {
-            MatchCollection resultsFromFile = Utils.RegexXstr.Matches(fileContent);
-            IEnumerable<Match> combinedResults = resultsFromFile.OfType<Match>().Where(m => m.Success);
-
-            // there is an additional specific format in fs2 files
-            if (fileInfo.Extension == ".fs2")
-            {
-                MatchCollection modifyResults = Regex.Matches(fileContent, "\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
-
-                combinedResults = combinedResults.Concat(modifyResults.OfType<Match>()).Where(match => match.Success);
-            }
-            else if (fileInfo.FullName.Contains(Constants.FICTION_FOLDER) && fileInfo.Extension == Constants.FICTION_EXTENSION)
-            {
-                MatchCollection showIconLines = Regex.Matches(fileContent, "SHOWICON.+?text=(\".+?\").+?xstrid=(-?\\d+)");
-
-                MatchCollection msgXstrLines = Regex.Matches(fileContent, "(?<=MSGXSTR.+)(\".+?\") (-?\\d+)");
-
-                combinedResults = combinedResults.Concat(showIconLines.OfType<Match>()).Where(match => match.Success)
-                    .Concat(msgXstrLines.OfType<Match>()).Where(match => match.Success);
-            }
-
-            return combinedResults;
         }
     }
 }

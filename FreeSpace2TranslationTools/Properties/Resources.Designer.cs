@@ -97,15 +97,6 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder).
-        /// </summary>
-        public static string CheckBoxManageNewIds {
-            get {
-                return ResourceManager.GetString("CheckBoxManageNewIds", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à This functionality replaces hard coded strings with XSTR variables in the mod files listed below, then creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder..
         /// </summary>
         public static string CreateMissingXstrDescription {
@@ -196,33 +187,6 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Include.
-        /// </summary>
-        public static string Include {
-            get {
-                return ResourceManager.GetString("Include", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à This functionality changes all the IDs in the table and mission files to match the IDs in the existing tstrings.tbl..
-        /// </summary>
-        public static string IncludeNewFileDescription {
-            get {
-                return ResourceManager.GetString("IncludeNewFileDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Include new files.
-        /// </summary>
-        public static string IncludeNewFileTitle {
-            get {
-                return ResourceManager.GetString("IncludeNewFileTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à The following directory is invalid: .
         /// </summary>
         public static string InvalidDirectory {
@@ -273,24 +237,6 @@ namespace FreeSpace2TranslationTools.Properties {
         public static string Merge {
             get {
                 return ResourceManager.GetString("Merge", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à This functionality copies the content of the strings from source to destination, using IDs as references. Only useful if you want to merge several translation files into a single one. Destination file will be overwritten..
-        /// </summary>
-        public static string MergeTranslationDescription {
-            get {
-                return ResourceManager.GetString("MergeTranslationDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Merge translations.
-        /// </summary>
-        public static string MergeTranslationTitle {
-            get {
-                return ResourceManager.GetString("MergeTranslationTitle", resourceCulture);
             }
         }
         

@@ -12,34 +12,27 @@ namespace FreeSpace2TranslationTools.Services
 {
     public class XstrManager
     {
-        public MainWindow Parent { get; set; }
-        public object Sender { get; set; }
-        public string ModFolder { get; set; }
-        public string DestinationFolder { get; set; }
-        public List<GameFile> Files { get; set; }
-        public int CurrentProgress { get; set; }
-        public List<Weapon> Weapons { get; set; }
-        public List<Ship> Ships { get; set; }
-        public ModFile FileInProgress { get; set; }
+        private MainWindow Parent { get; set; }
+        private object Sender { get; set; }
+        private List<GameFile> Files { get; set; }
+        private int CurrentProgress { get; set; }
+        private List<Weapon> Weapons { get; set; }
+        private List<Ship> Ships { get; set; }
+        private ModFile FileInProgress { get; set; }
 
-        public XstrManager(MainWindow parent, object sender, string modFolder, string destinationFolder, List<GameFile> filesList)
+        public XstrManager(MainWindow parent, object sender, List<GameFile> files)
         {
             Parent = parent;
             Sender = sender;
-            ModFolder = modFolder;
-            DestinationFolder = destinationFolder;
             CurrentProgress = 0;
             Weapons = new List<Weapon>();
             Ships = new List<Ship>();
             FileInProgress = new ModFile();
-
-            Files = filesList;
+            Files = files;
 
             Parent.InitializeProgress(Sender);
             Parent.SetMaxProgress(Files.Count);
         }
-
-        #region public methods
 
         public void LaunchXstrProcess()
         {
@@ -56,109 +49,99 @@ namespace FreeSpace2TranslationTools.Services
             ProcessMissionFiles();
             ProcessVisualNovelFiles();
         }
-        #endregion
+
+        internal static string GenerateAltNames(Match match)
+        {
+            return AddXstrLineToHardcodedValue("$Alt Name", match);
+        }
+
+        internal static string ReplaceHardcodedValueWithXstr(string originalMatch, string beginningOfLine, string value)
+        {
+            // if this is a comment or if it's already XSTR, then don't touch it and return the original match
+            if (beginningOfLine.Contains(';') || value.Contains("XSTR"))
+            {
+                return originalMatch;
+            }
+            else
+            {
+                string[] values = value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
+                string sanatizedValue = values.Length == 0 ? "" : values[0].Replace("\"", "$quote");
+
+                // in case no value, keep original
+                if (sanatizedValue == "")
+                {
+                    return originalMatch;
+                }
+
+                string result = $"{beginningOfLine}XSTR(\"{sanatizedValue}\", -1)";
+
+                if (values.Length > 1)
+                {
+                    result += $" ;{values[1]}";
+                }
+
+                if (originalMatch.EndsWith("\r\n"))
+                {
+                    result += "\r\n";
+                }
+                else if (originalMatch.EndsWith("\n"))
+                {
+                    result += "\n";
+                }
+
+                return result;
+            }
+        }
 
         private void ProcessCampaignFiles()
         {
-            List<GameFile> campaignFiles = Files.Where(x => x.Name.EndsWith(".fc2")).ToList();
-
-            foreach (GameFile file in campaignFiles)
+            foreach (GameFile file in Files.Where(x => x.Type == FileType.Campaign))
             {
-                string newContent = Regex.Replace(file.Content, @"(.*?\$Name: )((?!XSTR).*)\r\n", new MatchEvaluator(GenerateCampaignNames));
-
-                file.SaveContent(newContent);
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessFile(file, new Campaign(file.Content));
             }
         }
 
-        /// <summary>
-        /// Replace all hardcoded credit lines with XSTR
-        /// </summary>
         private void ProcessCreditFiles()
         {
-            List<GameFile> creditFiles = Files.Where(x => x.Name.Contains("-crd.tbm") || x.Name.Contains("credits.tbl")).ToList();
-
-            foreach (GameFile file in creditFiles)
+            foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-crd.tbm") || x.Name.EndsWith("credits.tbl")))
             {
-                string newContent = Regex.Replace(file.Content, @"(^)((?!(XSTR|\$|#End|#end)).+?)\r\n", new MatchEvaluator(GenerateCredits), RegexOptions.Multiline);
-
-                file.SaveContent(newContent);
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessFile(file, new Credits(file.Content));
             }
         }
 
-        /// <summary>
-        /// Replace all hardcoded cutscene lines with XSTR
-        /// </summary>
         private void ProcessCutscenesFile()
         {
-            GameFile cutscenesFile = Files.FirstOrDefault(x => x.Name.Contains("cutscenes.tbl"));
+            GameFile cutscenes = Files.FirstOrDefault(x => x.Name.EndsWith("cutscenes.tbl"));
 
-            if (cutscenesFile != null)
+            if (cutscenes != null)
             {
-                string newContent = Regex.Replace(cutscenesFile.Content, @"(\$Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateCutscenes));
-
-                cutscenesFile.SaveContent(newContent);
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessFile(cutscenes, new Cutscenes(cutscenes.Content));
             }
         }
 
         private void ProcessHudGaugeFiles()
         {
-            List<GameFile> creditFiles = Files.Where(x => x.Name.EndsWith("-hdg.tbm") || x.Name.EndsWith("hud_gauges.tbl")).ToList();
-
-            foreach (GameFile file in creditFiles)
+            foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hdg.tbm") || x.Name.EndsWith("hud_gauges.tbl")))
             {
-                string newContent = Regex.Replace(file.Content, @"(.*?Text:[ \t]*)((?!XSTR).*)\r?\n", new MatchEvaluator(GenerateHudGauges));
-
-                file.SaveContent(newContent);
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessFile(file, new HudGauges(file.Content));
             }
         }
 
-        /// <summary>
-        /// Adds alt names with XSTR variables to medals
-        /// </summary>
         private void ProcessMedalsFile()
         {
-            GameFile medalsFile = Files.FirstOrDefault(x => x.Name.Contains("medals.tbl"));
+            GameFile medals = Files.FirstOrDefault(x => x.Name.EndsWith("medals.tbl"));
 
-            if (medalsFile != null)
+            if (medals != null)
             {
-                string newContent = Regex.Replace(medalsFile.Content, @"(\$Name:[ \t]*(.*?)\r\n)([^\r]*\$Bitmap)", new MatchEvaluator(GenerateAltNames), RegexOptions.Multiline);
-
-                medalsFile.SaveContent(newContent);
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessFile(medals, new Medals(medals.Content));
             }
         }
 
-        /// <summary>
-        /// Adds XSTR variables to door descriptions of main halls
-        /// </summary>
-        /// <param name="filesList"></param>
-        /// <param name="modFolder"></param>
-        /// <param name="destinationFolder"></param>
-        /// <param name="currentProgress"></param>
-        /// <param name="sender"></param>
         private void ProcessMainHallFiles()
         {
-            List<GameFile> mainHallFiles = Files.Where(x => x.Name.Contains("-hall.tbm") || x.Name.Contains("mainhall.tbl")).ToList();
-
-            // all door descriptions without XSTR variable
-            Regex regexDoorDescription = new(@"(.*\+Door description:\s*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
-
-            foreach (GameFile file in mainHallFiles)
+            foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hall.tbm") || x.Name.EndsWith("mainhall.tbl")))
             {
-                string newContent = regexDoorDescription.Replace(file.Content, new MatchEvaluator(GenerateDoorDescriptions));
-
-                file.SaveContent(newContent);
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessFile(file, new Mainhall(file.Content));
             }
         }
 
@@ -168,11 +151,7 @@ namespace FreeSpace2TranslationTools.Services
 
             if (rankFile != null)
             {
-                string newContent = Regex.Replace(rankFile.Content, @"(.*\$Name:\s*)(.*?)\r\n", new MatchEvaluator(GenerateRanks));
-
-                rankFile.SaveContent(newContent);
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessFile(rankFile, new Rank(rankFile.Content));
             }
         }
 
@@ -191,7 +170,7 @@ namespace FreeSpace2TranslationTools.Services
                 foreach (Match shipEntry in shipEntries)
                 {
                     string newEntry = shipEntry.Value;
-                    string shipName = Utils.SanitizeName(Regex.Match(shipEntry.Value, @"\$Name:(.*)$", RegexOptions.Multiline).Groups[1].Value);
+                    string shipName = SanitizeName(Regex.Match(shipEntry.Value, @"\$Name:(.*)$", RegexOptions.Multiline).Groups[1].Value);
 
                     if (!Ships.Any(s => s.Name == shipName))
                     {
@@ -320,7 +299,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessMissionFiles()
         {
-            List<GameFile> missionFiles = Files.Where(x => x.Name.Contains(".fs2")).ToList();
+            List<GameFile> missionFiles = Files.Where(x => x.Type == FileType.Mission).ToList();
 
             // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
             // ex: $Label: Alpha 1 ==> $Label: XSTR("Alpha 1", -1)
@@ -366,21 +345,26 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessVisualNovelFiles()
         {
-            GameFile[] visualNovels = Files.Where(file => file.Name.Contains(Constants.FICTION_FOLDER) && file.Name.EndsWith(Constants.FICTION_EXTENSION)).ToArray();
+            GameFile[] visualNovels = Files.Where(file => file.Type == FileType.Fiction).ToArray();
 
             foreach (GameFile file in visualNovels)
             {
                 try
                 {
-                    VisualNovel visualNovel = new(file.Content);
-
-                    file.SaveContent(visualNovel.GetInternationalizedContent());
+                    ProcessFile(file, new VisualNovel(file.Content));
                 }
                 catch (WrongFileFormatException)
                 {
                     continue;
                 }
             }
+        }
+
+        private void ProcessFile(GameFile gameFile, IFile file)
+        {
+            gameFile.SaveContent(file.GetInternationalizedContent());
+
+            Parent.IncreaseProgress(Sender, CurrentProgress++);
         }
 
         private string GenerateSubsystems(Match match, bool replaceOnly = false)
@@ -487,34 +471,6 @@ namespace FreeSpace2TranslationTools.Services
             return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
-        private string GenerateCampaignNames(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateCredits(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateCutscenes(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateHudGauges(Match match)
-        {
-            // Always Show Text is a boolean, so don't treat this case
-            if (match.Value.Contains("Always Show Text"))
-            {
-                return match.Value;
-            }
-            else
-            {
-                return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-            }
-        }
-
         private string GenerateJumpNodeNames(Match match)
         {
             string newName = ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
@@ -522,7 +478,7 @@ namespace FreeSpace2TranslationTools.Services
             // if the jump node has already been translated, then don't add it to the list
             if (match.Value != newName)
             {
-                FileInProgress.JumpNodes.Add(Utils.SanitizeName(match.Groups[2].Value, true));
+                FileInProgress.JumpNodes.Add(SanitizeName(match.Groups[2].Value, true));
             }
 
             return newName;
@@ -565,21 +521,7 @@ namespace FreeSpace2TranslationTools.Services
             return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
-        private string GenerateRanks(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateAltNames(Match match)
-        {
-            return AddXstrLineToHardcodedValue("$Alt Name", match);
-        }
         private string ReplaceAltNames(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateDoorDescriptions(Match match)
         {
             return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
@@ -604,57 +546,12 @@ namespace FreeSpace2TranslationTools.Services
         }
 
         /// <summary>
-        /// Replaces an hardcoded line with an XSTR variable
-        /// </summary>
-        /// <param name="originalMatch"></param>
-        /// <param name="beginningOfLine"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        private string ReplaceHardcodedValueWithXstr(string originalMatch, string beginningOfLine, string value)
-        {
-            // if this is a comment or if it's already XSTR, then don't touch it and return the original match
-            if (beginningOfLine.Contains(';') || value.Contains("XSTR"))
-            {
-                return originalMatch;
-            }
-            else
-            {
-                string[] values = value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-                string sanatizedValue = values.Length == 0 ? "" : values[0].Replace("\"", "$quote");
-
-                // in case no value, keep original
-                if (sanatizedValue == "")
-                {
-                    return originalMatch;
-                }
-
-                string result = $"{beginningOfLine}XSTR(\"{sanatizedValue}\", -1)";
-
-                if (values.Length > 1)
-                {
-                    result += $" ;{values[1]}";
-                }
-
-                if (originalMatch.EndsWith("\r\n"))
-                {
-                    result += "\r\n";
-                }
-                else if (originalMatch.EndsWith("\n"))
-                {
-                    result += "\n";
-                }
-
-                return result;
-            }
-        }
-
-        /// <summary>
         /// Adds a new line including an XSTR variable
         /// </summary>
         /// <param name="newMarker">Name of the new marker identifying the XSTR variable</param>
         /// <param name="match">Groups[1]: first original line (including \r\n), Groups[2]: hardcoded value to be translated, Groups[3]: line after the hardcoded value</param>
         /// <returns></returns>
-        private string AddXstrLineToHardcodedValue(string newMarker, Match match)
+        private static string AddXstrLineToHardcodedValue(string newMarker, Match match)
         {
             // if marker already present, then don't touch anything
             if (match.Value.Contains(newMarker))
@@ -753,7 +650,7 @@ namespace FreeSpace2TranslationTools.Services
             return content;
         }
 
-        private string ConvertXPositionFromAbsoluteToRelative(string absolute)
+        private static string ConvertXPositionFromAbsoluteToRelative(string absolute)
         {
             // values determined testing the mission bp-09 of blue planet
             double input = 900;
@@ -762,7 +659,7 @@ namespace FreeSpace2TranslationTools.Services
             return Convert.ToInt32(Math.Round(int.Parse(absolute) / input * output)).ToString(CultureInfo.InvariantCulture);
         }
 
-        private string ConvertYPositionFromAbsoluteToRelative(string absolute)
+        private static string ConvertYPositionFromAbsoluteToRelative(string absolute)
         {
             // values determined testing the mission bp-09 of blue planet
             double input = 500;
@@ -910,7 +807,7 @@ namespace FreeSpace2TranslationTools.Services
             return content;
         }
 
-        private string AddVariablesToSexpVariablesSection(string content, List<MissionVariable> variableList)
+        private static string AddVariablesToSexpVariablesSection(string content, List<MissionVariable> variableList)
         {
             // Create '#Sexp_variables' section if not exists
             if (!content.Contains("#Sexp_variables"))
@@ -962,7 +859,7 @@ namespace FreeSpace2TranslationTools.Services
             return content.Replace(endOfVariables, newSexpVariablesSection + endOfVariables);
         }
 
-        private string AddEventToManageTranslations(string content, string newSexp)
+        private static string AddEventToManageTranslations(string content, string newSexp)
         {
             // very unorthodox way to add the event but it allows me to manage the case when this event already exists in the original file
             string eventForAltNamesTitle = "Manage translation variables";
@@ -984,7 +881,7 @@ namespace FreeSpace2TranslationTools.Services
             return content.Replace(eventEnd, newSexp + eventEnd);
         }
 
-        private string PrepareNewSexpForAltNames(List<Alt> altList)
+        private static string PrepareNewSexpForAltNames(List<Alt> altList)
         {
             string newSexp = string.Empty;
 
@@ -996,7 +893,7 @@ namespace FreeSpace2TranslationTools.Services
             return newSexp;
         }
 
-        private string PrepareNewSexpForVariables(List<MissionVariable> VariableList)
+        private static string PrepareNewSexpForVariables(List<MissionVariable> VariableList)
         {
             string newSexp = string.Empty;
 
@@ -1013,7 +910,7 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
-        private string ConvertHardcodedHudTextToVariables(string content)
+        private static string ConvertHardcodedHudTextToVariables(string content)
         {
             MatchCollection textMatches = Regex.Matches(content, "(\\( (?:hud-set-text|hud-set-directive).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
@@ -1052,7 +949,7 @@ namespace FreeSpace2TranslationTools.Services
             return content;
         }
 
-        private string ConvertSpecialMessageSendersToVariables(string content)
+        private static string ConvertSpecialMessageSendersToVariables(string content)
         {
             MatchCollection messageMatches = Regex.Matches(content, @"\( (send-random-message|send-message).*?\r?\n[ \t]*\)\r?\n", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
@@ -1152,7 +1049,7 @@ namespace FreeSpace2TranslationTools.Services
             }
         }
 
-        private string ConvertNavpointsToVariables(string content)
+        private static string ConvertNavpointsToVariables(string content)
         {
             List<MissionVariable> variableList = new();
 
@@ -1184,7 +1081,7 @@ namespace FreeSpace2TranslationTools.Services
             return content;
         }
 
-        private string ConvertHardcodedSubsystemNamesToVariables(string content)
+        private static string ConvertHardcodedSubsystemNamesToVariables(string content)
         {
             MatchCollection subsystemMatches = Regex.Matches(content, "(\\( (?:change-subsystem-name).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
@@ -1218,6 +1115,22 @@ namespace FreeSpace2TranslationTools.Services
             }
 
             return content;
+        }
+
+
+        /// <summary>
+        /// Removes comments, alias and spaces from a name
+        /// </summary>
+        private static string SanitizeName(string rawName, bool fullSanatizing = false)
+        {
+            if (fullSanatizing)
+            {
+                return rawName.Split(';')[0].Split('#')[0].Trim().TrimStart('@');
+            }
+            else
+            {
+                return rawName.Split(';')[0].Trim();
+            }
         }
     }
 }

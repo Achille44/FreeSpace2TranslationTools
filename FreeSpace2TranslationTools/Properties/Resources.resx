@@ -129,9 +129,6 @@
   <data name="CheckBoxManageDuplicates" xml:space="preserve">
     <value>Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder). Almost mandatory if original files only contain '-1' as ID.</value>
   </data>
-  <data name="CheckBoxManageNewIds" xml:space="preserve">
-    <value>Generate new IDs in case of non-existent in the original tstrings (this option will create a new file with new IDs in the destination folder)</value>
-  </data>
   <data name="CreateMissingXstrDescription" xml:space="preserve">
     <value>This functionality replaces hard coded strings with XSTR variables in the mod files listed below, then creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder.</value>
   </data>
@@ -162,15 +159,6 @@
   <data name="HudGauges" xml:space="preserve">
     <value>hud gauges</value>
   </data>
-  <data name="Include" xml:space="preserve">
-    <value>Include</value>
-  </data>
-  <data name="IncludeNewFileDescription" xml:space="preserve">
-    <value>This functionality changes all the IDs in the table and mission files to match the IDs in the existing tstrings.tbl.</value>
-  </data>
-  <data name="IncludeNewFileTitle" xml:space="preserve">
-    <value>Include new files</value>
-  </data>
   <data name="InvalidDirectory" xml:space="preserve">
     <value>The following directory is invalid: </value>
   </data>
@@ -188,12 +176,6 @@
   </data>
   <data name="Merge" xml:space="preserve">
     <value>Merge</value>
-  </data>
-  <data name="MergeTranslationDescription" xml:space="preserve">
-    <value>This functionality copies the content of the strings from source to destination, using IDs as references. Only useful if you want to merge several translation files into a single one. Destination file will be overwritten.</value>
-  </data>
-  <data name="MergeTranslationTitle" xml:space="preserve">
-    <value>Merge translations</value>
   </data>
   <data name="Missions" xml:space="preserve">
     <value>missions</value>

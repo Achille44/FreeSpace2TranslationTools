@@ -4,19 +4,19 @@ using System.Text.RegularExpressions;
 
 namespace FreeSpace2TranslationTools.Services
 {
-    internal class VisualNovel
+    internal class VisualNovel : IFile
     {
         private const string VISUAL_NOVEL_INITIAL_MARKER = "FILEVERSION";
         private const string EMPTY_TEXT = "text=\" \"";
         private const string DEFAULT_XSTR_ID_MARKER = "xstrid";
         private const string DEFAULT_XSTR_ID = "-1";
-        public const string MSGXSTR_MARKER = "MSGXSTR";
-        public const string SHOWICON_MARKER = "SHOWICON";
+        private const string MSGXSTR_MARKER = "MSGXSTR";
+        private const string SHOWICON_MARKER = "SHOWICON";
         private const string SEPARATOR = " ";
         private string Content;
         private readonly string[] ContentLines;
 
-        public VisualNovel(string content)
+        internal VisualNovel(string content)
         {
             if (!content.StartsWith(VISUAL_NOVEL_INITIAL_MARKER))
             {
@@ -117,7 +117,7 @@ namespace FreeSpace2TranslationTools.Services
             }
             else
             {
-                newLine += SEPARATOR + $"\"{line.Split(' ')[0]}\"";
+                newLine += SEPARATOR + $"\"{Regex.Match(line, @"^\w+").Value}\"";
                 newLine += SEPARATOR + DEFAULT_XSTR_ID;
                 newLine += SEPARATOR + strings[0].Value;
                 newLine += SEPARATOR + DEFAULT_XSTR_ID;

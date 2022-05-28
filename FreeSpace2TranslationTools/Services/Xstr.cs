@@ -5,7 +5,7 @@ using System.Text;
 
 namespace FreeSpace2TranslationTools.Services
 {
-    public class Xstr
+    public class Xstr : IXstr
     {
         public int Id { get; set; }
         public string Text { get; set; }
@@ -41,6 +41,13 @@ namespace FreeSpace2TranslationTools.Services
             FilePath = file.FullName;
             FullLine = fullLine;
             Treated = false;
+        }
+
+        public string ReplaceContentWithNewXstrId(string content)
+        {
+            string newLine = Utils.RegexXstr.Replace(FullLine, match => $"XSTR({match.Groups[1].Value}, {Id})");
+
+            return content.Replace(FullLine, newLine);
         }
     }
 }
