@@ -337,6 +337,8 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = ConvertHardcodedSubsystemNamesToVariables(newContent);
 
+                newContent = ConvertHardcodedObjectRolesToVariables(newContent);
+
                 file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
@@ -1117,6 +1119,55 @@ namespace FreeSpace2TranslationTools.Services
             return content;
         }
 
+        private static string ConvertHardcodedObjectRolesToVariables(string content)
+        {
+            MatchCollection objectRoleMatches = Regex.Matches(content, "(\\( (?:Add-Object-Role).*?\"(.*?)\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            List<MissionVariable> variableList = new();
+
+            foreach (Match match in objectRoleMatches)
+            {
+                // Only treat sexp not using variables
+                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                {
+                    variableList.Add(new MissionVariable(match.Groups[2].Value));
+                }
+                if (!string.IsNullOrEmpty(match.Groups[3].Value) && !match.Groups[3].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[3].Value))
+                {
+                    variableList.Add(new MissionVariable(match.Groups[3].Value));
+                }
+            }
+
+            if (variableList.Count > 0)
+            {
+                content = AddVariablesToSexpVariablesSection(content, variableList);
+                string newSexp = PrepareNewSexpForVariables(variableList);
+                content = AddEventToManageTranslations(content, newSexp);
+
+                // let's cycle again to catch all sexps that could have different conditions or space/tab count...
+                foreach (Match match in objectRoleMatches)
+                {
+                    string currentObjectRoleSexp = match.Value;
+
+                    if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                    {
+                        MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
+
+                        string newObjectRoleSexp = currentObjectRoleSexp.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                        content = content.Replace(currentObjectRoleSexp, newObjectRoleSexp);
+                        currentObjectRoleSexp = newObjectRoleSexp;
+                    }
+                    if (!string.IsNullOrEmpty(match.Groups[3].Value) && !match.Groups[3].Value.StartsWith("@", StringComparison.InvariantCulture) && variableList.Any(v => v.DefaultValue == match.Groups[3].Value))
+                    {
+                        MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[3].Value);
+
+                        string newObjectRoleSexp = currentObjectRoleSexp.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                        content = content.Replace(currentObjectRoleSexp, newObjectRoleSexp);
+                    }
+                }
+            }
+
+            return content;
+        }
 
         /// <summary>
         /// Removes comments, alias and spaces from a name
