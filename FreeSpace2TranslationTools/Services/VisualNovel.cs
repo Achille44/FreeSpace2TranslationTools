@@ -8,6 +8,7 @@ namespace FreeSpace2TranslationTools.Services
     {
         private const string VISUAL_NOVEL_INITIAL_MARKER = "FILEVERSION";
         private const string EMPTY_TEXT = "text=\" \"";
+        private const string TEXT = "text=";
         private const string DEFAULT_XSTR_ID_MARKER = "xstrid";
         private const string DEFAULT_XSTR_ID = "-1";
         private const string MSGXSTR_MARKER = "MSGXSTR";
@@ -18,7 +19,7 @@ namespace FreeSpace2TranslationTools.Services
 
         internal VisualNovel(string content)
         {
-            if (!content.StartsWith(VISUAL_NOVEL_INITIAL_MARKER))
+            if (!content.Trim().StartsWith(VISUAL_NOVEL_INITIAL_MARKER))
             {
                 throw new WrongFileFormatException();
             }
@@ -89,7 +90,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void InternationalizeShowIconLine(string line)
         {
-            if (line.Contains(EMPTY_TEXT) || line.Contains(DEFAULT_XSTR_ID_MARKER))
+            if (!line.Contains(TEXT) || line.Contains(EMPTY_TEXT) || line.Contains(DEFAULT_XSTR_ID_MARKER))
             {
                 return;
             }
