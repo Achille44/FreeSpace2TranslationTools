@@ -339,6 +339,10 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = ConvertHardcodedObjectRolesToVariables(newContent);
 
+                newContent = ConvertHardcodedMarkedShipsAndWingsToVariables(newContent);
+
+                newContent = ConvertHardcodedMarkedSubsystemsToVariables(newContent);
+
                 file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
@@ -1055,7 +1059,7 @@ namespace FreeSpace2TranslationTools.Services
         {
             List<MissionVariable> variableList = new();
 
-            MatchCollection navSexpMatches = Regex.Matches(content, "(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav).*?\"(.*?)\"", RegexOptions.Singleline);
+            MatchCollection navSexpMatches = Regex.Matches(content, "(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited).*?\"(.*?)\"", RegexOptions.Singleline);
 
             foreach (Match navSexp in navSexpMatches)
             {
@@ -1162,6 +1166,78 @@ namespace FreeSpace2TranslationTools.Services
 
                         string newObjectRoleSexp = currentObjectRoleSexp.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
                         content = content.Replace(currentObjectRoleSexp, newObjectRoleSexp);
+                    }
+                }
+            }
+
+            return content;
+        }
+
+        private static string ConvertHardcodedMarkedShipsAndWingsToVariables(string content)
+        {
+            MatchCollection matches = Regex.Matches(content, "(\\( (?:lua-mark-ship|lua-mark-wing).*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            List<MissionVariable> variableList = new();
+
+            foreach (Match match in matches)
+            {
+                // Only treat sexp not using variables
+                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                {
+                    variableList.Add(new MissionVariable(match.Groups[2].Value));
+                }
+            }
+
+            if (variableList.Count > 0)
+            {
+                content = AddVariablesToSexpVariablesSection(content, variableList);
+                string newSexp = PrepareNewSexpForVariables(variableList);
+                content = AddEventToManageTranslations(content, newSexp);
+
+                // let's cycle again to catch all sexps that could have different conditions or space/tab count...
+                foreach (Match match in matches)
+                {
+                    if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                    {
+                        MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
+
+                        string newMarkedObjectSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                        content = content.Replace(match.Value, newMarkedObjectSexp);
+                    }
+                }
+            }
+
+            return content;
+        }
+
+        private static string ConvertHardcodedMarkedSubsystemsToVariables(string content)
+        {
+            MatchCollection matches = Regex.Matches(content, "(\\( (?:lua-mark-subsystem).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            List<MissionVariable> variableList = new();
+
+            foreach (Match match in matches)
+            {
+                // Only treat sexp not using variables
+                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                {
+                    variableList.Add(new MissionVariable(match.Groups[2].Value));
+                }
+            }
+
+            if (variableList.Count > 0)
+            {
+                content = AddVariablesToSexpVariablesSection(content, variableList);
+                string newSexp = PrepareNewSexpForVariables(variableList);
+                content = AddEventToManageTranslations(content, newSexp);
+
+                // let's cycle again to catch all sexps that could have different conditions or space/tab count...
+                foreach (Match match in matches)
+                {
+                    if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                    {
+                        MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
+
+                        string newMarkedObjectSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                        content = content.Replace(match.Value, newMarkedObjectSexp);
                     }
                 }
             }
