@@ -62,6 +62,14 @@ namespace FreeSpace2TranslationTools.Services
                     IXstr xstr = new XstrModifyVariable(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value);
                     result.Add(xstr);
                 }
+
+                MatchCollection techIntelResults = Regex.Matches(Content, "\\(\\s*tech-add-intel-xstr\\s*(\".*?\")\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
+
+                foreach (Match match in techIntelResults)
+                {
+                    IXstr xstr = new XstrTechIntel(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value);
+                    result.Add(xstr);
+                }
             }
             else if (Type == FileType.Fiction)
             {
