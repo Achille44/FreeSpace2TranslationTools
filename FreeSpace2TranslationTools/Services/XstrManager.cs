@@ -335,6 +335,8 @@ namespace FreeSpace2TranslationTools.Services
 
                 newContent = ConvertNavpointsToVariables(newContent);
 
+                newContent = ConvertNavColorToVariables(newContent);
+
                 newContent = ConvertHardcodedSubsystemNamesToVariables(newContent);
 
                 newContent = ConvertHardcodedObjectRolesToVariables(newContent);
@@ -1080,6 +1082,48 @@ namespace FreeSpace2TranslationTools.Services
                     MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == navSexp.Groups[2].Value);
 
                     string newNavSexp = navSexp.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                    content = content.Replace(navSexp.Value, newNavSexp);
+                }
+            }
+
+            return content;
+        }
+
+        private static string ConvertNavColorToVariables(string content)
+        {
+            List<MissionVariable> variableList = new();
+
+            MatchCollection navSexpMatches = Regex.Matches(content, "\\( set-nav-color.*?\\)", RegexOptions.Singleline);
+
+            foreach (Match navSexp in navSexpMatches)
+            {
+                MatchCollection navNameMatches = Regex.Matches(navSexp.Value, "\"(.*?)\"");
+
+                foreach (Match navName in navNameMatches)
+                {
+                    if (!variableList.Any(v => v.DefaultValue == navName.Groups[1].Value) && !navName.Groups[1].Value.StartsWith('@'))
+                    {
+                        variableList.Add(new MissionVariable(navName.Groups[1].Value));
+                    }
+                }
+            }
+
+            if (variableList.Count > 0)
+            {
+                // TODO: check that the same variable doesn't already exit, to avoid duplicates
+                content = AddVariablesToSexpVariablesSection(content, variableList);
+                string newSexp = PrepareNewSexpForVariables(variableList);
+                content = AddEventToManageTranslations(content, newSexp);
+
+                foreach (Match navSexp in navSexpMatches)
+                {
+                    string newNavSexp = navSexp.Value;
+
+                    foreach (MissionVariable variable in variableList)
+                    {
+                        newNavSexp = newNavSexp.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                    }
+
                     content = content.Replace(navSexp.Value, newNavSexp);
                 }
             }
