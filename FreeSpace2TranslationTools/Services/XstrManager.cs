@@ -163,59 +163,62 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (GameFile file in shipFiles)
             {
-                string shipSection = Regex.Match(file.Content, @"#Ship Classes.*?(#End|#end)", RegexOptions.Singleline).Value;
-                string newContent = shipSection;
-                MatchCollection shipEntries = Regex.Matches(shipSection, @"\n\$Name:.*?(?=\n\$Name|#end|#End)", RegexOptions.Singleline);
-
-                foreach (Match shipEntry in shipEntries)
+                if (file.Content.Trim() != "")
                 {
-                    string newEntry = shipEntry.Value;
-                    string shipName = SanitizeName(Regex.Match(shipEntry.Value, @"\$Name:(.*)$", RegexOptions.Multiline).Groups[1].Value);
+                    string shipSection = Regex.Match(file.Content, @"#Ship Classes.*?#end", RegexOptions.Singleline | RegexOptions.IgnoreCase).Value;
+                    string newContent = shipSection;
+                    MatchCollection shipEntries = Regex.Matches(shipSection, @"\n\$Name:.*?(?=\n\$Name|#end)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-                    if (!Ships.Any(s => s.Name == shipName))
+                    foreach (Match shipEntry in shipEntries.AsEnumerable())
                     {
-                        newEntry = Utils.RegexNoAltNames.Replace(newEntry, new MatchEvaluator(GenerateAltNames));
-                        Ships.Add(new Ship { Name = shipName });
-                    }
+                        string newEntry = shipEntry.Value;
+                        string shipName = SanitizeName(Regex.Match(shipEntry.Value, @"\$Name:(.*)$", RegexOptions.Multiline).Groups[1].Value);
 
-                    Ship ship = Ships.FirstOrDefault(s => s.Name == shipName);
-
-                    MatchCollection subsystems = Regex.Matches(newEntry, @"(\$Subsystem:[ \t]*([^\r\n]*?),[^\r\n]*?\r?\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Singleline);
-
-                    foreach (Match subsystem in subsystems)
-                    {
-                        // some subsystems are not visible so don't translate them
-                        if (!subsystem.Value.Contains("untargetable") && !subsystem.Value.Contains("afterburner"))
+                        if (!Ships.Any(s => s.Name == shipName))
                         {
-                            string subsystemName = subsystem.Groups[2].Value.Trim().ToLower();
+                            newEntry = Utils.RegexNoAltNames.Replace(newEntry, new MatchEvaluator(GenerateAltNames));
+                            Ships.Add(new Ship { Name = shipName });
+                        }
 
-                            if (!ship.Subsystems.Any(s => s.Name == subsystemName))
+                        Ship ship = Ships.FirstOrDefault(s => s.Name == shipName);
+
+                        MatchCollection subsystems = Regex.Matches(newEntry, @"(\$Subsystem:[ \t]*([^\r\n]*?),[^\r\n]*?\r?\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Singleline);
+
+                        foreach (Match subsystem in subsystems)
+                        {
+                            // some subsystems are not visible so don't translate them
+                            if (!subsystem.Value.Contains("untargetable") && !subsystem.Value.Contains("afterburner"))
                             {
-                                ship.Subsystems.Add(new Subsystem { Name = subsystemName });
-                                newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem));
+                                string subsystemName = subsystem.Groups[2].Value.Trim().ToLower();
+
+                                if (!ship.Subsystems.Any(s => s.Name == subsystemName))
+                                {
+                                    ship.Subsystems.Add(new Subsystem { Name = subsystemName });
+                                    newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem));
+                                }
+                                // in this case the subsystem has already been treated in another file, so just replace hardcoded values with XSTR
+                                else
+                                {
+                                    newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem, true));
+                                }
                             }
-                            // in this case the subsystem has already been treated in another file, so just replace hardcoded values with XSTR
-                            else
-                            {
-                                newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem, true));
-                            }
+                        }
+
+                        if (newEntry != shipEntry.Value)
+                        {
+                            newContent = newContent.Replace(shipEntry.Value, newEntry);
                         }
                     }
 
-                    if (newEntry != shipEntry.Value)
-                    {
-                        newContent = newContent.Replace(shipEntry.Value, newEntry);
-                    }
+                    newContent = Regex.Replace(newContent, @"(\+Tech Description:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateShipDescription));
+
+                    // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
+                    newContent = Regex.Replace(newContent, @"(\$Name:(?:(?!\$Name:|\$Thruster).)*?\r\n)([ \t]*\+Length:[ \t]*)([^\r]*?)(\r\n)", new MatchEvaluator(GenerateShipLength), RegexOptions.Singleline);
+
+                    newContent = file.Content.Replace(shipSection, newContent);
+
+                    file.SaveContent(newContent); 
                 }
-
-                newContent = Regex.Replace(newContent, @"(\+Tech Description:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateShipDescription));
-
-                // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
-                newContent = Regex.Replace(newContent, @"(\$Name:(?:(?!\$Name:|\$Thruster).)*?\r\n)([ \t]*\+Length:[ \t]*)([^\r]*?)(\r\n)", new MatchEvaluator(GenerateShipLength), RegexOptions.Singleline);
-
-                newContent = file.Content.Replace(shipSection, newContent);
-
-                file.SaveContent(newContent);
 
                 Parent.IncreaseProgress(Sender, CurrentProgress++);
             }
