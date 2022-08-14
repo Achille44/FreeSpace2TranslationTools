@@ -3,6 +3,5 @@
     internal interface IFile
     {
         public string GetInternationalizedContent();
-
     }
 }
