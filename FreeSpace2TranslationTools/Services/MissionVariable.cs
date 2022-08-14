@@ -8,12 +8,13 @@ namespace FreeSpace2TranslationTools.Services
 {
     public class MissionVariable
     {
-        public string VariableName { get; set; }
+        public string Name { get; set; }
         public string DefaultValue { get; set; }
-        public string NewSexp => "\"@" + VariableName + "[" + DefaultValue + "]\"";
+        public string NewSexp => "\"@" + Name + "[" + DefaultValue + "]\"";
 
-        public MissionVariable(string defaultValue)
+        public MissionVariable(string name, string defaultValue)
         {
+            Name = name;
             DefaultValue = defaultValue;
         }
 
@@ -24,7 +25,7 @@ namespace FreeSpace2TranslationTools.Services
         public string ModifyVariableXstr()
         {
             string result = $"   ( modify-variable-xstr {Environment.NewLine}"
-                + $"      \"@{VariableName}[{DefaultValue}]\" {Environment.NewLine}"
+                + $"      \"@{Name}[{DefaultValue}]\" {Environment.NewLine}"
                 + $"      \"{DefaultValue}\" {Environment.NewLine}"
                 + $"      -1 {Environment.NewLine}"
                 + $"   ){Environment.NewLine}";

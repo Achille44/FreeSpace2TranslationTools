@@ -8,17 +8,10 @@ namespace FreeSpace2TranslationTools.Services
     {
         public List<string> Ships { get; set; }
 
-        public Alt(string defaultValue) : base(defaultValue)
+        public Alt(string name, string defaultValue) : base(name, defaultValue)
         {
-            //DefaultValue = defaultValue;
             Ships = new();
         }
-
-        //public Alt(MissionVariable variable) : base (variable.DefaultValue)
-        //{
-        //    VariableName = variable.VariableName;
-        //    Ships = new();
-        //}
 
         /// <summary>
         /// adds a ship using this alt
@@ -36,7 +29,7 @@ namespace FreeSpace2TranslationTools.Services
         public string ShipChangeAltName()
         {
             string result = $"   ( ship-change-alt-name {Environment.NewLine}"
-                + $"      \"@{VariableName}[{DefaultValue}]\" {Environment.NewLine}";
+                + $"      \"@{Name}[{DefaultValue}]\" {Environment.NewLine}";
 
             foreach (string ship in Ships)
             {

@@ -11,20 +11,8 @@ namespace FreeSpace2TranslationTools.Services
     internal class Mission : IFile
     {
         internal string Content { get; set; }
-
-        internal List<string> JumpNodes { get; set; } = new List<string>();
-
-        // all labels without XSTR variable (everything after ':' is selected in group 1, so comments (;) must be taken away
-        // ex: $Label: Alpha 1 ==> $Label: XSTR("Alpha 1", -1)
-        internal static Regex RegexLabels = new(@"(.*\$label:\s*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
-
-        internal static Regex RegexCallSigns = new(@"(.*\$Callsign:[ \t]*)(.*?)\r\n", RegexOptions.Compiled);
-
-        // ex: $Name: Psamtik   ==>     $Name: Psamtik
-        //     $Class.......    ==>     $Display Name: XSTR("Psamtik", -1)
-        //                      ==>     $Class......
-        internal static Regex RegexShipNames = new(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline | RegexOptions.Compiled);
-
+        internal List<string> JumpNodes { get; set; } = new();
+        internal List<MissionVariable> Variables { get; set; } = new();
         public Mission(string content)
         {
             Content = content;
@@ -32,36 +20,41 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            Content = RegexLabels.Replace(Content, new MatchEvaluator(GenerateLabels));
+            Content = Regexp.Labels.Replace(Content, new MatchEvaluator(GenerateLabels));
 
-            Content = RegexCallSigns.Replace(Content, new MatchEvaluator(GenerateCallSigns));
+            Content = Regexp.CallSigns.Replace(Content, new MatchEvaluator(GenerateCallSigns));
 
-            Content = RegexShipNames.Replace(Content, new MatchEvaluator(GenerateShipNames));
+            Content = Regexp.ShipNames.Replace(Content, new MatchEvaluator(GenerateShipNames));
 
-            Content = ConvertShowSubtitleToShowSubtitleText(Content);
+            ConvertShowSubtitleToShowSubtitleText();
 
-            Content = ExtractShowSubtitleTextContentToMessages(Content);
+            ExtractShowSubtitleTextContentToMessages();
 
-            Content = ConvertAltToVariables(Content);
+            ConvertAltToVariables();
 
-            Content = ConvertHardcodedHudTextToVariables(Content);
+            ConvertHardcodedHudTextToVariables();
 
-            Content = ConvertSpecialMessageSendersToVariables(Content);
+            ConvertSpecialMessageSendersToVariables();
 
-            Content = Regex.Replace(Content, @"(.*\$Jump Node Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateJumpNodeNames));
-            Content = ConvertJumpNodeReferencesToVariables(Content);
+            Content = Regexp.JumpNodeNames.Replace(Content, new MatchEvaluator(GenerateJumpNodeNames));
 
-            Content = ConvertNavpointsToVariables(Content);
+            ConvertJumpNodeReferencesToVariables();
 
-            Content = ConvertNavColorToVariables(Content);
+            ConvertNavpointsToVariables();
 
-            Content = ConvertHardcodedSubsystemNamesToVariables(Content);
+            ConvertNavColorToVariables();
 
-            Content = ConvertHardcodedObjectRolesToVariables(Content);
+            ConvertHardcodedSubsystemNamesToVariables();
 
-            Content = ConvertHardcodedMarkedShipsAndWingsToVariables(Content);
+            ConvertHardcodedObjectRolesToVariables();
 
-            Content = ConvertHardcodedMarkedSubsystemsToVariables(Content);
+            ConvertHardcodedMarkedShipsAndWingsToVariables();
+
+            ConvertHardcodedMarkedSubsystemsToVariables();
+
+            AddVariablesToSexpVariablesSection();
+
+            AddEventToManageTranslations();
 
             return Content;
         }
@@ -174,15 +167,12 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Convert sexp show-subtitle to show-subtitle-text so they can be translated
         /// </summary>
-        /// <param name="content"></param>
         /// <returns></returns>
-        private static string ConvertShowSubtitleToShowSubtitleText(string content)
+        private void ConvertShowSubtitleToShowSubtitleText()
         {
-            MatchCollection subtitleResults = Regex.Matches(content, @"show-subtitle\s+.*?\r\n[ \t]+\)", RegexOptions.Singleline);
-
-            foreach (Match match in subtitleResults)
+            foreach (Match match in Regexp.ShowSubtitle.Matches(Content).AsEnumerable())
             {
-                MatchCollection parameters = Regex.Matches(match.Value, @"(\s*)(.*?)(\s*\r\n)", RegexOptions.Multiline);
+                MatchCollection parameters = Regexp.ParametersInSexp.Matches(match.Value);
 
                 // Try not to accidentally convert image subtitle to text...
                 if (!string.IsNullOrWhiteSpace(parameters[3].Groups[2].Value.Trim('"')))
@@ -248,19 +238,16 @@ namespace FreeSpace2TranslationTools.Services
 
                     sexp.CloseFormula();
 
-                    content = content.Replace(match.Value, sexp.Formula);
+                    Content = Content.Replace(match.Value, sexp.Formula);
                 }
             }
-
-            return content;
         }
 
         /// <summary>
         /// Extract hardcoded strings from show-subtitle-text and put them into new messages so they can be translated
         /// </summary>
-        /// <param name="content"></param>
         /// <returns></returns>
-        private static string ExtractShowSubtitleTextContentToMessages(string content)
+        private void ExtractShowSubtitleTextContentToMessages()
         {
             // ex: ( show-subtitle-text     ==>     ( show-subtitle-text
             //        "Europa, 2386"        ==>        "AutoGeneratedMessage1"
@@ -274,8 +261,8 @@ namespace FreeSpace2TranslationTools.Services
             //                              ==>     
             //                              ==>     #Reinforcements
             #region get all existing messages in the mission
-            string messagesSection = Regex.Match(content, @"#Messages.*#Reinforcements", RegexOptions.Singleline).Value;
-            MatchCollection messages = Regex.Matches(messagesSection, @"\$Name:\s*(.*?)(?=;|\r)", RegexOptions.Multiline);
+            string messagesSection = Regexp.MessagesSection.Match(Content).Value;
+            IEnumerable<Match> messages = Regexp.Messages.Matches(messagesSection);
             List<string> allMessages = new();
 
             string autoGeneratedMessage = "AutoGeneratedMessage";
@@ -298,17 +285,17 @@ namespace FreeSpace2TranslationTools.Services
             }
             #endregion
 
-            MatchCollection subtitleTextResults = Regex.Matches(content, "(show-subtitle-text\\s*\r\n\\s*\")(.*?)\"", RegexOptions.Multiline);
+            IEnumerable<Match> subtitleTextResults = Regexp.SubtitleTexts.Matches(Content);
             string newMessages = string.Empty;
 
-            foreach (Match match in subtitleTextResults.AsEnumerable())
+            foreach (Match match in subtitleTextResults)
             {
                 // skip already existing messages and cases with variables
                 if (!allMessages.Contains(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@"))
                 {
                     subtitleMessagesCount++;
 
-                    content = content.Replace(match.Value, match.Groups[1].Value + autoGeneratedMessage + subtitleMessagesCount + "\"");
+                    Content = Content.Replace(match.Value, match.Groups[1].Value + autoGeneratedMessage + subtitleMessagesCount + "\"");
 
                     newMessages += $"$Name: {autoGeneratedMessage}{subtitleMessagesCount}{Environment.NewLine}" +
                         $"$Team: -1{Environment.NewLine}" +
@@ -321,45 +308,35 @@ namespace FreeSpace2TranslationTools.Services
 
             if (newMessages != string.Empty)
             {
-                content = content.Replace("#Reinforcements", newMessages + "#Reinforcements");
+                Content = Content.Replace("#Reinforcements", newMessages + "#Reinforcements");
             }
-
-            return content;
         }
 
         /// <summary>
         /// Convert ship alt names to sexp variables so that they can be translated via modify-variable-xstr sexp
         /// </summary>
-        /// <param name="content"></param>
         /// <returns></returns>
-        private static string ConvertAltToVariables(string content)
+        private void ConvertAltToVariables()
         {
-            if (Utils.RegexAlternateTypes.IsMatch(content))
+            if (Regexp.AlternateTypes.IsMatch(Content))
             {
                 #region alt from '#Objects' section
-                string objects = Regex.Match(content, @"#Objects.*#Wings", RegexOptions.Singleline).Value;
-                // ((?!\$Name).)* => all characters not containing \$Name
-                MatchCollection altShips = Regex.Matches(objects, @"\$Name:\s*(((?!\$Name).)*?)\s*(\r\n|;)((?!\$Name).)*?\$Alt:\s*(.*?)\s*\r\n", RegexOptions.Singleline);
+                string objects = Regexp.Objects.Match(Content).Value;
+                MatchCollection altShips = Regexp.AltShips.Matches(objects);
                 #endregion
 
                 // Check at least one alt name is used before starting modifications
                 if (altShips.Count > 0)
                 {
                     #region alt from '#Alternate Types' section
-                    string alternateTypes = Utils.RegexAlternateTypes.Match(content).Value;
-                    // for unknown reason in this case \r case is captured, so we have to uncapture it
-                    // in some cases and Alt can have an empty value... 
-                    MatchCollection altTypes = Regex.Matches(alternateTypes, @"\$Alt:\s*(((?!\$Alt).)+)(?=\r)");
+                    string alternateTypes = Regexp.AlternateTypes.Match(Content).Value;
                     #endregion
 
-                    List<MissionVariable> variableList = new();
-                    List<Alt> altList = new();
-
-                    foreach (Match match in altTypes)
+                    foreach (Match match in Regexp.AltTypes.Matches(alternateTypes).AsEnumerable())
                     {
-                        Alt alt = new(match.Groups[1].Value);
+                        Alt alt = new(GiveMeAVariableName(match.Groups[1].Value), match.Groups[1].Value);
 
-                        foreach (Match altShip in altShips)
+                        foreach (Match altShip in altShips.AsEnumerable())
                         {
                             if (altShip.Groups[5].Value == alt.DefaultValue)
                             {
@@ -367,204 +344,104 @@ namespace FreeSpace2TranslationTools.Services
                             }
                         }
 
-                        // some alt are not used for unknown reasons, so we dont keep them
+                        // some alt are not used for unknown reasons, so we don't keep them
                         if (alt.Ships.Count > 0)
                         {
-                            variableList.Add(alt);
-                            altList.Add(alt);
+                            AddVariableToListIfNotExisting(alt);
                         }
                     }
 
-                    if (variableList.Count > 0)
+                    if (Variables.Count > 0)
                     {
                         // Remove the 'Alternate Types' section
-                        content = content.Replace(alternateTypes, string.Empty);
+                        Content = Content.Replace(alternateTypes, "");
                         // Remove all '$Alt' from '#Objects' section
-                        content = Regex.Replace(content, @"\$Alt:\s*.*?\r\n", string.Empty, RegexOptions.Singleline);
-
-                        content = AddVariablesToSexpVariablesSection(content, variableList);
-
-                        string newSexp = PrepareNewSexpForAltNames(altList);
-
-                        content = AddEventToManageTranslations(content, newSexp);
+                        Content = Regexp.Alt.Replace(Content, "");
                     }
                 }
             }
-
-            return content;
         }
 
-        private static string AddVariablesToSexpVariablesSection(string content, List<MissionVariable> variableList)
+        private string PrepareNewSexpForVariables()
         {
-            // Create '#Sexp_variables' section if not exists
-            if (!content.Contains("#Sexp_variables"))
+            string newSexp = "";
+
+            foreach (MissionVariable variable in Variables)
             {
-                string beforeSexp = Regex.Match(content, @"(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline).Value;
+                newSexp += variable.ModifyVariableXstr();
 
-                string newSection = $"#Sexp_variables{Environment.NewLine}" +
-                    $"{Environment.NewLine}" +
-                    $"$Variables:{Environment.NewLine}" +
-                    $"({Environment.NewLine}" +
-                    $"){Environment.NewLine}" +
-                    $"{Environment.NewLine}" +
-                    $"{beforeSexp}";
-
-                content = content.Replace(beforeSexp, newSection);
-            }
-
-            string autoGeneratedVariableName = "autoGenVar";
-            string sexpVariablesSection = Regex.Match(content, @"#Sexp_variables.*?(#Fiction Viewer|#Command Briefing)", RegexOptions.Singleline).Value;
-            MatchCollection variableNameIds = Regex.Matches(sexpVariablesSection, $"{autoGeneratedVariableName}(\\d+)", RegexOptions.Multiline);
-            int variableId = Regex.Matches(sexpVariablesSection, @"^\t\t\d", RegexOptions.Multiline).Count;
-
-            int variableNameId = 1;
-
-            // set the next variable id
-            foreach (Match match in variableNameIds)
-            {
-                int currentId = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
-
-                if (currentId >= variableNameId)
+                if (variable.GetType() == typeof(Alt))
                 {
-                    variableNameId++;
+                    Alt alt = (Alt)variable;
+
+                    newSexp += alt.ShipChangeAltName();
                 }
             }
 
-            string newSexpVariablesSection = string.Empty;
-
-            // here we add a new variable for each alt
-            foreach (MissionVariable variable in variableList)
-            {
-                variable.VariableName = autoGeneratedVariableName + variableNameId;
-                newSexpVariablesSection += $"\t\t{variableId}\t\t\"{variable.VariableName}\"\t\t\"{variable.DefaultValue}\"\t\t\"string\"{Environment.NewLine}";
-                variableNameId++;
-                variableId++;
-            }
-
-            string endOfVariables = Regex.Match(content, @"\)\r\n\r\n(#Fiction Viewer|#Command Briefing|#Cutscenes)", RegexOptions.Multiline).Value;
-
-            return content.Replace(endOfVariables, newSexpVariablesSection + endOfVariables);
-        }
-
-        private static string PrepareNewSexpForAltNames(List<Alt> altList)
-        {
-            string newSexp = string.Empty;
-
-            foreach (Alt alt in altList)
-            {
-                newSexp += alt.ModifyVariableXstr() + alt.ShipChangeAltName();
-            }
-
             return newSexp;
-        }
-
-        private static string PrepareNewSexpForVariables(List<MissionVariable> VariableList)
-        {
-            string newSexp = string.Empty;
-
-            foreach (MissionVariable variable in VariableList)
-            {
-                newSexp += variable.ModifyVariableXstr();
-            }
-
-            return newSexp;
-        }
-
-        private static string AddEventToManageTranslations(string content, string newSexp)
-        {
-            // very unorthodox way to add the event but it allows me to manage the case when this event already exists in the original file
-            string eventForAltNamesTitle = "Manage translation variables";
-            string eventEnd = $"){Environment.NewLine}"
-                + $"+Name: {eventForAltNamesTitle}{Environment.NewLine}"
-                + $"+Repeat Count: 1{Environment.NewLine}"
-                + $"+Interval: 1{Environment.NewLine}{Environment.NewLine}";
-
-            if (!content.Contains(eventForAltNamesTitle))
-            {
-                string events = Regex.Match(content, @"#Events.*?\r\n\r\n", RegexOptions.Singleline).Value;
-
-                string eventBeginning = $"$Formula: ( when {Environment.NewLine}"
-                    + $"   ( true ) {Environment.NewLine}";
-
-                content = content.Replace(events, events + eventBeginning + eventEnd);
-            }
-
-            return content.Replace(eventEnd, newSexp + eventEnd);
         }
 
         /// <summary>
         /// Convert hardcoded texts in hud-set-text sexp to variables to be treated by XSTR
         /// </summary>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        private static string ConvertHardcodedHudTextToVariables(string content)
+        private void ConvertHardcodedHudTextToVariables()
         {
-            MatchCollection textMatches = Regex.Matches(content, "(\\( (?:hud-set-text|hud-set-directive).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
-            List<MissionVariable> variableList = new();
+            IEnumerable<Match> textMatches = Regexp.HudTexts.Matches(Content);
+            List<MissionVariable> hudVariables = new();
             List<HudText> hudTextList = new();
 
             foreach (Match match in textMatches)
             {
                 // Only treat sexp not using variables
-                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !hudVariables.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
-                    HudText hudText = new(match.Groups[1].Value, match.Groups[2].Value, match.Groups[3].Value);
-                    variableList.Add(hudText);
+                    HudText hudText = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[1].Value, match.Groups[2].Value, match.Groups[3].Value);
+                    hudVariables.Add(hudText);
                     hudTextList.Add(hudText);
+                    AddVariableToListIfNotExisting(hudText);
                 }
             }
 
-            if (variableList.Count > 0)
+            if (hudVariables.Count > 0)
             {
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-
-                string newSexp = PrepareNewSexpForVariables(variableList);
-
-                content = AddEventToManageTranslations(content, newSexp);
-
                 // let's cycle again to catch all sexps that could have different conditions or space/tab count...
                 foreach (Match match in textMatches)
                 {
-                    if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                    if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && hudVariables.Any(v => v.DefaultValue == match.Groups[2].Value))
                     {
                         HudText hudText = hudTextList.FirstOrDefault(h => h.DefaultValue == match.Groups[2].Value);
-                        content = content.Replace(match.Value, match.Groups[1] + hudText.NewSexp + match.Groups[3]);
+                        Content = Content.Replace(match.Value, match.Groups[1] + hudText.NewSexp + match.Groups[3]);
                     }
                 }
             }
-
-            return content;
         }
 
-        private static string ConvertSpecialMessageSendersToVariables(string content)
+        private void ConvertSpecialMessageSendersToVariables()
         {
-            MatchCollection messageMatches = Regex.Matches(content, @"\( (send-random-message|send-message).*?\r?\n[ \t]*\)\r?\n", RegexOptions.Singleline);
+            IEnumerable<Match> messageMatches = Regexp.SendMessages.Matches(Content);
             List<MissionVariable> variableList = new();
 
             foreach (Match message in messageMatches)
             {
-                MatchCollection specialSenderMatches = Regex.Matches(message.Value, "\"(#.*?)\"");
+                IEnumerable<Match> specialSenderMatches = Regexp.SpecialSenders.Matches(message.Value);
 
                 // in case of send-message-list, there can be several special senders
                 foreach (Match specialSender in specialSenderMatches)
                 {
                     if (!variableList.Any(v => v.DefaultValue == specialSender.Groups[1].Value))
                     {
-                        MissionVariable variable = new(specialSender.Groups[1].Value);
+                        MissionVariable variable = new(GiveMeAVariableName(specialSender.Groups[1].Value), specialSender.Groups[1].Value);
                         variableList.Add(variable);
+                        AddVariableToListIfNotExisting(variable);
                     }
                 }
             }
 
             if (variableList.Count > 0)
             {
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-                string newSexp = PrepareNewSexpForVariables(variableList);
-                content = AddEventToManageTranslations(content, newSexp);
-
                 foreach (Match message in messageMatches)
                 {
-                    MatchCollection specialSenderMatches = Regex.Matches(message.Value, "\"(#.*?)\"");
+                    IEnumerable<Match> specialSenderMatches = Regexp.SpecialSenders.Matches(message.Value);
 
                     string currentMessage = message.Value;
 
@@ -573,18 +450,16 @@ namespace FreeSpace2TranslationTools.Services
                     {
                         if (variableList.Any(v => v.DefaultValue == specialSender.Groups[1].Value))
                         {
-                            MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == specialSender.Groups[1].Value);
+                            MissionVariable variable = variableList.First(v => v.DefaultValue == specialSender.Groups[1].Value);
 
                             string newMessage = currentMessage.Replace(specialSender.Value, variable.NewSexp);
-                            content = content.Replace(currentMessage, newMessage);
+                            Content = Content.Replace(currentMessage, newMessage);
                             // once the currentMessage has been replaced in the original content, the newMessage becomes the currentMessage
                             currentMessage = newMessage;
                         }
                     }
                 }
             }
-
-            return content;
         }
 
         /// <summary>
@@ -602,14 +477,14 @@ namespace FreeSpace2TranslationTools.Services
             }
         }
 
-        private string ConvertJumpNodeReferencesToVariables(string content)
+        private void ConvertJumpNodeReferencesToVariables()
         {
             if (JumpNodes.Count > 0)
             {
                 List<MissionVariable> variableList = new();
                 // don't take variables section
                 string fromObjectToWaypoints = "#Objects.*#Waypoints";
-                string originalContent = Regex.Match(content, fromObjectToWaypoints, RegexOptions.Singleline).Value;
+                string originalContent = Regex.Match(Content, fromObjectToWaypoints, RegexOptions.Singleline).Value;
                 string jumpNodesSexp = "depart-node-delay|show-jumpnode|hide-jumpnode|set-jumpnode-color|set-jumpnode-name|set-jumpnode-model";
 
                 foreach (string jumpNode in JumpNodes)
@@ -620,16 +495,15 @@ namespace FreeSpace2TranslationTools.Services
 
                     if (jumpNodeReferences.Count > 0)
                     {
-                        variableList.Add(new(jumpNode));
+                        MissionVariable variable = new(GiveMeAVariableName(jumpNode), jumpNode);
+                        variableList.Add(variable);
+                        AddVariableToListIfNotExisting(variable);
                     }
                 }
 
                 if (variableList.Count > 0)
                 {
-                    content = AddVariablesToSexpVariablesSection(content, variableList);
-                    string newSexp = PrepareNewSexpForVariables(variableList);
-                    content = AddEventToManageTranslations(content, newSexp);
-                    originalContent = Regex.Match(content, fromObjectToWaypoints, RegexOptions.Singleline).Value;
+                    originalContent = Regex.Match(Content, fromObjectToWaypoints, RegexOptions.Singleline).Value;
                     string newContent = originalContent;
 
                     foreach (MissionVariable variable in variableList)
@@ -639,76 +513,62 @@ namespace FreeSpace2TranslationTools.Services
                         newContent = Regex.Replace(newContent, $"(?<=\\([ \t]*({jumpNodesSexp})[^\\(]*)\"{variable.DefaultValue}\"", variable.NewSexp, RegexOptions.Singleline);
                     }
 
-                    content = content.Replace(originalContent, newContent);
+                    Content = Content.Replace(originalContent, newContent);
                 }
-
-                return content;
-
-            }
-            else
-            {
-                return content;
             }
         }
 
-        private static string ConvertNavpointsToVariables(string content)
+        private void ConvertNavpointsToVariables()
         {
             List<MissionVariable> variableList = new();
 
-            MatchCollection navSexpMatches = Regex.Matches(content, "(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited).*?\"(.*?)\"", RegexOptions.Singleline);
+            IEnumerable<Match> navSexpMatches = Regex.Matches(Content, "(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited).*?\"(.*?)\"", RegexOptions.Singleline);
 
             foreach (Match navSexp in navSexpMatches)
             {
                 if (!variableList.Any(v => v.DefaultValue == navSexp.Groups[2].Value) && !navSexp.Groups[2].Value.StartsWith('@'))
                 {
-                    variableList.Add(new MissionVariable(navSexp.Groups[2].Value));
+                    MissionVariable variable = new(GiveMeAVariableName(navSexp.Groups[2].Value), navSexp.Groups[2].Value);
+                    variableList.Add(variable);
+                    AddVariableToListIfNotExisting(variable);
                 }
             }
 
             if (variableList.Count > 0)
             {
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-                string newSexp = PrepareNewSexpForVariables(variableList);
-                content = AddEventToManageTranslations(content, newSexp);
-
                 foreach (Match navSexp in navSexpMatches)
                 {
                     MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == navSexp.Groups[2].Value);
 
                     string newNavSexp = navSexp.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
-                    content = content.Replace(navSexp.Value, newNavSexp);
+                    Content = Content.Replace(navSexp.Value, newNavSexp);
                 }
             }
-
-            return content;
         }
 
-        private static string ConvertNavColorToVariables(string content)
+        private void ConvertNavColorToVariables()
         {
             List<MissionVariable> variableList = new();
 
-            MatchCollection navSexpMatches = Regex.Matches(content, "\\( set-nav-color.*?\\)", RegexOptions.Singleline);
+            IEnumerable<Match> navSexpMatches = Regex.Matches(Content, "\\( set-nav-color.*?\\)", RegexOptions.Singleline);
 
             foreach (Match navSexp in navSexpMatches)
             {
-                MatchCollection navNameMatches = Regex.Matches(navSexp.Value, "\"(.*?)\"");
+                IEnumerable<Match> navNameMatches = Regex.Matches(navSexp.Value, "\"(.*?)\"");
 
                 foreach (Match navName in navNameMatches)
                 {
                     if (!variableList.Any(v => v.DefaultValue == navName.Groups[1].Value) && !navName.Groups[1].Value.StartsWith('@'))
                     {
-                        variableList.Add(new MissionVariable(navName.Groups[1].Value));
+                        MissionVariable variable = new(GiveMeAVariableName(navName.Groups[1].Value), navName.Groups[1].Value);
+                        variableList.Add(variable);
+                        AddVariableToListIfNotExisting(variable);
                     }
                 }
             }
 
             if (variableList.Count > 0)
             {
-                // TODO: check that the same variable doesn't already exit, to avoid duplicates
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-                string newSexp = PrepareNewSexpForVariables(variableList);
-                content = AddEventToManageTranslations(content, newSexp);
-
                 foreach (Match navSexp in navSexpMatches)
                 {
                     string newNavSexp = navSexp.Value;
@@ -718,16 +578,14 @@ namespace FreeSpace2TranslationTools.Services
                         newNavSexp = newNavSexp.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
                     }
 
-                    content = content.Replace(navSexp.Value, newNavSexp);
+                    Content = Content.Replace(navSexp.Value, newNavSexp);
                 }
             }
-
-            return content;
         }
 
-        private static string ConvertHardcodedSubsystemNamesToVariables(string content)
+        private void ConvertHardcodedSubsystemNamesToVariables()
         {
-            MatchCollection subsystemMatches = Regex.Matches(content, "(\\( (?:change-subsystem-name).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            IEnumerable<Match> subsystemMatches = Regex.Matches(Content, "(\\( (?:change-subsystem-name).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
 
             foreach (Match match in subsystemMatches)
@@ -735,16 +593,14 @@ namespace FreeSpace2TranslationTools.Services
                 // Only treat sexp not using variables
                 if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
-                    variableList.Add(new MissionVariable(match.Groups[2].Value));
+                    MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
+                    variableList.Add(variable);
+                    AddVariableToListIfNotExisting(variable);
                 }
             }
 
             if (variableList.Count > 0)
             {
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-                string newSexp = PrepareNewSexpForVariables(variableList);
-                content = AddEventToManageTranslations(content, newSexp);
-
                 // let's cycle again to catch all sexps that could have different conditions or space/tab count...
                 foreach (Match match in subsystemMatches)
                 {
@@ -753,17 +609,15 @@ namespace FreeSpace2TranslationTools.Services
                         MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
 
                         string newSubsystemSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
-                        content = content.Replace(match.Value, newSubsystemSexp);
+                        Content = Content.Replace(match.Value, newSubsystemSexp);
                     }
                 }
             }
-
-            return content;
         }
 
-        private static string ConvertHardcodedObjectRolesToVariables(string content)
+        private void ConvertHardcodedObjectRolesToVariables()
         {
-            MatchCollection objectRoleMatches = Regex.Matches(content, "(\\( (?:Add-Object-Role).*?\"(.*?)\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            IEnumerable<Match> objectRoleMatches = Regex.Matches(Content, "(\\( (?:Add-Object-Role).*?\"(.*?)\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
 
             foreach (Match match in objectRoleMatches)
@@ -771,20 +625,20 @@ namespace FreeSpace2TranslationTools.Services
                 // Only treat sexp not using variables
                 if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
-                    variableList.Add(new MissionVariable(match.Groups[2].Value));
+                    MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
+                    variableList.Add(variable);
+                    AddVariableToListIfNotExisting(variable);
                 }
                 if (!string.IsNullOrEmpty(match.Groups[3].Value) && !match.Groups[3].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[3].Value))
                 {
-                    variableList.Add(new MissionVariable(match.Groups[3].Value));
+                    MissionVariable variable = new(GiveMeAVariableName(match.Groups[3].Value), match.Groups[3].Value);
+                    variableList.Add(variable);
+                    AddVariableToListIfNotExisting(variable);
                 }
             }
 
             if (variableList.Count > 0)
             {
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-                string newSexp = PrepareNewSexpForVariables(variableList);
-                content = AddEventToManageTranslations(content, newSexp);
-
                 // let's cycle again to catch all sexps that could have different conditions or space/tab count...
                 foreach (Match match in objectRoleMatches)
                 {
@@ -795,7 +649,7 @@ namespace FreeSpace2TranslationTools.Services
                         MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
 
                         string newObjectRoleSexp = currentObjectRoleSexp.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
-                        content = content.Replace(currentObjectRoleSexp, newObjectRoleSexp);
+                        Content = Content.Replace(currentObjectRoleSexp, newObjectRoleSexp);
                         currentObjectRoleSexp = newObjectRoleSexp;
                     }
                     if (!string.IsNullOrEmpty(match.Groups[3].Value) && !match.Groups[3].Value.StartsWith("@", StringComparison.InvariantCulture) && variableList.Any(v => v.DefaultValue == match.Groups[3].Value))
@@ -803,17 +657,15 @@ namespace FreeSpace2TranslationTools.Services
                         MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[3].Value);
 
                         string newObjectRoleSexp = currentObjectRoleSexp.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
-                        content = content.Replace(currentObjectRoleSexp, newObjectRoleSexp);
+                        Content = Content.Replace(currentObjectRoleSexp, newObjectRoleSexp);
                     }
                 }
             }
-
-            return content;
         }
 
-        private static string ConvertHardcodedMarkedShipsAndWingsToVariables(string content)
+        private void ConvertHardcodedMarkedShipsAndWingsToVariables()
         {
-            MatchCollection matches = Regex.Matches(content, "(\\( (?:lua-mark-ship|lua-mark-wing).*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            IEnumerable<Match> matches = Regex.Matches(Content, "(\\( (?:lua-mark-ship|lua-mark-wing).*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
 
             foreach (Match match in matches)
@@ -821,16 +673,14 @@ namespace FreeSpace2TranslationTools.Services
                 // Only treat sexp not using variables
                 if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
-                    variableList.Add(new MissionVariable(match.Groups[2].Value));
+                    MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
+                    variableList.Add(variable);
+                    AddVariableToListIfNotExisting(variable);
                 }
             }
 
             if (variableList.Count > 0)
             {
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-                string newSexp = PrepareNewSexpForVariables(variableList);
-                content = AddEventToManageTranslations(content, newSexp);
-
                 // let's cycle again to catch all sexps that could have different conditions or space/tab count...
                 foreach (Match match in matches)
                 {
@@ -839,17 +689,15 @@ namespace FreeSpace2TranslationTools.Services
                         MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
 
                         string newMarkedObjectSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
-                        content = content.Replace(match.Value, newMarkedObjectSexp);
+                        Content = Content.Replace(match.Value, newMarkedObjectSexp);
                     }
                 }
             }
-
-            return content;
         }
 
-        private static string ConvertHardcodedMarkedSubsystemsToVariables(string content)
+        private void ConvertHardcodedMarkedSubsystemsToVariables()
         {
-            MatchCollection matches = Regex.Matches(content, "(\\( (?:lua-mark-subsystem).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
+            IEnumerable<Match> matches = Regex.Matches(Content, "(\\( (?:lua-mark-subsystem).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline);
             List<MissionVariable> variableList = new();
 
             foreach (Match match in matches)
@@ -857,16 +705,14 @@ namespace FreeSpace2TranslationTools.Services
                 // Only treat sexp not using variables
                 if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith("@", StringComparison.InvariantCulture) && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
-                    variableList.Add(new MissionVariable(match.Groups[2].Value));
+                    MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
+                    variableList.Add(variable);
+                    AddVariableToListIfNotExisting(variable);
                 }
             }
 
             if (variableList.Count > 0)
             {
-                content = AddVariablesToSexpVariablesSection(content, variableList);
-                string newSexp = PrepareNewSexpForVariables(variableList);
-                content = AddEventToManageTranslations(content, newSexp);
-
                 // let's cycle again to catch all sexps that could have different conditions or space/tab count...
                 foreach (Match match in matches)
                 {
@@ -875,12 +721,114 @@ namespace FreeSpace2TranslationTools.Services
                         MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
 
                         string newMarkedObjectSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
-                        content = content.Replace(match.Value, newMarkedObjectSexp);
+                        Content = Content.Replace(match.Value, newMarkedObjectSexp);
                     }
                 }
             }
+        }
 
-            return content;
+        private void AddVariablesToSexpVariablesSection()
+        {
+            if (Variables.Count > 0)
+            {
+                // Create '#Sexp_variables' section if not exists
+                if (!Content.Contains("#Sexp_variables"))
+                {
+                    string beforeSexp = Regex.Match(Content, @"(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline).Value;
+
+                    string newSection = $"#Sexp_variables{Environment.NewLine}" +
+                        $"{Environment.NewLine}" +
+                        $"$Variables:{Environment.NewLine}" +
+                        $"({Environment.NewLine}" +
+                        $"){Environment.NewLine}" +
+                        $"{Environment.NewLine}" +
+                        $"{beforeSexp}";
+
+                    Content = Content.Replace(beforeSexp, newSection);
+                }
+
+                string autoGeneratedVariableName = "autoGenVar";
+                string sexpVariablesSection = Regex.Match(Content, @"#Sexp_variables.*?(#Fiction Viewer|#Command Briefing)", RegexOptions.Singleline).Value;
+                IEnumerable<Match> variableNameIds = Regex.Matches(sexpVariablesSection, $"{autoGeneratedVariableName}(\\d+)", RegexOptions.Multiline);
+                int variableId = Regex.Matches(sexpVariablesSection, @"^\t\t\d", RegexOptions.Multiline).Count;
+
+                int variableNameId = 1;
+
+                // set the next variable id
+                foreach (Match match in variableNameIds)
+                {
+                    int currentId = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+
+                    if (currentId >= variableNameId)
+                    {
+                        variableNameId++;
+                    }
+                }
+
+                string newSexpVariablesSection = string.Empty;
+
+                // here we add a new variable for each alt
+                foreach (MissionVariable variable in Variables)
+                {
+                    variable.Name = autoGeneratedVariableName + variableNameId;
+                    newSexpVariablesSection += $"\t\t{variableId}\t\t\"{variable.Name}\"\t\t\"{variable.DefaultValue}\"\t\t\"string\"{Environment.NewLine}";
+                    variableNameId++;
+                    variableId++;
+                }
+
+                string endOfVariables = Regex.Match(Content, @"\)\r\n\r\n(#Fiction Viewer|#Command Briefing|#Cutscenes)", RegexOptions.Multiline).Value;
+
+                Content = Content.Replace(endOfVariables, newSexpVariablesSection + endOfVariables);
+            }
+        }
+
+        private void AddEventToManageTranslations()
+        {
+            if (Variables.Count > 0)
+            {
+                // very unorthodox way to add the event but it allows me to manage the case when this event already exists in the original file
+                string eventForAltNamesTitle = "Manage translation variables";
+                string eventEnd = $"){Environment.NewLine}"
+                    + $"+Name: {eventForAltNamesTitle}{Environment.NewLine}"
+                    + $"+Repeat Count: 1{Environment.NewLine}"
+                    + $"+Interval: 1{Environment.NewLine}{Environment.NewLine}";
+
+                if (!Content.Contains(eventForAltNamesTitle))
+                {
+                    string events = Regex.Match(Content, @"#Events.*?\r\n\r\n", RegexOptions.Singleline).Value;
+
+                    string eventBeginning = $"$Formula: ( when {Environment.NewLine}"
+                        + $"   ( true ) {Environment.NewLine}";
+
+                    Content = Content.Replace(events, events + eventBeginning + eventEnd);
+                }
+
+                string newSexp = PrepareNewSexpForVariables();
+
+                Content = Content.Replace(eventEnd, newSexp + eventEnd);
+            }
+        }
+
+        private string GiveMeAVariableName(string defaultValue)
+        {
+            if (!Variables.Any(v => v.DefaultValue == defaultValue))
+            {
+                string name = "autoGenVar" + (Variables.Count + 1);
+
+                return name;
+            }
+            else
+            {
+                return Variables.First(v => v.DefaultValue == defaultValue).Name;
+            }
+        }
+
+        private void AddVariableToListIfNotExisting(MissionVariable variable)
+        {
+            if (!Variables.Any(v => v.Name == variable.Name))
+            {
+                Variables.Add(variable);
+            }
         }
     }
 }
