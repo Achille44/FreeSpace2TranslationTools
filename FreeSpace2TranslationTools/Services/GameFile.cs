@@ -45,7 +45,7 @@ namespace FreeSpace2TranslationTools.Services
             FileInfo fileInfo = new(Name);
 
             List<IXstr> result = new();
-            MatchCollection resultsFromFile = Utils.RegexXstr.Matches(Content);
+            MatchCollection resultsFromFile = Regexp.Xstr.Matches(Content);
 
             foreach (Match match in resultsFromFile)
             {

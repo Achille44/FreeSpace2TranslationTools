@@ -14,10 +14,10 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            return Regex.Replace(OriginalContent, @"(^)((?!(XSTR|\$|#End|#end)).+?)\r\n", new MatchEvaluator(GenerateCredits), RegexOptions.Multiline | RegexOptions.Compiled);
+            return Regexp.HardcodedLines.Replace(OriginalContent, new MatchEvaluator(GenerateInternationalizedCredits));
         }
 
-        private string GenerateCredits(Match match)
+        private string GenerateInternationalizedCredits(Match match)
         {
             return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }

@@ -81,33 +81,55 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _FromObjectsToWaypoints = new("#Objects.*#Waypoints", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex FromObjectsToWaypoints { get => _FromObjectsToWaypoints; }
 
-        private static Regex _FirstSexpParameters = new("(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited|lua-mark-ship|lua-mark-wing).*?\"(.*?)\"", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex _FirstSexpParameters = new("(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited|lua-mark-ship|lua-mark-wing).*?\"(.*?)\"", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex FirstSexpParameters { get => _FirstSexpParameters; }
 
-        private static Regex _SecondSexpParameters = new("(\\( (?:change-subsystem-name|lua-mark-subsystem).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex _SecondSexpParameters = new("(\\( (?:change-subsystem-name|lua-mark-subsystem).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex SecondSexpParameters { get => _SecondSexpParameters; }
 
-        private static Regex _Sexp = new("\\( (set-nav-color|Add-Object-Role).*?\\)", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex _Sexp = new("\\( (set-nav-color|Add-Object-Role).*?\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex Sexp { get => _Sexp; }
 
-        private static Regex _StringParameters = new("\"(.*?)\"", RegexOptions.Compiled);
+        private static readonly Regex _StringParameters = new("\"(.*?)\"", RegexOptions.Compiled);
         public static Regex StringParameters { get => _StringParameters; }
 
-        private static Regex _BeforeSexp = new("(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex _BeforeSexp = new("(#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline | RegexOptions.Compiled);
         public static Regex BeforeSexp { get => _BeforeSexp; }
 
-        private static Regex _SexpVariablesSection = new("#Sexp_variables.*?(#Fiction Viewer|#Command Briefing)", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex _SexpVariablesSection = new("#Sexp_variables.*?(#Fiction Viewer|#Command Briefing)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex SexpVariablesSection { get => _SexpVariablesSection; }
 
-        private static Regex _VariableIds = new(@"^\t\t\d", RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex _VariableIds = new(@"^\t\t\d", RegexOptions.Multiline | RegexOptions.Compiled);
         public static Regex VariableIds { get => _VariableIds; }
 
-        private static Regex _EndOfVariablesSection = new(@"\)\r\n\r\n(#Fiction Viewer|#Command Briefing|#Cutscenes)", RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex _EndOfVariablesSection = new(@"\)\r\n\r\n(#Fiction Viewer|#Command Briefing|#Cutscenes)", RegexOptions.Multiline | RegexOptions.Compiled);
         public static Regex EndOfVariablesSection { get => _EndOfVariablesSection; }
 
-        private static Regex _EventsSection = new(@"#Events.*?\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex _EventsSection = new(@"#Events.*?\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex EventsSection { get => _EventsSection; }
 
+        private static readonly Regex _HardcodedNames = new(@"(.*?\$Name:[ \t]*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
+        public static Regex HardcodedNames { get => _HardcodedNames; }
+
+        private static readonly Regex _HardcodedMedalNames = new(@"(\$Name:[ \t]*(.*?)\r\n)([^\r]*\$Bitmap)", RegexOptions.Multiline | RegexOptions.Compiled);
+        public static Regex HardcodedMedalNames { get => _HardcodedMedalNames; }
+
+        private static readonly Regex _HardcodedLines = new(@"(^)((?!(XSTR|\$|#End|#end)).+?)\r\n", RegexOptions.Multiline | RegexOptions.Compiled);
+        public static Regex HardcodedLines { get => _HardcodedLines; }
+
+        private static readonly Regex _HardcodedTexts = new(@"(.*?Text:[ \t]*)((?!XSTR).*)\r?\n", RegexOptions.Compiled);
+        public static Regex HardcodedTexts { get => _HardcodedTexts; }
+
+        private static readonly Regex _HardcodedDoorDescriptions = new(@"(.*\+Door description:\s*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
+        public static Regex HardcodedDoorDescriptions { get => _HardcodedDoorDescriptions; }
+
+        private static readonly Regex _NotEmptyStrings = new("\".+?\"", RegexOptions.Compiled);
+        public static Regex NotEmptyStrings { get => _NotEmptyStrings; }
+
+        private static readonly Regex _LinesStartingWithAWord = new(@"^\w+", RegexOptions.Compiled);
+        public static Regex LinesStartingWithAWord { get => _LinesStartingWithAWord; }
+
+        
 
         public static Regex GetJumpNodeReferences(string jumpNode)
         {

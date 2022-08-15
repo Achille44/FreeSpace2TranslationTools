@@ -55,65 +55,6 @@ namespace FreeSpace2TranslationTools.Services
             return Content;
         }
 
-        internal static string ReplaceHardcodedValueWithXstr(string originalMatch, string beginningOfLine, string value)
-        {
-            // if this is a comment or if it's already XSTR, then don't touch it and return the original match
-            if (beginningOfLine.Contains(';') || value.Contains("XSTR"))
-            {
-                return originalMatch;
-            }
-            else
-            {
-                string[] values = value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-                string sanatizedValue = values.Length == 0 ? "" : values[0].Replace("\"", "$quote");
-
-                // in case no value, keep original
-                if (sanatizedValue == "")
-                {
-                    return originalMatch;
-                }
-
-                string result = $"{beginningOfLine}XSTR(\"{sanatizedValue}\", -1)";
-
-                if (values.Length > 1)
-                {
-                    result += $" ;{values[1]}";
-                }
-
-                if (originalMatch.EndsWith("\r\n"))
-                {
-                    result += "\r\n";
-                }
-                else if (originalMatch.EndsWith("\n"))
-                {
-                    result += "\n";
-                }
-
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// Adds a new line including an XSTR variable
-        /// </summary>
-        /// <param name="newMarker">Name of the new marker identifying the XSTR variable</param>
-        /// <param name="match">Groups[1]: first original line (including \r\n), Groups[2]: hardcoded value to be translated, Groups[3]: line after the hardcoded value</param>
-        /// <returns></returns>
-        private static string AddXstrLineToHardcodedValue(string newMarker, Match match)
-        {
-            // if marker already present, then don't touch anything
-            if (match.Value.Contains(newMarker))
-            {
-                return match.Value;
-            }
-            else
-            {
-                string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-                string valueWithoutAlias = valueWithoutComment.Split('#', 2, StringSplitOptions.RemoveEmptyEntries)[0];
-                return $"{match.Groups[1].Value}{newMarker}: XSTR(\"{valueWithoutAlias.Trim().TrimStart('@')}\", -1){Environment.NewLine}{match.Groups[3].Value}";
-            }
-        }
-
         private static string ConvertXPositionFromAbsoluteToRelative(string absolute)
         {
             // values determined testing the mission bp-09 of blue planet
@@ -134,27 +75,27 @@ namespace FreeSpace2TranslationTools.Services
 
         private string GenerateLabels(Match match)
         {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+            return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateCallSigns(Match match)
         {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+            return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateShipNames(Match match)
         {
-            return AddXstrLineToHardcodedValue("$Display Name", match);
+            return XstrManager.AddXstrLineToHardcodedValue("$Display Name", match);
         }
 
         private string GenerateJumpNodeNames(Match match)
         {
-            string newName = ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+            string newName = XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
 
             // if the jump node has already been translated, then don't add it to the list
             if (match.Value != newName)
             {
-                JumpNodes.Add(SanitizeName(match.Groups[2].Value, true));
+                JumpNodes.Add(XstrManager.SanitizeName(match.Groups[2].Value, true));
             }
 
             return newName;
@@ -163,7 +104,6 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Convert sexp show-subtitle to show-subtitle-text so they can be translated
         /// </summary>
-        /// <returns></returns>
         private void ConvertShowSubtitleToShowSubtitleText()
         {
             foreach (Match match in Regexp.ShowSubtitle.Matches(Content).AsEnumerable())
@@ -242,7 +182,6 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Extract hardcoded strings from show-subtitle-text and put them into new messages so they can be translated
         /// </summary>
-        /// <returns></returns>
         private void ExtractShowSubtitleTextContentToMessages()
         {
             // ex: ( show-subtitle-text     ==>     ( show-subtitle-text
@@ -282,7 +221,7 @@ namespace FreeSpace2TranslationTools.Services
             #endregion
 
             IEnumerable<Match> subtitleTextResults = Regexp.SubtitleTexts.Matches(Content);
-            string newMessages = string.Empty;
+            string newMessages = "";
 
             foreach (Match match in subtitleTextResults)
             {
@@ -302,7 +241,7 @@ namespace FreeSpace2TranslationTools.Services
                 }
             }
 
-            if (newMessages != string.Empty)
+            if (newMessages != "")
             {
                 Content = Content.Replace("#Reinforcements", newMessages + "#Reinforcements");
             }
@@ -311,7 +250,6 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Convert ship alt names to sexp variables so that they can be translated via modify-variable-xstr sexp
         /// </summary>
-        /// <returns></returns>
         private void ConvertAltToVariables()
         {
             if (Regexp.AlternateTypes.IsMatch(Content))
@@ -676,21 +614,6 @@ namespace FreeSpace2TranslationTools.Services
             }
 
             return newSexp;
-        }
-
-        /// <summary>
-        /// Removes comments, alias and spaces from a name
-        /// </summary>
-        private static string SanitizeName(string rawName, bool fullSanatizing = false)
-        {
-            if (fullSanatizing)
-            {
-                return rawName.Split(';')[0].Split('#')[0].Trim().TrimStart('@');
-            }
-            else
-            {
-                return rawName.Split(';')[0].Trim();
-            }
         }
     }
 }

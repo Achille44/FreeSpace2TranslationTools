@@ -45,7 +45,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public string ReplaceContentWithNewXstrId(string content)
         {
-            string newLine = Utils.RegexXstr.Replace(FullLine, match => $"XSTR({match.Groups[1].Value}, {Id})");
+            string newLine = Regexp.Xstr.Replace(FullLine, match => $"XSTR({match.Groups[1].Value}, {Id})");
 
             return content.Replace(FullLine, newLine);
         }

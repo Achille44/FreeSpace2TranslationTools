@@ -13,7 +13,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            return Regex.Replace(OriginalContent, @"(\$Name:[ \t]*(.*?)\r\n)([^\r]*\$Bitmap)", new MatchEvaluator(XstrManager.GenerateAltNames), RegexOptions.Multiline | RegexOptions.Compiled);
+            return Regexp.HardcodedMedalNames.Replace(OriginalContent, new MatchEvaluator(XstrManager.GenerateAltNames));
         }
     }
 }

@@ -13,10 +13,10 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            return Regex.Replace(OriginalContent, @"(.*?Text:[ \t]*)((?!XSTR).*)\r?\n", new MatchEvaluator(GenerateHudGauges), RegexOptions.Compiled);
+            return Regexp.HardcodedTexts.Replace(OriginalContent, new MatchEvaluator(GenerateInternationalizedHudGauges));
         }
 
-        private string GenerateHudGauges(Match match)
+        private string GenerateInternationalizedHudGauges(Match match)
         {
             // Always Show Text is a boolean, so don't treat this case
             if (match.Value.Contains("Always Show Text"))

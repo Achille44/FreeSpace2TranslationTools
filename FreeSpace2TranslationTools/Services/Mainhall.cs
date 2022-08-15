@@ -13,11 +13,10 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            // replace all door descriptions without XSTR variable
-            return Regex.Replace(OriginalContent, @"(.*\+Door description:\s*)((?!XSTR).*)\r\n", new MatchEvaluator(GenerateDoorDescriptions), RegexOptions.Compiled);
+            return Regexp.HardcodedDoorDescriptions.Replace(OriginalContent, new MatchEvaluator(GenerateInternationalizedDoorDescriptions));
         }
 
-        private string GenerateDoorDescriptions(Match match)
+        private string GenerateInternationalizedDoorDescriptions(Match match)
         {
             return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }

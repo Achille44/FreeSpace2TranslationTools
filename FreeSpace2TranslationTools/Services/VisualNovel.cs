@@ -102,7 +102,7 @@ namespace FreeSpace2TranslationTools.Services
         {
             string newLine = MSGXSTR_MARKER;
 
-            MatchCollection strings = Regex.Matches(line, "\".+?\"");
+            MatchCollection strings = Regexp.NotEmptyStrings.Matches(line);
 
             if (line.StartsWith('\"'))
             {
@@ -118,7 +118,7 @@ namespace FreeSpace2TranslationTools.Services
             }
             else
             {
-                newLine += SEPARATOR + $"\"{Regex.Match(line, @"^\w+").Value}\"";
+                newLine += SEPARATOR + $"\"{Regexp.LinesStartingWithAWord.Match(line).Value}\"";
                 newLine += SEPARATOR + DEFAULT_XSTR_ID;
                 newLine += SEPARATOR + strings[0].Value;
                 newLine += SEPARATOR + DEFAULT_XSTR_ID;

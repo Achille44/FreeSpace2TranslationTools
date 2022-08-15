@@ -174,7 +174,7 @@ namespace FreeSpace2TranslationTools.Services
 
                         if (!Ships.Any(s => s.Name == shipName))
                         {
-                            newEntry = Utils.RegexNoAltNames.Replace(newEntry, new MatchEvaluator(GenerateAltNames));
+                            newEntry = Regexp.NoAltNames.Replace(newEntry, new MatchEvaluator(GenerateAltNames));
                             Ships.Add(new Ship { Name = shipName });
                         }
 
@@ -232,7 +232,7 @@ namespace FreeSpace2TranslationTools.Services
             {
                 string newContent = Regex.Replace(file.Content, @"([^;]\$Alt Name:[ \t]*)((?!XSTR).*)\r\n", new MatchEvaluator(ReplaceAltNames));
 
-                newContent = Utils.RegexNoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
+                newContent = Regexp.NoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
 
                 newContent = Regex.Replace(newContent, @"(\+Title:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateWeaponTitle));
 
@@ -486,7 +486,7 @@ namespace FreeSpace2TranslationTools.Services
         /// <param name="newMarker">Name of the new marker identifying the XSTR variable</param>
         /// <param name="match">Groups[1]: first original line (including \r\n), Groups[2]: hardcoded value to be translated, Groups[3]: line after the hardcoded value</param>
         /// <returns></returns>
-        private static string AddXstrLineToHardcodedValue(string newMarker, Match match)
+        internal static string AddXstrLineToHardcodedValue(string newMarker, Match match)
         {
             // if marker already present, then don't touch anything
             if (match.Value.Contains(newMarker))
@@ -504,7 +504,7 @@ namespace FreeSpace2TranslationTools.Services
         /// <summary>
         /// Removes comments, alias and spaces from a name
         /// </summary>
-        private static string SanitizeName(string rawName, bool fullSanatizing = false)
+        internal static string SanitizeName(string rawName, bool fullSanatizing = false)
         {
             if (fullSanatizing)
             {

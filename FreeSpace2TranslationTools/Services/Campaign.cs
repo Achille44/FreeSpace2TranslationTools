@@ -14,10 +14,10 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            return Regex.Replace(OriginalContent, @"(.*?\$Name: )((?!XSTR).*)\r\n", new MatchEvaluator(GenerateCampaignNames), RegexOptions.Compiled);
+            return Regexp.HardcodedNames.Replace(OriginalContent, new MatchEvaluator(GenerateInternationalizedCampaignNames));
         }
 
-        private string GenerateCampaignNames(Match match)
+        private string GenerateInternationalizedCampaignNames(Match match)
         {
             return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }

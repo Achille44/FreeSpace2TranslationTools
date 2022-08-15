@@ -13,10 +13,10 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            return Regex.Replace(OriginalContent, @"(\$Name:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateCutscenes), RegexOptions.Compiled);
+            return Regexp.HardcodedNames.Replace(OriginalContent, new MatchEvaluator(GenerateInternationalizedCutscenes));
         }
 
-        private string GenerateCutscenes(Match match)
+        private string GenerateInternationalizedCutscenes(Match match)
         {
             return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
