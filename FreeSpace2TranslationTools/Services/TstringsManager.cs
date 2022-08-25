@@ -204,7 +204,7 @@ namespace FreeSpace2TranslationTools.Services
                 string iterationFile = string.Empty;
                 string content = $"#Default{Environment.NewLine}";
 
-                foreach (Xstr line in Lines.OrderBy(x => x.Id))
+                foreach (IXstr line in Lines.OrderBy(x => x.Id))
                 {
                     // add the name of the file in comment
                     if (iterationFile != line.FileName)
