@@ -8,7 +8,7 @@ namespace FreeSpace2TranslationTools.Services
 {
     internal class Ships : IFile
     {
-        private readonly string Content;
+        private string Content;
 
         public Ships(string content)
         {
@@ -16,6 +16,11 @@ namespace FreeSpace2TranslationTools.Services
         }
 
         public string GetInternationalizedContent()
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetInternationalizedContent(List<Weapon> modWeapons)
         {
             throw new NotImplementedException();
         }

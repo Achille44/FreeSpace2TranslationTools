@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace FreeSpace2TranslationTools.Services
 {
@@ -13,12 +14,12 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            return Regexp.HardcodedDoorDescriptions.Replace(OriginalContent, new MatchEvaluator(GenerateInternationalizedDoorDescriptions));
+            return Regexp.HardcodedDoorDescriptions.Replace(OriginalContent, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
         }
 
-        private string GenerateInternationalizedDoorDescriptions(Match match)
+        public string GetInternationalizedContent(List<Weapon> modWeapons)
         {
-            return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+            return GetInternationalizedContent();
         }
     }
 }

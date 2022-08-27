@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace FreeSpace2TranslationTools.Services
 {
@@ -14,6 +15,11 @@ namespace FreeSpace2TranslationTools.Services
         public string GetInternationalizedContent()
         {
             return Regexp.HardcodedMedalNames.Replace(OriginalContent, new MatchEvaluator(XstrManager.GenerateAltNames));
+        }
+
+        public string GetInternationalizedContent(List<Weapon> modWeapons)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

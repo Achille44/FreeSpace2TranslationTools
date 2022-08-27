@@ -11,6 +11,7 @@ namespace FreeSpace2TranslationTools.Services
     {
         // REGEX HELP
         // (?=) : Positive lookahead. Matches a group after the main expression without including it in the result
+        // (?<=...) : look behind
         // -----------------------------------------------------------------------------------------------------------
 
         private static readonly Regex _Xstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
@@ -129,11 +130,33 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _LinesStartingWithAWord = new(@"^\w+", RegexOptions.Compiled);
         public static Regex LinesStartingWithAWord { get => _LinesStartingWithAWord; }
 
-        
+        private static readonly Regex _HardCodedAltNames = new(@"([^;]\$Alt Name:[ \t]*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
+        public static Regex HardCodedAltNames { get => _HardCodedAltNames; }
+
+        private static readonly Regex _Titles = new(@"(\+Title:[ \t]*)(.*?)\r\n", RegexOptions.Compiled);
+        public static Regex Titles { get => _Titles; }
+
+        private static readonly Regex _Descriptions = new(@"(\+Description:[ \t]*)(.*?)\r\n(?=\$end_multi_text)", RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Regex Descriptions { get => _Descriptions; }
+
+        private static readonly Regex _Weapons = new(@"\$Name:\s*.*?(?=\$Name|#end)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        public static Regex Weapons { get => _Weapons; }
+
+        private static readonly Regex _NoTechTitles = new(@"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Tech Anim:|\s*\+Tech Description:)", RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Regex NoTechTitles { get => _NoTechTitles; }
+
+        private static readonly Regex _NoTitles = new(@"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Description:)", RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Regex NoTitles { get => _NoTitles; }
+
+        private static readonly Regex _WeaponNames = new(@"\$Name:[ \t]*([^\r]*)", RegexOptions.Compiled);
+        public static Regex WeaponNames { get => _WeaponNames; }
+
+        private static readonly Regex _Flags = new("\\$Flags:(.*?)\"[ \t]*\\)", RegexOptions.Compiled);
+        public static Regex Flags { get => _Flags; }
+
 
         public static Regex GetJumpNodeReferences(string jumpNode)
         {
-            // (?<=...) => look behind
             return new($"(?<=\\([ \t]*(depart-node-delay|show-jumpnode|hide-jumpnode|set-jumpnode-color|set-jumpnode-name|set-jumpnode-model)[^\\(]*)\"{jumpNode}\"", RegexOptions.Singleline);
         }
     }

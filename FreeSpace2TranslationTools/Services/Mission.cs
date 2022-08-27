@@ -20,9 +20,9 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
-            Content = Regexp.Labels.Replace(Content, new MatchEvaluator(GenerateLabels));
+            Content = Regexp.Labels.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
-            Content = Regexp.CallSigns.Replace(Content, new MatchEvaluator(GenerateCallSigns));
+            Content = Regexp.CallSigns.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
             Content = Regexp.ShipNames.Replace(Content, new MatchEvaluator(GenerateShipNames));
 
@@ -55,6 +55,11 @@ namespace FreeSpace2TranslationTools.Services
             return Content;
         }
 
+        public string GetInternationalizedContent(List<Weapon> modWeapons)
+        {
+            return GetInternationalizedContent();
+        }
+
         private static string ConvertXPositionFromAbsoluteToRelative(string absolute)
         {
             // values determined testing the mission bp-09 of blue planet
@@ -71,16 +76,6 @@ namespace FreeSpace2TranslationTools.Services
             double output = 65;
 
             return Convert.ToInt32(Math.Round(int.Parse(absolute) / input * output)).ToString(CultureInfo.InvariantCulture);
-        }
-
-        private string GenerateLabels(Match match)
-        {
-            return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateCallSigns(Match match)
-        {
-            return XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
         }
 
         private string GenerateShipNames(Match match)

@@ -53,6 +53,11 @@ namespace FreeSpace2TranslationTools.Services
             return AddXstrLineToHardcodedValue("$Alt Name", match);
         }
 
+        internal static string InternationalizeHardcodedValue(Match match)
+        {
+            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+        }
+
         internal static string ReplaceHardcodedValueWithXstr(string originalMatch, string beginningOfLine, string value)
         {
             // if this is a comment or if it's already XSTR, then don't touch it and return the original match
@@ -224,77 +229,9 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ProcessWeaponFiles()
         {
-            List<GameFile> weaponFiles = Files.Where(x => x.Name.Contains("-wep.tbm") || x.Name.Contains("weapons.tbl")).ToList();
-            List<string> primaryNames = new();
-            List<string> secondaryNames = new();
-
-            foreach (GameFile file in weaponFiles)
+            foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-wep.tbm") || x.Name.EndsWith("weapons.tbl")))
             {
-                string newContent = Regex.Replace(file.Content, @"([^;]\$Alt Name:[ \t]*)((?!XSTR).*)\r\n", new MatchEvaluator(ReplaceAltNames));
-
-                newContent = Regexp.NoAltNames.Replace(newContent, new MatchEvaluator(GenerateAltNames));
-
-                newContent = Regex.Replace(newContent, @"(\+Title:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateWeaponTitle));
-
-                newContent = Regex.Replace(newContent, @"(\+Description:[ \t]*)(.*?)\r\n(?=\$end_multi_text)", new MatchEvaluator(GenerateWeaponDescription), RegexOptions.Singleline);
-
-                MatchCollection weapons = Regex.Matches(newContent, @"\$Name:\s*.*?(?=\$Name|#end|#End)", RegexOptions.Singleline);
-
-                foreach (Match weapon in weapons)
-                {
-                    if (!weapon.Value.Contains("+nocreate"))
-                    {
-                        if (!weapon.Value.Contains("+Tech Title:") && weapon.Value.Contains("+Tech Description:"))
-                        {
-                            string newEntry = Regex.Replace(weapon.Value, @"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Tech Anim:|\s*\+Tech Description:)", new MatchEvaluator(GenerateTechTitle), RegexOptions.Singleline);
-
-                            newContent = newContent.Replace(weapon.Value, newEntry);
-                        }
-
-                        if (!weapon.Value.Contains("+Title:") && weapon.Value.Contains("+Description:"))
-                        {
-                            string newEntry = Regex.Replace(weapon.Value, @"(\$Name:\s*(.*?)\r\n.*?\r\n)(\s*\+Description:)", new MatchEvaluator(GenerateTitle), RegexOptions.Singleline);
-
-                            newContent = newContent.Replace(weapon.Value, newEntry);
-                        }
-                    }
-
-                    // Here we save weapons to use them in ships files for subsystems
-                    if (weapon.Value.Contains("$Flags:"))
-                    {
-                        string name = Regex.Match(weapon.Value, @"\$Name:[ \t]*([^\r]*)").Groups[1].Value.Trim();
-
-                        if (!Weapons.Any(w => w.Name == name))
-                        {
-                            string type = "Laser turret";
-
-                            string flags = Regex.Match(weapon.Value, "\\$Flags:(.*?)\"[ \t]*\\)").Value;
-
-                            if (flags.Contains("beam"))
-                            {
-                                type = "Beam turret";
-                            }
-                            else if (flags.Contains("Flak"))
-                            {
-                                type = "Flak turret";
-                            }
-                            else if (flags.Contains("Bomb"))
-                            {
-                                type = "Missile lnchr";
-                            }
-                            else if (flags.Contains("Ballistic"))
-                            {
-                                type = "Turret";
-                            }
-
-                            Weapons.Add(new Weapon(name, type));
-                        }
-                    }
-                }
-
-                file.SaveContent(newContent);
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessWeaponFile(file, new WeaponsFile(file.Content));
             }
         }
 
@@ -326,6 +263,13 @@ namespace FreeSpace2TranslationTools.Services
         private void ProcessFile(GameFile gameFile, IFile file)
         {
             gameFile.SaveContent(file.GetInternationalizedContent());
+
+            Parent.IncreaseProgress(Sender, CurrentProgress++);
+        }
+
+        private void ProcessWeaponFile(GameFile gameFile, IFile file)
+        {
+            gameFile.SaveContent(file.GetInternationalizedContent(Weapons));
 
             Parent.IncreaseProgress(Sender, CurrentProgress++);
         }
@@ -454,30 +398,6 @@ namespace FreeSpace2TranslationTools.Services
             }
 
             return result;
-        }
-
-        private string GenerateWeaponDescription(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateWeaponTitle(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string ReplaceAltNames(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateTechTitle(Match match)
-        {
-            return AddXstrLineToHardcodedValue("\t+Tech Title", match);
-        }
-        private string GenerateTitle(Match match)
-        {
-            return AddXstrLineToHardcodedValue("\t+Title", match);
         }
 
         /// <summary>

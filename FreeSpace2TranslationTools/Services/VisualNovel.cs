@@ -1,5 +1,6 @@
 ﻿using FreeSpace2TranslationTools.Exceptions;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace FreeSpace2TranslationTools.Services
@@ -86,6 +87,11 @@ namespace FreeSpace2TranslationTools.Services
             }
 
             return Content;
+        }
+
+        public string GetInternationalizedContent(List<Weapon> modWeapons)
+        {
+            return GetInternationalizedContent();
         }
 
         private void InternationalizeShowIconLine(string line)
