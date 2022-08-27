@@ -24,7 +24,7 @@ namespace FreeSpace2TranslationTools.Services
 
             Content = Regexp.CallSigns.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
-            Content = Regexp.ShipNames.Replace(Content, new MatchEvaluator(GenerateShipNames));
+            Content = Regexp.MissionShipNames.Replace(Content, new MatchEvaluator(GenerateShipNames));
 
             ConvertShowSubtitleToShowSubtitleText();
 
@@ -56,6 +56,11 @@ namespace FreeSpace2TranslationTools.Services
         }
 
         public string GetInternationalizedContent(List<Weapon> modWeapons)
+        {
+            return GetInternationalizedContent();
+        }
+
+        public string GetInternationalizedContent(List<Ship> modShips)
         {
             return GetInternationalizedContent();
         }

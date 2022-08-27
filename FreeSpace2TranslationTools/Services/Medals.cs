@@ -19,7 +19,12 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent(List<Weapon> modWeapons)
         {
-            throw new System.NotImplementedException();
+            return GetInternationalizedContent();
+        }
+
+        public string GetInternationalizedContent(List<Ship> modShips)
+        {
+            return GetInternationalizedContent();
         }
     }
 }

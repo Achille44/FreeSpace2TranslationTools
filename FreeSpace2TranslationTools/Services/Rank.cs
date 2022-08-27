@@ -21,5 +21,10 @@ namespace FreeSpace2TranslationTools.Services
         {
             return GetInternationalizedContent();
         }
+
+        public string GetInternationalizedContent(List<Ship> modShips)
+        {
+            return GetInternationalizedContent();
+        }
     }
 }

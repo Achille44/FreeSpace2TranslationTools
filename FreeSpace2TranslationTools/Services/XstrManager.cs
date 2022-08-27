@@ -161,69 +161,12 @@ namespace FreeSpace2TranslationTools.Services
         private void ProcessShipFiles()
         {
             // Start with ships.tbl
-            List<GameFile> shipFiles = Files.Where(x => x.Name.Contains("ships.tbl")).ToList();
-            shipFiles.AddRange(Files.Where(x => x.Name.Contains("-shp.tbm")).ToList());
+            List<GameFile> shipFiles = Files.Where(f => f.Name.Contains("ships.tbl")).ToList();
+            shipFiles.AddRange(Files.Where(f => f.Name.Contains("-shp.tbm")).ToList());
 
             foreach (GameFile file in shipFiles)
             {
-                if (file.Content.Trim() != "")
-                {
-                    string shipSection = Regex.Match(file.Content, @"#Ship Classes.*?#end", RegexOptions.Singleline | RegexOptions.IgnoreCase).Value;
-                    string newContent = shipSection;
-                    MatchCollection shipEntries = Regex.Matches(shipSection, @"\n\$Name:.*?(?=\n\$Name|#end)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-                    foreach (Match shipEntry in shipEntries.AsEnumerable())
-                    {
-                        string newEntry = shipEntry.Value;
-                        string shipName = SanitizeName(Regex.Match(shipEntry.Value, @"\$Name:(.*)$", RegexOptions.Multiline).Groups[1].Value);
-
-                        if (!Ships.Any(s => s.Name == shipName))
-                        {
-                            newEntry = Regexp.NoAltNames.Replace(newEntry, new MatchEvaluator(GenerateAltNames));
-                            Ships.Add(new Ship { Name = shipName });
-                        }
-
-                        Ship ship = Ships.FirstOrDefault(s => s.Name == shipName);
-
-                        MatchCollection subsystems = Regex.Matches(newEntry, @"(\$Subsystem:[ \t]*([^\r\n]*?),[^\r\n]*?\r?\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Singleline);
-
-                        foreach (Match subsystem in subsystems)
-                        {
-                            // some subsystems are not visible so don't translate them
-                            if (!subsystem.Value.Contains("untargetable") && !subsystem.Value.Contains("afterburner"))
-                            {
-                                string subsystemName = subsystem.Groups[2].Value.Trim().ToLower();
-
-                                if (!ship.Subsystems.Any(s => s.Name == subsystemName))
-                                {
-                                    ship.Subsystems.Add(new Subsystem { Name = subsystemName });
-                                    newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem));
-                                }
-                                // in this case the subsystem has already been treated in another file, so just replace hardcoded values with XSTR
-                                else
-                                {
-                                    newEntry = newEntry.Replace(subsystem.Value, GenerateSubsystems(subsystem, true));
-                                }
-                            }
-                        }
-
-                        if (newEntry != shipEntry.Value)
-                        {
-                            newContent = newContent.Replace(shipEntry.Value, newEntry);
-                        }
-                    }
-
-                    newContent = Regex.Replace(newContent, @"(\+Tech Description:[ \t]*)(.*?)\r\n", new MatchEvaluator(GenerateShipDescription));
-
-                    // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
-                    newContent = Regex.Replace(newContent, @"(\$Name:(?:(?!\$Name:|\$Thruster).)*?\r\n)([ \t]*\+Length:[ \t]*)([^\r]*?)(\r\n)", new MatchEvaluator(GenerateShipLength), RegexOptions.Singleline);
-
-                    newContent = file.Content.Replace(shipSection, newContent);
-
-                    file.SaveContent(newContent); 
-                }
-
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                ProcessShipFile(file, new ShipsFile(file.Content, Weapons));
             }
         }
 
@@ -274,130 +217,11 @@ namespace FreeSpace2TranslationTools.Services
             Parent.IncreaseProgress(Sender, CurrentProgress++);
         }
 
-        private string GenerateSubsystems(Match match, bool replaceOnly = false)
+        private void ProcessShipFile(GameFile gameFile, IFile file)
         {
-            string newSubsystem = match.Value;
-            bool altNameAlreadyExisting = true;
-            bool altDamagePopupNameAlreadyExisting = true;
+            gameFile.SaveContent(file.GetInternationalizedContent(Ships));
 
-            if (!replaceOnly && !match.Value.Contains("$Alt Subsystem Name:") && !match.Value.Contains("$Alt Subsystem name:"))
-            {
-                altNameAlreadyExisting = false;
-                newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\n)(.*?)", new MatchEvaluator(AddAltSubsystemName));
-            }
-            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:[ \t]*XSTR", RegexOptions.IgnoreCase))
-            {
-                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Subsystem Name:[ \t]*)(.*)\r?\n", new MatchEvaluator(ReplaceAltSubsystemName), RegexOptions.IgnoreCase);
-            }
-
-            if (!replaceOnly && !match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
-            {
-                altDamagePopupNameAlreadyExisting = false;
-
-                // if existing, copy the alt name to damage popup name
-                if (altNameAlreadyExisting)
-                {
-                    newSubsystem = Regex.Replace(newSubsystem, "(\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)\\r?\\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName), RegexOptions.IgnoreCase);
-                }
-                else
-                {
-                    // take 2 lines after subsystem to skip alt subsystem line
-                    newSubsystem = Regex.Replace(newSubsystem, @"(\$Subsystem:[ \t]*(.*?),.*?\n.*?\n)(.*?)", new MatchEvaluator(AddAltDamagePopupSubsystemName));
-                }
-            }
-            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:[ \t]*XSTR", RegexOptions.IgnoreCase))
-            {
-                // [ \t] because \s includes \r and \n
-                newSubsystem = Regex.Replace(newSubsystem, @"(.*\$Alt Damage Popup Subsystem Name:[ \t]*)(.*)\r?\n", new MatchEvaluator(ReplaceAltDamagePopupSubsystemName));
-            }
-
-            if (!replaceOnly)
-            {
-                // if alt damage popup name already existing but not alt name, then copy it to alt name 
-                if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
-                {
-                    string newName = Regex.Match(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)").Groups[1].Value;
-                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)", RegexOptions.IgnoreCase);
-                }
-                // if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name 
-                else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default SBanks:"))
-                {
-                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Subsystem Name: XSTR(\"Missile lnchr\", -1)", RegexOptions.IgnoreCase);
-                    newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)", "$Alt Damage Popup Subsystem Name: XSTR(\"Missile lnchr\", -1)");
-                }
-                // if there is neither alt name nor alt damage popup, then check if this is gun turret ("PBanks" or "$Turret Reset Delay" key words) to set a custom alt name 
-                else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting)
-                {
-                    if (match.Value.Contains("$Default PBanks:"))
-                    {
-                        string turretType = "Turret";
-                        string defaultPBank = Regex.Match(match.Value, "\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"").Groups[1].Value;
-                        Weapon defaultWeapon = Weapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
-
-                        if (defaultWeapon != null)
-                        {
-                            turretType = defaultWeapon.Type;
-                        }
-
-                        newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"{turretType}\", -1)", RegexOptions.IgnoreCase);
-                        newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretType}\", -1)");
-                    }
-                    else if (match.Value.Contains("$Turret Reset Delay"))
-                    {
-                        newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Subsystem Name: XSTR(\"Turret\", -1)", RegexOptions.IgnoreCase);
-                        newSubsystem = Regex.Replace(newSubsystem, "\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", $"$Alt Damage Popup Subsystem Name: XSTR(\"Turret\", -1)");
-                    }
-                }
-            }
-
-            return newSubsystem;
-        }
-
-        private string AddAltSubsystemName(Match match)
-        {
-            return AddXstrLineToHardcodedValue("$Alt Subsystem Name", match);
-        }
-
-        private string ReplaceAltSubsystemName(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string AddAltDamagePopupSubsystemName(Match match)
-        {
-            return AddXstrLineToHardcodedValue("$Alt Damage Popup Subsystem Name", match);
-        }
-
-        private string ReplaceAltDamagePopupSubsystemName(Match match)
-        {
-            return ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-        }
-
-        private string GenerateShipLength(Match match)
-        {
-            if (match.Groups[1].Value.Contains("$thruster:"))
-            {
-                return match.Value;
-            }
-            else
-            {
-                // don't send groups[1] content in the parameters, otherwise the method will check for a ';' in every line
-                return match.Groups[1].Value + ReplaceHardcodedValueWithXstr(match.Groups[2].Value + match.Groups[3].Value + match.Groups[4].Value, match.Groups[2].Value, match.Groups[3].Value);
-            }
-        }
-
-        private string GenerateShipDescription(Match match)
-        {
-            string result = ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-
-            // if $end_multi_text is part of the original line, we have to exlude it from XSTR and put it on a new line
-            if (result.Contains("$end_multi_text"))
-            {
-                result = result.Replace("$end_multi_text", "");
-                result += "$end_multi_text\r\n";
-            }
-
-            return result;
+            Parent.IncreaseProgress(Sender, CurrentProgress++);
         }
 
         /// <summary>

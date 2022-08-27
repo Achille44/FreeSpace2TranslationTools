@@ -6,5 +6,6 @@ namespace FreeSpace2TranslationTools.Services
     {
         public string GetInternationalizedContent();
         public string GetInternationalizedContent(List<Weapon> modWeapons);
+        public string GetInternationalizedContent(List<Ship> modShips);
     }
 }

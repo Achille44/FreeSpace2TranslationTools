@@ -22,6 +22,11 @@ namespace FreeSpace2TranslationTools.Services
             return GetInternationalizedContent();
         }
 
+        public string GetInternationalizedContent(List<Ship> modShips)
+        {
+            return GetInternationalizedContent();
+        }
+
         private string GenerateInternationalizedHudGauges(Match match)
         {
             // Always Show Text is a boolean, so don't treat this case

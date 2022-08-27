@@ -88,6 +88,11 @@ namespace FreeSpace2TranslationTools.Services
             return Content;
         }
 
+        public string GetInternationalizedContent(List<Ship> modShips)
+        {
+            throw new NotImplementedException();
+        }
+
         private string GenerateTechTitle(Match match)
         {
             return XstrManager.AddXstrLineToHardcodedValue("\t+Tech Title", match);

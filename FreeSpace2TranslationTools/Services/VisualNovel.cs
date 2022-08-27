@@ -94,6 +94,11 @@ namespace FreeSpace2TranslationTools.Services
             return GetInternationalizedContent();
         }
 
+        public string GetInternationalizedContent(List<Ship> modShips)
+        {
+            return GetInternationalizedContent();
+        }
+
         private void InternationalizeShowIconLine(string line)
         {
             if (!line.Contains(TEXT) || line.Contains(EMPTY_TEXT) || line.Contains(DEFAULT_XSTR_ID_MARKER))

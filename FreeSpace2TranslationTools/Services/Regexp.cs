@@ -34,8 +34,8 @@ namespace FreeSpace2TranslationTools.Services
         // ex: $Name: Psamtik   ==>     $Name: Psamtik
         //     $Class.......    ==>     $Display Name: XSTR("Psamtik", -1)
         //                      ==>     $Class......
-        private static readonly Regex _ShipNames = new(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline | RegexOptions.Compiled);
-        public static Regex ShipNames { get => _ShipNames; }
+        private static readonly Regex _MissionShipNames = new(@"(\$Name:\s*(.*?)\r\n)(\$Class)", RegexOptions.Multiline | RegexOptions.Compiled);
+        public static Regex MissionShipNames { get => _MissionShipNames; }
 
         private static readonly Regex _ShowSubtitle = new(@"show-subtitle\s+.*?\r\n[ \t]+\)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex ShowSubtitle { get => _ShowSubtitle; }
@@ -55,7 +55,7 @@ namespace FreeSpace2TranslationTools.Services
 
         // for unknown reason in this case \r is captured, so we have to uncapture it.
         // in some cases Alt can have an empty value... 
-        private static readonly Regex _AltTypes =new(@"\$Alt:\s*(((?!\$Alt).)+)(?=\r)", RegexOptions.Compiled);
+        private static readonly Regex _AltTypes = new(@"\$Alt:\s*(((?!\$Alt).)+)(?=\r)", RegexOptions.Compiled);
         public static Regex AltTypes { get => _AltTypes; }
 
         private static readonly Regex _Alt = new(@"\$Alt:.*?\r\n", RegexOptions.Singleline);
@@ -153,6 +153,54 @@ namespace FreeSpace2TranslationTools.Services
 
         private static readonly Regex _Flags = new("\\$Flags:(.*?)\"[ \t]*\\)", RegexOptions.Compiled);
         public static Regex Flags { get => _Flags; }
+
+        private static readonly Regex _ShipSection = new(@"#Ship Classes.*?#end", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        public static Regex ShipSection { get => _ShipSection; }
+
+        private static readonly Regex _ShipEntries = new(@"\n\$Name:.*?(?=\n\$Name|#end)", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        public static Regex ShipEntries { get => _ShipEntries; }
+
+        private static readonly Regex _ShipNames = new(@"\$Name:(.*)$", RegexOptions.Compiled | RegexOptions.Multiline);
+        public static Regex ShipNames { get => _ShipNames; }
+
+        private static readonly Regex _Subsystems = new(@"(\$Subsystem:[ \t]*([^\r\n]*?),[^\r\n]*?\r?\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Regex Subsystems { get => _Subsystems; }
+
+        private static readonly Regex _TechDescriptions = new(@"(\+Tech Description:[ \t]*)(.*?)\r\n", RegexOptions.Compiled);
+        public static Regex TechDescriptions { get => _TechDescriptions; }
+
+        // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
+        private static readonly Regex _ShipLength = new(@"(\$Name:(?:(?!\$Name:|\$Thruster).)*?\r\n)([ \t]*\+Length:[ \t]*)([^\r]*?)(\r\n)", RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Regex ShipLength { get => _ShipLength; }
+
+        private static readonly Regex _SubsystemNames = new(@"(\$Subsystem:[ \t]*(.*?),.*?\n)(.*?)", RegexOptions.Compiled);
+        public static Regex SubsystemNames { get => _SubsystemNames; }
+
+        private static readonly Regex _AltSubsystemNames = new(@"(.*\$Alt Subsystem Name:[ \t]*)(.*)\r?\n", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static Regex AltSubsystemNames { get => _AltSubsystemNames; }
+
+        private static readonly Regex _InternationalizedAltSubsystemNamesWithFollowingLine = new("(\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)\\r?\\n)(.*?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static Regex InternationalizedAltSubsystemNamesWithFollowingLine { get => _InternationalizedAltSubsystemNamesWithFollowingLine; }
+
+        // take 2 lines after subsystem to skip alt subsystem line
+        private static readonly Regex _SubsystemsWithAltSubsystems = new(@"(\$Subsystem:[ \t]*(.*?),.*?\n.*?\n)(.*?)", RegexOptions.Compiled);
+        public static Regex SubsystemsWithAltSubsystems { get => _SubsystemsWithAltSubsystems; }
+
+        private static readonly Regex _InternationalizedSubsystemNames = new(@"\$Alt Subsystem Name:[ \t]*XSTR", RegexOptions.IgnoreCase);
+        public static Regex InternationalizedSubsystemNames { get => _InternationalizedSubsystemNames; }
+
+        // [ \t] because \s includes \r and \n
+        private static readonly Regex _AltDamagePopupSubsystemNames = new(@"(.*\$Alt Damage Popup Subsystem Name:[ \t]*)(.*)\r?\n", RegexOptions.Compiled);
+        public static Regex AltDamagePopupSubsystemNames { get => _AltDamagePopupSubsystemNames; }
+
+        private static readonly Regex _InternationalizedAltDamagePopupSubsystemNames = new("\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", RegexOptions.Compiled);
+        public static Regex InternationalizedAltDamagePopupSubsystemNames { get => _InternationalizedAltDamagePopupSubsystemNames; }
+
+        private static readonly Regex _InternationalizedAltSubsystemNames = new("\\$Alt Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static Regex InternationalizedAltSubsystemNames { get => _InternationalizedAltSubsystemNames; }
+
+        private static readonly Regex _DefaultPBanks = new("\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"", RegexOptions.Compiled);
+        public static Regex DefaultPBanks { get => _DefaultPBanks; }
 
 
         public static Regex GetJumpNodeReferences(string jumpNode)
