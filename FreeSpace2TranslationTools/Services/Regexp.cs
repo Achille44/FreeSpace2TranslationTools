@@ -82,7 +82,7 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _FromObjectsToWaypoints = new("#Objects.*#Waypoints", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex FromObjectsToWaypoints { get => _FromObjectsToWaypoints; }
 
-        private static readonly Regex _FirstSexpParameters = new("(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited|lua-mark-ship|lua-mark-wing).*?\"(.*?)\"", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex _FirstSexpParameters = new("(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited|lua-mark-ship|lua-mark-wing|ship-create).*?\"(.*?)\"", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex FirstSexpParameters { get => _FirstSexpParameters; }
 
         private static readonly Regex _SecondSexpParameters = new("(\\( (?:change-subsystem-name|lua-mark-subsystem).*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline | RegexOptions.Compiled);
