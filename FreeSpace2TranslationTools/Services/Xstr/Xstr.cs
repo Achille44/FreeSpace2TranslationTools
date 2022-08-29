@@ -24,15 +24,6 @@ namespace FreeSpace2TranslationTools.Services
             Treated = false;
         }
 
-        public Xstr(int id, string text, FileInfo file)
-        {
-            Id = id;
-            Text = text;
-            FileName = file.Name;
-            FilePath = file.FullName;
-            Treated = false;
-        }
-
         public Xstr(int id, string text, FileInfo file, string fullLine)
         {
             Id = id;

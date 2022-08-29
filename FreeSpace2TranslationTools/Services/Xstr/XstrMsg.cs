@@ -12,8 +12,6 @@ namespace FreeSpace2TranslationTools.Services
         public string FullLine { get; set; }
         public bool Treated { get; set; }
 
-        private static readonly Regex RegexMsgXstr = new("(\".*?\" )(-?\\d+)", RegexOptions.Compiled);
-
         public XstrMsg(int id, string text, FileInfo file, string fullLine)
         {
             Id = id;
@@ -26,7 +24,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public string ReplaceContentWithNewXstrId(string content)
         {
-            string newLine = RegexMsgXstr.Replace(FullLine, match => $"{match.Groups[1].Value}{Id}");
+            string newLine = Regexp.StringAndId.Replace(FullLine, match => $"{match.Groups[1].Value}{Id}");
 
             return content.Replace(FullLine, newLine);
         }

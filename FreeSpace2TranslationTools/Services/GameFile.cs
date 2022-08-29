@@ -45,7 +45,7 @@ namespace FreeSpace2TranslationTools.Services
             FileInfo fileInfo = new(Name);
 
             List<IXstr> result = new();
-            MatchCollection resultsFromFile = Regexp.Xstr.Matches(Content);
+            IEnumerable<Match> resultsFromFile = Regexp.Xstr.Matches(Content);
 
             foreach (Match match in resultsFromFile)
             {
@@ -55,33 +55,33 @@ namespace FreeSpace2TranslationTools.Services
 
             if (Type == FileType.Mission)
             {
-                MatchCollection modifyResults = Regex.Matches(Content, "\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
+                IEnumerable<Match> modifyResults = Regexp.ModifyVariableXstr.Matches(Content);
 
                 foreach (Match match in modifyResults)
                 {
-                    IXstr xstr = new XstrModifyVariable(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value);
+                    IXstr xstr = new XstrModifyVariable(int.Parse(match.Groups[3].Value), match.Groups[2].Value, fileInfo, match.Value);
                     result.Add(xstr);
                 }
 
-                MatchCollection techIntelResults = Regex.Matches(Content, "\\(\\s*tech-add-intel-xstr\\s*(\".*?\")\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline);
+                IEnumerable<Match> techIntelResults = Regexp.TechAddIntelXstr.Matches(Content);
 
                 foreach (Match match in techIntelResults)
                 {
-                    IXstr xstr = new XstrTechIntel(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value);
+                    IXstr xstr = new XstrTechIntel(int.Parse(match.Groups[3].Value), match.Groups[2].Value, fileInfo, match.Value);
                     result.Add(xstr);
                 }
             }
             else if (Type == FileType.Fiction)
             {
-                MatchCollection showIconLines = Regex.Matches(Content, "SHOWICON.+?text=(\".+?\").+?xstrid=(-?\\d+)");
+                IEnumerable<Match> showIconLines = Regexp.ShowIcon.Matches(Content);
 
                 foreach (Match match in showIconLines)
                 {
-                    IXstr xstr = new XstrShowIcon(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value);
+                    IXstr xstr = new XstrShowIcon(int.Parse(match.Groups[3].Value), match.Groups[2].Value, fileInfo, match.Value);
                     result.Add(xstr);
                 }
 
-                MatchCollection msgXstrLines = Regex.Matches(Content, "(?<=MSGXSTR.+)(\".+?\") (-?\\d+)");
+                IEnumerable<Match> msgXstrLines = Regexp.MsgXstr.Matches(Content);
 
                 foreach (Match match in msgXstrLines)
                 {
@@ -102,6 +102,10 @@ namespace FreeSpace2TranslationTools.Services
             else if (Name.EndsWith(Constants.CAMPAIGN_EXTENSION))
             {
                 Type = FileType.Campaign;
+            }
+            else if (Name.EndsWith(Constants.CAMPAIGN_EXTENSION))
+            {
+                Type = FileType.ScriptTable;
             }
             else if (Name.EndsWith(Constants.TABLE_EXTENSION) || Name.EndsWith(Constants.MODULAR_TABLE_EXTENSION))
             {

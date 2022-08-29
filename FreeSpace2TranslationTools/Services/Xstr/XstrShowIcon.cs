@@ -12,8 +12,6 @@ namespace FreeSpace2TranslationTools.Services
         public string FullLine { get; set; }
         public bool Treated { get; set; }
 
-        private static readonly Regex RegexShowIcon = new(@"(SHOWICON.+xstrid=)(-?\d+)(.*$)", RegexOptions.Compiled);
-
         public XstrShowIcon(int id, string text, FileInfo file, string fullLine)
         {
             Id = id;
@@ -26,7 +24,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public string ReplaceContentWithNewXstrId(string content)
         {
-            string newLine = RegexShowIcon.Replace(FullLine, match => $"{match.Groups[1].Value}{Id}{match.Groups[3].Value}");
+            string newLine = Regexp.ShowIcon.Replace(FullLine, match => $"{match.Groups[1].Value}{Id}{match.Groups[4].Value}");
 
             return content.Replace(FullLine, newLine);
         }

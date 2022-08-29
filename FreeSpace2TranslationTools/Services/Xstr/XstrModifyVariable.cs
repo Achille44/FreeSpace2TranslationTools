@@ -12,8 +12,6 @@ namespace FreeSpace2TranslationTools.Services
         public string FullLine { get; set; }
         public bool Treated { get; set; }
 
-        private static readonly Regex RegexModifyXstr = new("(\\(\\s*modify-variable-xstr\\s*.*?\\s*\".*?\"\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline | RegexOptions.Compiled);
-
         public XstrModifyVariable(int id, string text, FileInfo file, string fullLine)
         {
             Id = id;
@@ -26,7 +24,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public string ReplaceContentWithNewXstrId(string content)
         {
-            string newLine = RegexModifyXstr.Replace(FullLine, match => $"{match.Groups[1].Value}{Id}{match.Groups[3].Value}");
+            string newLine = Regexp.ModifyVariableXstr.Replace(FullLine, match => $"{match.Groups[1].Value}{Id}{match.Groups[4].Value}");
 
             return content.Replace(FullLine, newLine);
         }

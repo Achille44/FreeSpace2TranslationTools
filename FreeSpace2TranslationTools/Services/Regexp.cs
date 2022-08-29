@@ -208,6 +208,21 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _OnlyDigits = new("[^0-9.-]+", RegexOptions.Compiled);
         public static Regex OnlyDigits { get => _OnlyDigits; }
 
+        private static readonly Regex _ModifyVariableXstr = new("(\\(\\s*modify-variable-xstr\\s*\".*?\"\\s*(\".*?\")\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Regex ModifyVariableXstr { get => _ModifyVariableXstr; }
+
+        private static readonly Regex _StringAndId = new("(\".*?\" )(-?\\d+)", RegexOptions.Compiled);
+        public static Regex StringAndId { get => _StringAndId; }
+
+        private static readonly Regex _MsgXstr = new("(?<=MSGXSTR.+)(\".+?\") (-?\\d+)", RegexOptions.Compiled);
+        public static Regex MsgXstr { get => _MsgXstr; }
+
+        private static readonly Regex _ShowIcon = new(@"(SHOWICON.+?text=("".+?"").+?xstrid=)(-?\d+)(.*$)", RegexOptions.Compiled | RegexOptions.Multiline);
+        public static Regex ShowIcon { get => _ShowIcon; }
+
+        private static readonly Regex _TechAddIntelXstr = new("(\\(\\s*tech-add-intel-xstr\\s*(\".*?\")\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Regex TechAddIntelXstr { get => _TechAddIntelXstr; }
+
 
         public static Regex GetJumpNodeReferences(string jumpNode)
         {
