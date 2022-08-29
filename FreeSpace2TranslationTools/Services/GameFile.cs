@@ -103,10 +103,6 @@ namespace FreeSpace2TranslationTools.Services
             {
                 Type = FileType.Campaign;
             }
-            else if (Name.EndsWith(Constants.CAMPAIGN_EXTENSION))
-            {
-                Type = FileType.ScriptTable;
-            }
             else if (Name.EndsWith(Constants.TABLE_EXTENSION) || Name.EndsWith(Constants.MODULAR_TABLE_EXTENSION))
             {
                 Type = FileType.Table;
