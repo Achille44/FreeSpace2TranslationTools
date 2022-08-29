@@ -20,7 +20,6 @@ namespace FreeSpace2TranslationTools
     /// </summary>
     public partial class MainWindow : Window
     {
-        Regex regexXstrInTstrings = new("(\\d+), (\".*?\")", RegexOptions.Singleline | RegexOptions.Compiled);
         readonly static string newLine = Environment.NewLine;
 
         public MainWindow()
@@ -94,7 +93,7 @@ namespace FreeSpace2TranslationTools
 
         private static bool IsOnlyDigit(string text)
         {
-            return Regex.IsMatch(text, "[^0-9.-]+");
+            return Regexp.OnlyDigits.IsMatch(text);
         }
 
         /// <summary>
@@ -192,7 +191,7 @@ namespace FreeSpace2TranslationTools
                 string oldTranslatedContent = File.ReadAllText(oldTranslatedFile);
                 string newTranslatedContent = File.ReadAllText(newTranslatedFile);
 
-                MatchCollection matchesInNewOriginal = regexXstrInTstrings.Matches(newOriginalContent);
+                MatchCollection matchesInNewOriginal = Regexp.XstrInTstrings.Matches(newOriginalContent);
 
                 // Required to avoid thread access errors...
                 Dispatcher.Invoke(() =>
@@ -200,7 +199,7 @@ namespace FreeSpace2TranslationTools
                     pbGlobalProgress.Maximum = matchesInNewOriginal.Count;
                 });
 
-                MatchCollection matchesInOldOriginal = regexXstrInTstrings.Matches(oldOriginalContent);
+                IEnumerable<Match> matchesInOldOriginal = Regexp.XstrInTstrings.Matches(oldOriginalContent);
                 List<IXstr> oldOriginalXstrList = new();
 
                 foreach (Match match in matchesInOldOriginal)
@@ -210,7 +209,7 @@ namespace FreeSpace2TranslationTools
                     oldOriginalXstrList.Add(xstr);
                 }
 
-                MatchCollection matchesInOldTranslated = regexXstrInTstrings.Matches(oldTranslatedContent);
+                IEnumerable<Match> matchesInOldTranslated = Regexp.XstrInTstrings.Matches(oldTranslatedContent);
                 List<IXstr> oldTranslatedXstrList = new();
 
                 foreach (Match match in matchesInOldTranslated)
@@ -220,7 +219,7 @@ namespace FreeSpace2TranslationTools
                     oldTranslatedXstrList.Add(xstr);
                 }
 
-                foreach (Match match in matchesInNewOriginal)
+                foreach (Match match in matchesInNewOriginal.AsEnumerable())
                 {
                     currentProgress++;
                     (sender as BackgroundWorker).ReportProgress(currentProgress);
@@ -369,12 +368,12 @@ namespace FreeSpace2TranslationTools
             });
         }
 
-        public void InitializeProgress(object sender)
+        public static void InitializeProgress(object sender)
         {
             (sender as BackgroundWorker).ReportProgress(0);
         }
 
-        public void IncreaseProgress(object sender, int progress)
+        public static void IncreaseProgress(object sender, int progress)
         {
             (sender as BackgroundWorker).ReportProgress(progress);
         }

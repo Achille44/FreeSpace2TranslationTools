@@ -201,6 +201,12 @@ namespace FreeSpace2TranslationTools.Services
 
         private static readonly Regex _DefaultPBanks = new("\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"", RegexOptions.Compiled);
         public static Regex DefaultPBanks { get => _DefaultPBanks; }
+        
+        private static readonly Regex _XstrInTstrings = new("(\\d+), (\".*?\")", RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Regex XstrInTstrings { get => _XstrInTstrings; }
+
+        private static readonly Regex _OnlyDigits = new("[^0-9.-]+", RegexOptions.Compiled);
+        public static Regex OnlyDigits { get => _OnlyDigits; }
 
 
         public static Regex GetJumpNodeReferences(string jumpNode)

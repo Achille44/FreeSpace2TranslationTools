@@ -28,7 +28,7 @@ namespace FreeSpace2TranslationTools.Services
             Ships = new List<Ship>();
             Files = files;
 
-            Parent.InitializeProgress(Sender);
+            MainWindow.InitializeProgress(Sender);
             Parent.SetMaxProgress(Files.Count);
         }
 
@@ -207,21 +207,21 @@ namespace FreeSpace2TranslationTools.Services
         {
             gameFile.SaveContent(file.GetInternationalizedContent());
 
-            Parent.IncreaseProgress(Sender, CurrentProgress++);
+            MainWindow.IncreaseProgress(Sender, CurrentProgress++);
         }
 
         private void ProcessWeaponFile(GameFile gameFile, IFile file)
         {
             gameFile.SaveContent(file.GetInternationalizedContent(Weapons));
 
-            Parent.IncreaseProgress(Sender, CurrentProgress++);
+            MainWindow.IncreaseProgress(Sender, CurrentProgress++);
         }
 
         private void ProcessShipFile(GameFile gameFile, IFile file)
         {
             gameFile.SaveContent(file.GetInternationalizedContent(Ships));
 
-            Parent.IncreaseProgress(Sender, CurrentProgress++);
+            MainWindow.IncreaseProgress(Sender, CurrentProgress++);
         }
 
         /// <summary>

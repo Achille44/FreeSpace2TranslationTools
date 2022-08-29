@@ -35,7 +35,7 @@ namespace FreeSpace2TranslationTools.Services
 
             Files = files;
 
-            Parent.InitializeProgress(Sender);
+            MainWindow.InitializeProgress(Sender);
             Parent.SetMaxProgress(Files.Count);
         }
 
@@ -43,7 +43,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public void ProcessTstrings()
         {
-            Parent.InitializeProgress(Sender);
+            MainWindow.InitializeProgress(Sender);
 
             FetchXstr();
 
@@ -144,7 +144,7 @@ namespace FreeSpace2TranslationTools.Services
                     duplicate.Treated = true;
                 }
 
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                MainWindow.IncreaseProgress(Sender, CurrentProgress++);
             }
 
             tstringsModifiedContent += $"{Environment.NewLine}#End";
@@ -190,7 +190,7 @@ namespace FreeSpace2TranslationTools.Services
 
                 gameFile.SaveContent(newContent);
 
-                Parent.IncreaseProgress(Sender, CurrentProgress++);
+                MainWindow.IncreaseProgress(Sender, CurrentProgress++);
             }
         }
 
@@ -215,7 +215,7 @@ namespace FreeSpace2TranslationTools.Services
 
                     content += $"{Environment.NewLine}{line.Id}, {line.Text}{Environment.NewLine}";
 
-                    Parent.IncreaseProgress(Sender, CurrentProgress++);
+                    MainWindow.IncreaseProgress(Sender, CurrentProgress++);
                 }
 
                 content += $"{Environment.NewLine}#End";
