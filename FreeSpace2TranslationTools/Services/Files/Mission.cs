@@ -418,7 +418,7 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (Match match in matches)
             {
-                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith('@') && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith('@') && match.Groups[2].Value != "<argument>" && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
                     MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
                     variableList.Add(variable);
