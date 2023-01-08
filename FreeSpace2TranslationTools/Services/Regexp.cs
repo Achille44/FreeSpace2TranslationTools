@@ -17,8 +17,8 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _Xstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex Xstr { get => _Xstr; }
 
-        // don't select entries in comment...
-        private static readonly Regex _NoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:[ \t]*\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
+        // don't select entries in comment... but take into account comments between $Name and +nocreate
+        private static readonly Regex _NoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:;.*?\r\n)?(?:[ \t]*\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex NoAltNames { get => _NoAltNames; }
 
         private static readonly Regex _AlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
@@ -163,7 +163,7 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _ShipNames = new(@"\$Name:(.*)$", RegexOptions.Compiled | RegexOptions.Multiline);
         public static Regex ShipNames { get => _ShipNames; }
 
-        private static readonly Regex _Subsystems = new(@"(\$Subsystem:[ \t]*([^\r\n]*?),[^\r\n]*?\r?\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex _Subsystems = new(@"(?<!;)(\$Subsystem:[ \t]*([^\r\n]*?),[^\r\n]*?\r?\n)(.*?)(?=\$Subsystem:|$)", RegexOptions.Compiled | RegexOptions.Singleline);
         public static Regex Subsystems { get => _Subsystems; }
 
         private static readonly Regex _TechDescriptions = new(@"(\+Tech Description:[ \t]*)(.*?)\r\n", RegexOptions.Compiled);
