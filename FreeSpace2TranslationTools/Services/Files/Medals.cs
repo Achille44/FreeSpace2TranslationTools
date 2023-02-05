@@ -5,16 +5,20 @@ namespace FreeSpace2TranslationTools.Services
 {
     internal class Medals : IFile
     {
-        private readonly string OriginalContent;
+        internal string Content { get; set; }
 
-        public Medals(string originalContent)
+        public Medals(string content)
         {
-            OriginalContent = originalContent;
+            Content = content;
         }
 
         public string GetInternationalizedContent()
         {
-            return Regexp.HardcodedMedalNames.Replace(OriginalContent, new MatchEvaluator(XstrManager.GenerateAltNames));
+            Content = Regexp.HardCodedAltNames.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+
+            Content = Regexp.HardcodedMedalNames.Replace(Content, new MatchEvaluator(XstrManager.GenerateAltNames));
+
+            return Content;
         }
 
         public string GetInternationalizedContent(List<Weapon> modWeapons)
