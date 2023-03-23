@@ -103,7 +103,7 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _VariableIds = new(@"^\t\t\d", RegexOptions.Multiline | RegexOptions.Compiled);
         public static Regex VariableIds { get => _VariableIds; }
 
-        private static readonly Regex _EndOfVariablesSection = new(@"\)\r\n\r\n(#Fiction Viewer|#Command Briefing|.*?#Cutscenes)", RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex _EndOfVariablesSection = new(@"\)\r\n\r\n(#Fiction Viewer|#Command Briefing|#Sexp_containers|.*?#Cutscenes)", RegexOptions.Multiline | RegexOptions.Compiled);
         public static Regex EndOfVariablesSection { get => _EndOfVariablesSection; }
 
         private static readonly Regex _EventsSection = new(@"#Events.*?\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
