@@ -25,6 +25,8 @@ namespace FreeSpace2TranslationTools.Services
         {
             Content = Regexp.HardCodedAltNames.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
+            Content = Regexp.HardCodedTurretNames.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+
             Content = Regexp.NoAltNames.Replace(Content, new MatchEvaluator(XstrManager.GenerateAltNames));
 
             Content = Regexp.Titles.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));

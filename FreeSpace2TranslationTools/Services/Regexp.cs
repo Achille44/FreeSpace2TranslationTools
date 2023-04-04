@@ -133,6 +133,9 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _HardCodedAltNames = new(@"([^;]\$Alt Name:[ \t]*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
         public static Regex HardCodedAltNames { get => _HardCodedAltNames; }
 
+        private static readonly Regex _HardCodedTurretNames = new(@"([^;]\$Turret Name:[ \t]*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
+        public static Regex HardCodedTurretNames { get => _HardCodedTurretNames; }
+
         private static readonly Regex _Titles = new(@"(\+Title:[ \t]*)(.*?)\r\n", RegexOptions.Compiled);
         public static Regex Titles { get => _Titles; }
 
