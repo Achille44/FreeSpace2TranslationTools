@@ -94,6 +94,18 @@ namespace FreeSpace2TranslationTools.Services
             bool altNameAlreadyExisting = true;
             bool altDamagePopupNameAlreadyExisting = true;
 
+            // if we're treating a turret that already has a $Turret Name, no need to add $Alt...
+            if (match.Value.Contains("$Default PBanks:"))
+            {
+                string defaultPBank = Regexp.DefaultPBanks.Match(match.Value).Groups[1].Value;
+                Weapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
+
+                if (defaultWeapon != null && defaultWeapon.HasTurretName)
+                {
+                    replaceOnly = true;
+                }
+            }
+
             if (!replaceOnly && !match.Value.Contains("$Alt Subsystem Name:") && !match.Value.Contains("$Alt Subsystem name:"))
             {
                 altNameAlreadyExisting = false;
