@@ -93,6 +93,7 @@ namespace FreeSpace2TranslationTools.Services
             string newSubsystem = match.Value;
             bool altNameAlreadyExisting = true;
             bool altDamagePopupNameAlreadyExisting = true;
+            string turretName = null;
 
             // if we're treating a turret that already has a $Turret Name, no need to add $Alt...
             if (match.Value.Contains("$Default PBanks:"))
@@ -102,14 +103,18 @@ namespace FreeSpace2TranslationTools.Services
 
                 if (defaultWeapon != null && defaultWeapon.HasTurretName)
                 {
-                    replaceOnly = true;
+                    turretName = defaultWeapon.TurretName;
                 }
             }
 
-            if (!replaceOnly && !match.Value.Contains("$Alt Subsystem Name:") && !match.Value.Contains("$Alt Subsystem name:"))
+            if (!replaceOnly && !match.Value.Contains("$Alt Subsystem Name:", StringComparison.OrdinalIgnoreCase))
             {
                 altNameAlreadyExisting = false;
-                newSubsystem = Regexp.SubsystemNames.Replace(newSubsystem, new MatchEvaluator(AddAltSubsystemName));
+
+                if (turretName == null)
+                {
+                    newSubsystem = Regexp.SubsystemNames.Replace(newSubsystem, new MatchEvaluator(AddAltSubsystemName));
+                }
             }
             else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:[ \t]*XSTR", RegexOptions.IgnoreCase))
             {
@@ -125,9 +130,13 @@ namespace FreeSpace2TranslationTools.Services
                 {
                     newSubsystem = Regexp.InternationalizedAltSubsystemNamesWithFollowingLine.Replace(newSubsystem, new MatchEvaluator(AddAltDamagePopupSubsystemName));
                 }
-                else
+                else if (turretName == null)
                 {
                     newSubsystem = Regexp.SubsystemsWithAltSubsystems.Replace(newSubsystem, new MatchEvaluator(AddAltDamagePopupSubsystemName));
+                }
+                else
+                {
+                    newSubsystem = Regexp.SubsystemNames.Replace(newSubsystem, new MatchEvaluator(AddAltDamagePopupSubsystemName));
                 }
             }
             else if (!Regexp.InternationalizedSubsystemNames.IsMatch(match.Value))
@@ -137,8 +146,13 @@ namespace FreeSpace2TranslationTools.Services
 
             if (!replaceOnly)
             {
+                // if there is a turret name but no damage popup name, then copy the turret name to damage popup name
+                if (!altDamagePopupNameAlreadyExisting && turretName != null)
+                {
+                    newSubsystem = Regexp.InternationalizedAltDamagePopupSubsystemNames.Replace(newSubsystem, $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretName}\", -1)");
+                }
                 // if alt damage popup name already existing but not alt name, then copy it to alt name 
-                if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
+                else if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
                 {
                     string newName = Regexp.InternationalizedAltDamagePopupSubsystemNames.Match(newSubsystem).Groups[1].Value;
                     newSubsystem = Regexp.InternationalizedAltSubsystemNames.Replace(newSubsystem, $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");

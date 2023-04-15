@@ -10,8 +10,9 @@ namespace FreeSpace2TranslationTools.Services
     public static class Regexp
     {
         // REGEX HELP
-        // (?=) : Positive lookahead. Matches a group after the main expression without including it in the result
-        // (?<=...) : look behind
+        // (?=): Positive lookahead. Matches a group after the main expression without including it in the result
+        // (?<=...): look behind
+        // (?>...): non capturing group
         // -----------------------------------------------------------------------------------------------------------
 
         private static readonly Regex _Xstr = new("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline | RegexOptions.Compiled);
@@ -103,6 +104,9 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _VariableIds = new(@"^\t\t\d", RegexOptions.Multiline | RegexOptions.Compiled);
         public static Regex VariableIds { get => _VariableIds; }
 
+        private static readonly Regex _Variables = new(@"^\t\t\d+\t\t""(.+?)""\t\t""(.+?)""", RegexOptions.Multiline | RegexOptions.Compiled);
+        public static Regex Variables { get => _Variables; }
+
         private static readonly Regex _EndOfVariablesSection = new(@"\)\r\n\r\n(#Fiction Viewer|#Command Briefing|#Sexp_containers|.*?#Cutscenes)", RegexOptions.Multiline | RegexOptions.Compiled);
         public static Regex EndOfVariablesSection { get => _EndOfVariablesSection; }
 
@@ -133,8 +137,11 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _HardCodedAltNames = new(@"([^;]\$Alt Name:[ \t]*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
         public static Regex HardCodedAltNames { get => _HardCodedAltNames; }
 
-        private static readonly Regex _HardCodedTurretNames = new(@"([^;]\$Turret Name:[ \t]*)((?!XSTR).*)\r\n", RegexOptions.Compiled);
+        private static readonly Regex _HardCodedTurretNames = new(@"([^;]\$Turret Name:[ \t]*)((?!XSTR).*)\r\n", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static Regex HardCodedTurretNames { get => _HardCodedTurretNames; }
+
+        private static readonly Regex _TurretNames = new(@"[^;]\$Turret Name: XSTR\(\""(.*)"", -1\)\r\n", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static Regex TurretNames { get => _TurretNames; }
 
         private static readonly Regex _Titles = new(@"(\+Title:[ \t]*)(.*?)\r\n", RegexOptions.Compiled);
         public static Regex Titles { get => _Titles; }

@@ -82,9 +82,17 @@ namespace FreeSpace2TranslationTools.Services
                             type = "Turret";
                         }
 
-                        bool hasTurretName = weapon.Value.Contains("$Turret Name:");
+                        if (weapon.Value.Contains("$Turret Name:"))
+                        {
+                            Match test = Regexp.TurretNames.Match(weapon.Value);
+                            string turretName = Regexp.TurretNames.Match(weapon.Value).Groups[1].Value;
+                            modWeapons.Add(new Weapon(name, type, true, turretName));
+                        }
+                        else
+                        {
+                            modWeapons.Add(new Weapon(name, type));
 
-                        modWeapons.Add(new Weapon(name, type, hasTurretName));
+                        }
                     }
                 }
             }
