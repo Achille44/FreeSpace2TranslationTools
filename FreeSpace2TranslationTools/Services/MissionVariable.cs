@@ -11,11 +11,13 @@ namespace FreeSpace2TranslationTools.Services
         public string Name { get; set; }
         public string DefaultValue { get; set; }
         public string NewSexp => "\"@" + Name + "[" + DefaultValue + "]\"";
+        public bool Original { get; set; }
 
-        public MissionVariable(string name, string defaultValue)
+        public MissionVariable(string name, string defaultValue, bool original = false)
         {
             Name = name;
             DefaultValue = defaultValue;
+            Original = original;
         }
 
         /// <summary>

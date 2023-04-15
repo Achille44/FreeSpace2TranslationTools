@@ -20,6 +20,8 @@ namespace FreeSpace2TranslationTools.Services
 
         public string GetInternationalizedContent()
         {
+            GetOriginalVariables();
+
             Content = Regexp.Labels.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
             Content = Regexp.CallSigns.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
@@ -285,7 +287,7 @@ namespace FreeSpace2TranslationTools.Services
                         }
                     }
 
-                    if (Variables.Count > 0)
+                    if (Variables.Where(v => v.Original == false).Count() > 0)
                     {
                         // Remove the 'Alternate Types' section
                         Content = Content.Replace(alternateTypes, "");
@@ -513,7 +515,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void AddVariablesToSexpVariablesSection()
         {
-            if (Variables.Count > 0)
+            if (Variables.Where(v => v.Original == false).Count() > 0)
             {
                 // Create '#Sexp_variables' section if not exists
                 if (!Content.Contains("#Sexp_variables"))
@@ -536,7 +538,7 @@ namespace FreeSpace2TranslationTools.Services
 
                 string newSexpVariablesSection = "";
 
-                foreach (MissionVariable variable in Variables)
+                foreach (MissionVariable variable in Variables.Where(v => v.Original == false))
                 {
                     newSexpVariablesSection += $"\t\t{variableId}\t\t\"{variable.Name}\"\t\t\"{variable.DefaultValue}\"\t\t\"string\"{Environment.NewLine}";
                     variableId++;
@@ -550,7 +552,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void AddEventToManageTranslations()
         {
-            if (Variables.Count > 0)
+            if (Variables.Where(v => v.Original == false).Count() > 0)
             {
                 // very unorthodox way to add the event but it allows me to manage the case when this event already exists in the original file
                 string eventForAltNamesTitle = "Manage translation variables";
@@ -577,9 +579,16 @@ namespace FreeSpace2TranslationTools.Services
 
         private string GiveMeAVariableName(string defaultValue)
         {
-            if (!Variables.Any(v => v.DefaultValue == defaultValue))
+            if (!Variables.Any(v => v.DefaultValue == defaultValue && v.Original == false))
             {
-                string name = "autoGenVar" + (Variables.Count + 1);
+                int i = 0;
+                string name;
+
+                do
+                {
+                    i++;
+                    name = "autoGenVar" + i;
+                } while (Variables.Any(v => v.Name == name));
 
                 return name;
             }
@@ -601,7 +610,7 @@ namespace FreeSpace2TranslationTools.Services
         {
             string newSexp = "";
 
-            foreach (MissionVariable variable in Variables)
+            foreach (MissionVariable variable in Variables.Where(v => v.Original == false))
             {
                 newSexp += variable.ModifyVariableXstr();
 
@@ -614,6 +623,17 @@ namespace FreeSpace2TranslationTools.Services
             }
 
             return newSexp;
+        }
+
+        private void GetOriginalVariables()
+        {
+            string sexpVariablesSection = Regexp.SexpVariablesSection.Match(Content).Value;
+            IEnumerable<Match> variableNames = Regexp.Variables.Matches(sexpVariablesSection);
+
+            foreach (Match variableName in variableNames)
+            {
+                Variables.Add(new(variableName.Groups[1].Value, variableName.Groups[2].Value, true));
+            }
         }
     }
 }
