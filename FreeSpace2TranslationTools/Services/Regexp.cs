@@ -12,6 +12,7 @@ namespace FreeSpace2TranslationTools.Services
         // REGEX HELP
         // (?=): Positive lookahead. Matches a group after the main expression without including it in the result
         // (?<=...): look behind
+        // (?<!;): Negative lookbehind
         // (?>...): non capturing group
         // -----------------------------------------------------------------------------------------------------------
 
@@ -19,7 +20,7 @@ namespace FreeSpace2TranslationTools.Services
         public static Regex Xstr { get => _Xstr; }
 
         // don't select entries in comment... but take into account comments between $Name and +nocreate
-        private static readonly Regex _NoAltNames = new(@"([^;]\$Name:[ \t]*(.*?)\r\n(?:;.*?\r\n)?(?:[ \t]*\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex _NoAltNames = new(@"(?<!;)(\$Name:[ \t]*(.*?)\r\n(?:;.*?\r\n)?(?:[ \t]*\+nocreate[ \t]*\r\n)?)(((?!\$Alt Name|\+nocreate).)*?\r\n)", RegexOptions.Singleline | RegexOptions.Compiled);
         public static Regex NoAltNames { get => _NoAltNames; }
 
         private static readonly Regex _AlternateTypes = new(@"#Alternate Types:.*?#end\r\n\r\n", RegexOptions.Singleline | RegexOptions.Compiled);
@@ -167,7 +168,7 @@ namespace FreeSpace2TranslationTools.Services
         private static readonly Regex _ShipSection = new(@"#Ship Classes.*?#end", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
         public static Regex ShipSection { get => _ShipSection; }
 
-        private static readonly Regex _ShipEntries = new(@"\n\$Name:.*?(?=\n\$Name|#end)", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        private static readonly Regex _ShipEntries = new(@"(?<!;)\$Name:.*?(?=(?<!;)\$Name|#end)", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
         public static Regex ShipEntries { get => _ShipEntries; }
 
         private static readonly Regex _ShipNames = new(@"\$Name:(.*)$", RegexOptions.Compiled | RegexOptions.Multiline);
