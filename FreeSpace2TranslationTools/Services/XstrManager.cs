@@ -100,7 +100,14 @@ namespace FreeSpace2TranslationTools.Services
         {
             foreach (GameFile file in Files.Where(x => x.Type == FileType.Campaign))
             {
-                ProcessFile(file, new Campaign(file.Content));
+                try
+                {
+                    ProcessFile(file, new Campaign(file.Content));
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, file.Name);
+                }
             }
         }
 
@@ -108,7 +115,14 @@ namespace FreeSpace2TranslationTools.Services
         {
             foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-crd.tbm") || x.Name.EndsWith("credits.tbl")))
             {
-                ProcessFile(file, new Credits(file.Content));
+                try
+                {
+                    ProcessFile(file, new Credits(file.Content));
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, file.Name);
+                }
             }
         }
 
@@ -118,7 +132,14 @@ namespace FreeSpace2TranslationTools.Services
 
             if (cutscenes != null)
             {
-                ProcessFile(cutscenes, new Cutscenes(cutscenes.Content));
+                try
+                {
+                    ProcessFile(cutscenes, new Cutscenes(cutscenes.Content));
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, cutscenes.Name);
+                }
             }
         }
 
@@ -126,7 +147,14 @@ namespace FreeSpace2TranslationTools.Services
         {
             foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hdg.tbm") || x.Name.EndsWith("hud_gauges.tbl")))
             {
-                ProcessFile(file, new HudGauges(file.Content));
+                try
+                {
+                    ProcessFile(file, new HudGauges(file.Content));
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, file.Name);
+                }
             }
         }
 
@@ -136,7 +164,14 @@ namespace FreeSpace2TranslationTools.Services
 
             if (medals != null)
             {
-                ProcessFile(medals, new Medals(medals.Content));
+                try
+                {
+                    ProcessFile(medals, new Medals(medals.Content));
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, medals.Name);
+                }
             }
         }
 
@@ -144,7 +179,14 @@ namespace FreeSpace2TranslationTools.Services
         {
             foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hall.tbm") || x.Name.EndsWith("mainhall.tbl")))
             {
-                ProcessFile(file, new Mainhall(file.Content));
+                try
+                {
+                    ProcessFile(file, new Mainhall(file.Content));
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, file.Name);
+                }
             }
         }
 
@@ -154,7 +196,14 @@ namespace FreeSpace2TranslationTools.Services
 
             if (rankFile != null)
             {
-                ProcessFile(rankFile, new Rank(rankFile.Content));
+                try
+                {
+                    ProcessFile(rankFile, new Rank(rankFile.Content));
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, rankFile.Name);
+                }
             }
         }
 
@@ -166,7 +215,14 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (GameFile file in shipFiles)
             {
-                ProcessShipFile(file, new ShipsFile(file.Content, Weapons));
+                try
+                {
+                    ProcessShipFile(file, new ShipsFile(file.Content, Weapons));
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, file.Name);
+                }
             }
         }
 
@@ -174,7 +230,11 @@ namespace FreeSpace2TranslationTools.Services
         {
             foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-wep.tbm") || x.Name.EndsWith("weapons.tbl")))
             {
-                ProcessWeaponFile(file, new WeaponsFile(file.Content));
+                try
+                {
+                    ProcessWeaponFile(file, new WeaponsFile(file.Content));
+                }
+                catch (Exception ex) { throw new FileException(ex, file.Name); }
             }
         }
 
@@ -182,7 +242,11 @@ namespace FreeSpace2TranslationTools.Services
         {
             foreach (GameFile file in Files.Where(x => x.Type == FileType.Mission).ToList())
             {
-                ProcessFile(file, new Mission(file.Content));
+                try
+                {
+                    ProcessFile(file, new Mission(file.Content));
+                }
+                catch (Exception ex) { throw new FileException(ex, file.Name); }
             }
         }
 
@@ -199,6 +263,10 @@ namespace FreeSpace2TranslationTools.Services
                 catch (WrongFileFormatException)
                 {
                     continue;
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, file.Name);
                 }
             }
         }

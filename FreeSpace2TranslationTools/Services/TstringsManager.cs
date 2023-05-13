@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FreeSpace2TranslationTools.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -74,20 +75,27 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (GameFile file in compatibleFiles)
             {
-                IEnumerable<IXstr> xstrs = file.GetAllXstr();
-
-                foreach (IXstr xstr in xstrs)
+                try
                 {
-                    // if id not existing, add a new line
-                    if (xstr.Id >= 0 && !Lines.Any(x => x.Id == xstr.Id))
+                    IEnumerable<IXstr> xstrs = file.GetAllXstr();
+
+                    foreach (IXstr xstr in xstrs)
                     {
-                        Lines.Add(xstr);
+                        // if id not existing, add a new line
+                        if (xstr.Id >= 0 && !Lines.Any(x => x.Id == xstr.Id))
+                        {
+                            Lines.Add(xstr);
+                        }
+                        // if id already existing but value is different, then put it in another list that will be treated separately
+                        else if (ManageDuplicates && (xstr.Id < 0 || Lines.First(x => x.Id == xstr.Id).Text != xstr.Text))
+                        {
+                            Duplicates.Add(xstr);
+                        }
                     }
-                    // if id already existing but value is different, then put it in another list that will be treated separately
-                    else if (ManageDuplicates && (xstr.Id < 0 || Lines.First(x => x.Id == xstr.Id).Text != xstr.Text))
-                    {
-                        Duplicates.Add(xstr);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new FileException(ex, file.Name);
                 }
             }
 

@@ -180,6 +180,9 @@
   <data name="Missions" xml:space="preserve">
     <value>missions</value>
   </data>
+  <data name="ModFileInvolved" xml:space="preserve">
+    <value>Mod file involved: </value>
+  </data>
   <data name="ModFolder" xml:space="preserve">
     <value>Mod folder</value>
   </data>

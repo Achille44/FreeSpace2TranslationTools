@@ -128,6 +128,11 @@ namespace FreeSpace2TranslationTools
             MessageBox.Show(Localization.ProcessComplete + newLine + newLine + Localization.ExecutionTime + time.Seconds.ToString() + " " + Localization.Seconds);
         }
 
+        private static void ManageFileException(FileException ex)
+        {
+            MessageBox.Show($"{Localization.TechnicalError}{newLine}{newLine}{Localization.ModFileInvolved}{ex.File}{newLine}{newLine}{ex.Message}{newLine}{ex.StackTrace}{newLine}{ex.InnerException}");
+        }
+
         private static void ManageException(Exception ex)
         {
             if (ex.GetType().Name == nameof(UserFriendlyException))
@@ -246,6 +251,10 @@ namespace FreeSpace2TranslationTools
                 watch.Stop();
                 ProcessComplete(watch.Elapsed);
             }
+            catch (FileException ex)
+            {
+                ManageFileException(ex);
+            }
             catch (Exception ex)
             {
                 ManageException(ex);
@@ -327,6 +336,10 @@ namespace FreeSpace2TranslationTools
 
                 watch.Stop();
                 ProcessComplete(watch.Elapsed);
+            }
+            catch (FileException ex)
+            {
+                ManageFileException(ex);
             }
             catch (Exception ex)
             {

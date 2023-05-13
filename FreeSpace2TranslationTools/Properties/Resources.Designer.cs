@@ -250,6 +250,15 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Mod file involved: .
+        /// </summary>
+        public static string ModFileInvolved {
+            get {
+                return ResourceManager.GetString("ModFileInvolved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Mod folder.
         /// </summary>
         public static string ModFolder {
