@@ -116,7 +116,7 @@ namespace FreeSpace2TranslationTools.Services
                     newSubsystem = Regexp.SubsystemNames.Replace(newSubsystem, new MatchEvaluator(AddAltSubsystemName));
                 }
             }
-            else if (!Regex.IsMatch(match.Value, @"\$Alt Subsystem Name:[ \t]*XSTR", RegexOptions.IgnoreCase))
+            else if (!Regexp.InternationalizedSubsystemNames.IsMatch(match.Value))
             {
                 newSubsystem = Regexp.AltSubsystemNames.Replace(newSubsystem, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
             }

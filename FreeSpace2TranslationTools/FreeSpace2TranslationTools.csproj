@@ -2,12 +2,14 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <RootNamespace>FreeSpace2TranslationTools</RootNamespace>
     <UseWPF>true</UseWPF>
     <AssemblyName>FreeSpace2TranslationTools</AssemblyName>
     <ApplicationIcon>Hlplogo512_60x60.ico</ApplicationIcon>
-    <Version>1.0.1</Version>
+    <Version>1.2.0</Version>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Achille44/FreeSpace2TranslationTools</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +24,13 @@
     <None Remove="Images\rank.png" />
     <None Remove="Images\ships.png" />
     <None Remove="Images\weapons.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
