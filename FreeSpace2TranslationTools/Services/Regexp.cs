@@ -13,10 +13,10 @@ namespace FreeSpace2TranslationTools.Services
         // (?=): Positive lookahead. Matches a group after the main expression without including it in the result
         // (?<=...): look behind
         // (?<!;): Negative lookbehind
-        // (?>...): non capturing group
+        // (?:...): non capturing group
         // -----------------------------------------------------------------------------------------------------------
 
-        [GeneratedRegex("XSTR\\s*\\(\\s*(\".*?\")\\s*,\\s*(-?\\d+)\\s*\\)", RegexOptions.Singleline)]
+        [GeneratedRegex("XSTR\\s*\\(\\s*(\"(?:(?!XSTR).)*?\")\\s*,\\s*(-?\\d+)\\s*(\\)|,)", RegexOptions.Singleline)]
         private static partial Regex _Xstr();
         public static Regex Xstr { get => _Xstr(); }
 
