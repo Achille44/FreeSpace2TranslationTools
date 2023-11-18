@@ -44,7 +44,8 @@ namespace FreeSpace2TranslationTools.Services
 
                     if (!modShips.Any(s => s.Name == shipName))
                     {
-                        newEntry = Regexp.NoAltNames.Replace(newEntry, new MatchEvaluator(XstrManager.GenerateAltNames));
+                        newEntry = Regexp.HardCodedAltNames.Replace(newEntry, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+						newEntry = Regexp.NoAltNames.Replace(newEntry, new MatchEvaluator(XstrManager.GenerateAltNames));
                         modShips.Add(new Ship { Name = shipName });
                     }
 
