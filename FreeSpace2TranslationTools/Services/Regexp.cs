@@ -54,7 +54,10 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _ParametersInSexp();
         public static Regex ParametersInSexp { get => _ParametersInSexp(); }
 
-        [GeneratedRegex("(.*\\$Jump Node Name:[ \\t]*)(.*?)\\r\\n")]
+		// Only used for FSO < v23.0
+		//[GeneratedRegex("(.*\\$Jump Node Name:[ \\t]*)(.*?)\\r\\n")]
+		// Only used for FSO => v23.0
+		[GeneratedRegex("(.*\\$Jump Node Name:[ \\t]*(.*?)\\r\\n)((?!\\+Display Name).)")]
         private static partial Regex _JumpNodeNames();
         public static Regex JumpNodeNames { get => _JumpNodeNames(); }
 
@@ -304,7 +307,8 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _TechAddIntelXstr();
         public static Regex TechAddIntelXstr { get => _TechAddIntelXstr(); }
 
-        public static Regex GetJumpNodeReferences(string jumpNode)
+		// Only used for FSO < v23.0
+		public static Regex GetJumpNodeReferences(string jumpNode)
         {
             return new($"(?<=\\([ \t]*(depart-node-delay|show-jumpnode|hide-jumpnode|set-jumpnode-color|set-jumpnode-name|set-jumpnode-model)[^\\(]*)\"{jumpNode}\"", RegexOptions.Singleline);
         }

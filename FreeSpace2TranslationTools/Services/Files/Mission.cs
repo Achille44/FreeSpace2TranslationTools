@@ -40,7 +40,8 @@ namespace FreeSpace2TranslationTools.Services
 
             Content = Regexp.JumpNodeNames.Replace(Content, new MatchEvaluator(GenerateJumpNodeNames));
 
-            ConvertJumpNodeReferencesToVariables();
+			// Only used for FSO < v23.0
+			//ConvertJumpNodeReferencesToVariables();
 
             ConvertFirstSexpParametersToVariables();
 
@@ -92,21 +93,25 @@ namespace FreeSpace2TranslationTools.Services
 
         private string GenerateJumpNodeNames(Match match)
         {
-            string newName = XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
+			#region Only used for FSO < v23.0
+			//string newName = XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
 
-            // if the jump node has already been translated, then don't add it to the list
-            if (match.Value != newName)
-            {
-                JumpNodes.Add(XstrManager.SanitizeName(match.Groups[2].Value, true));
-            }
+			//// if the jump node has already been translated, then don't add it to the list
+			//if (match.Value != newName)
+			//{
+			//    JumpNodes.Add(XstrManager.SanitizeName(match.Groups[2].Value, true));
+			//}
 
-            return newName;
-        }
+			//return newName; 
+			#endregion
 
-        /// <summary>
-        /// Convert sexp show-subtitle to show-subtitle-text so they can be translated
-        /// </summary>
-        private void ConvertShowSubtitleToShowSubtitleText()
+			return XstrManager.AddXstrLineToHardcodedValue("+Display Name", match);
+		}
+
+		/// <summary>
+		/// Convert sexp show-subtitle to show-subtitle-text so they can be translated
+		/// </summary>
+		private void ConvertShowSubtitleToShowSubtitleText()
         {
             foreach (Match match in Regexp.ShowSubtitle.Matches(Content).AsEnumerable())
             {
@@ -379,7 +384,10 @@ namespace FreeSpace2TranslationTools.Services
             }
         }
 
-        private void ConvertJumpNodeReferencesToVariables()
+		/// <summary>
+		/// Only used for FSO < v23.0
+		/// </summary>
+		private void ConvertJumpNodeReferencesToVariables()
         {
             if (JumpNodes.Count > 0)
             {
