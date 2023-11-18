@@ -21,7 +21,8 @@ namespace FreeSpace2TranslationTools.Services
         public static Regex Xstr { get => _Xstr(); }
 
         // don't select entries in comment... but take into account comments between $Name and +nocreate
-        [GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n(?:;.*?\\r\\n)?(?:[ \\t]*\\+nocreate[ \\t]*\\r\\n)?)(((?!\\$Alt Name|\\+nocreate).)*?\\r\\n)", RegexOptions.Singleline)]
+        //[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n(?:;.*?\\r\\n)?(?:[ \\t]*\\+nocreate[ \\t]*\\r\\n)?)(((?!\\$Alt Name|\\+nocreate).)*?\\r\\n)", RegexOptions.Singleline)]
+        [GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n)(.)")]
         private static partial Regex _NoAltNames();
         public static Regex NoAltNames { get => _NoAltNames(); }
 
@@ -196,7 +197,7 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _Descriptions();
         public static Regex Descriptions { get => _Descriptions(); }
 
-        [GeneratedRegex("\\$Name:\\s*.*?(?=\\$Name|#end)", RegexOptions.IgnoreCase |RegexOptions.Singleline)]
+        [GeneratedRegex("(?<!;)\\$Name:\\s*.*?(?=\\$Name|#end)", RegexOptions.IgnoreCase |RegexOptions.Singleline)]
         private static partial Regex _Weapons();
         public static Regex Weapons { get => _Weapons(); }
 
@@ -306,6 +307,22 @@ namespace FreeSpace2TranslationTools.Services
         [GeneratedRegex("(\\(\\s*tech-add-intel-xstr\\s*(\".*?\")\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline)]
         private static partial Regex _TechAddIntelXstr();
         public static Regex TechAddIntelXstr { get => _TechAddIntelXstr(); }
+
+		[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n.*\\+Use Ship as Template.*?\\r\\n)(.)", RegexOptions.Singleline)]
+		private static partial Regex _UseShipAsTemplate();
+		public static Regex UseShipAsTemplate { get => _UseShipAsTemplate(); }
+
+		[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n.*?\\+Use Template.*?\\r\\n)(.)", RegexOptions.Singleline)]
+		private static partial Regex _UseTemplate();
+		public static Regex UseTemplate { get => _UseTemplate(); }
+
+		[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n.*?\\+nocreate.*?\\r\\n)(.)", RegexOptions.Singleline)]
+		private static partial Regex _Nocreate();
+		public static Regex Nocreate { get => _Nocreate(); }
+
+		[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n.*?\\+remove.*?\\r\\n)(.)", RegexOptions.Singleline)]
+		private static partial Regex _Remove();
+		public static Regex Remove { get => _Remove(); }
 
 		// Only used for FSO < v23.0
 		public static Regex GetJumpNodeReferences(string jumpNode)
