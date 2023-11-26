@@ -37,7 +37,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						Cutscenes.Add(new ECutscene()
 						{
 							FileName = fileName.Value,
-							Name = name.Value,
+							Name = name.Value.Trim(),
 							Description = description.Value
 						});
 					}
