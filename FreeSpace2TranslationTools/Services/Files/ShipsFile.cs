@@ -71,7 +71,7 @@ namespace FreeSpace2TranslationTools.Services
 
                     Ship ship = modShips.FirstOrDefault(s => s.Name == shipName);
 
-                    IEnumerable<Match> subsystems = Regexp.Subsystems.Matches(newEntry);
+                    IEnumerable<Match> subsystems = Regexp.FullSubsystems.Matches(newEntry);
 
                     foreach (Match subsystem in subsystems)
                     {
@@ -99,7 +99,7 @@ namespace FreeSpace2TranslationTools.Services
                     }
                 }
 
-                newContent = Regexp.TechDescriptions.Replace(newContent, new MatchEvaluator(GenerateShipDescription));
+                newContent = Regexp.FullTechDescriptions.Replace(newContent, new MatchEvaluator(GenerateShipDescription));
 
                 newContent = Regexp.ShipLength.Replace(newContent, new MatchEvaluator(GenerateShipLength));
 
@@ -119,7 +119,7 @@ namespace FreeSpace2TranslationTools.Services
             // if we're treating a turret that already has a $Turret Name, no need to add $Alt...
             if (match.Value.Contains("$Default PBanks:"))
             {
-                string defaultPBank = Regexp.DefaultPBanks.Match(match.Value).Groups[1].Value;
+                string defaultPBank = Regexp.DefaultPBanks.Match(match.Value).Value;
                 Weapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
 
                 if (defaultWeapon != null && defaultWeapon.HasTurretName)
@@ -139,7 +139,7 @@ namespace FreeSpace2TranslationTools.Services
             }
             else if (!Regexp.InternationalizedSubsystemNames.IsMatch(match.Value))
             {
-                newSubsystem = Regexp.AltSubsystemNames.Replace(newSubsystem, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+                newSubsystem = Regexp.AltSubsystemNamesToModify.Replace(newSubsystem, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
             }
 
             if (!replaceOnly && !match.Value.Contains("$Alt Damage Popup Subsystem Name:"))
@@ -162,7 +162,7 @@ namespace FreeSpace2TranslationTools.Services
             }
             else if (!Regexp.InternationalizedSubsystemNames.IsMatch(match.Value))
             {
-                newSubsystem = Regexp.AltDamagePopupSubsystemNames.Replace(newSubsystem, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+                newSubsystem = Regexp.AltDamagePopupSubsystemNamesToModify.Replace(newSubsystem, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
             }
 
             if (!replaceOnly)
@@ -172,25 +172,25 @@ namespace FreeSpace2TranslationTools.Services
                 {
                     newSubsystem = Regexp.InternationalizedAltDamagePopupSubsystemNames.Replace(newSubsystem, $"$Alt Damage Popup Subsystem Name: XSTR(\"{turretName}\", -1)");
                 }
-                // if alt damage popup name already existing but not alt name, then copy it to alt name 
+                // if alt damage popup name already existing but not alt name, then copy it to alt name
                 else if (!altNameAlreadyExisting && altDamagePopupNameAlreadyExisting)
                 {
                     string newName = Regexp.InternationalizedAltDamagePopupSubsystemNames.Match(newSubsystem).Groups[1].Value;
                     newSubsystem = Regexp.InternationalizedAltSubsystemNames.Replace(newSubsystem, $"$Alt Subsystem Name: XSTR(\"{newName}\", -1)");
                 }
-                // if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name 
+                // if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name
                 else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting && match.Value.Contains("$Default SBanks:"))
                 {
                     newSubsystem = Regexp.InternationalizedAltSubsystemNames.Replace(newSubsystem, "$Alt Subsystem Name: XSTR(\"Missile lnchr\", -1)");
                     newSubsystem = Regexp.InternationalizedAltDamagePopupSubsystemNames.Replace(newSubsystem, "$Alt Damage Popup Subsystem Name: XSTR(\"Missile lnchr\", -1)");
                 }
-                // if there is neither alt name nor alt damage popup, then check if this is gun turret ("PBanks" or "$Turret Reset Delay" key words) to set a custom alt name 
+                // if there is neither alt name nor alt damage popup, then check if this is gun turret ("PBanks" or "$Turret Reset Delay" key words) to set a custom alt name
                 else if (!altNameAlreadyExisting && !altDamagePopupNameAlreadyExisting)
                 {
                     if (match.Value.Contains("$Default PBanks:"))
                     {
                         string turretType = "Turret";
-                        string defaultPBank = Regexp.DefaultPBanks.Match(match.Value).Groups[1].Value;
+                        string defaultPBank = Regexp.DefaultPBanks.Match(match.Value).Value;
                         Weapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
 
                         if (defaultWeapon != null)

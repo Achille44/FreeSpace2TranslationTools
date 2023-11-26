@@ -18,9 +18,17 @@ namespace FreeSpace2TranslationTools.Services
             Content = File.ReadAllText(name);
             Modified = false;
             SetFileType();
-        }
+		}
 
-        public void SaveContent(string newContent)
+		public GameFile(string name, string content)
+		{
+			Name = name;
+			Content = content;
+			Modified = true;
+			SetFileType();
+		}
+
+		public void SaveContent(string newContent)
         {
             if (newContent != Content)
             { 

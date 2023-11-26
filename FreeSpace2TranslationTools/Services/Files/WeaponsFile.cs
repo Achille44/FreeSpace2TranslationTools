@@ -27,11 +27,11 @@ namespace FreeSpace2TranslationTools.Services
 
 			Content = Regexp.HardCodedTurretNames.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
-			Content = Regexp.Titles.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+			Content = Regexp.TitlesFullLine.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
-			Content = Regexp.Descriptions.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+			Content = Regexp.DescriptionsFullLine.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
-			IEnumerable<Match> weapons = Regexp.Weapons.Matches(Content);
+			IEnumerable<Match> weapons = Regexp.GenericEntries.Matches(Content);
 
 			foreach (Match weapon in weapons)
 			{
@@ -96,7 +96,7 @@ namespace FreeSpace2TranslationTools.Services
 
 						if (weapon.Value.Contains("$Turret Name:"))
 						{
-							string turretName = Regexp.TurretNames.Match(weapon.Value).Groups[1].Value;
+							string turretName = Regexp.TurretNamesInsideXstr.Match(weapon.Value).Groups[1].Value;
 							modWeapons.Add(new Weapon(name, type, true, turretName));
 						}
 						else

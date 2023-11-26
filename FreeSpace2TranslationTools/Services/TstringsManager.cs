@@ -20,9 +20,10 @@ namespace FreeSpace2TranslationTools.Services
         private List<IXstr> Duplicates { get; set; }
         private bool ManageDuplicates { get; set; }
         private string StartingID { get; set; }
-        private int CurrentProgress { get; set; }
+		private bool ExtractToSeparateFiles { get; }
+		private int CurrentProgress { get; set; }
 
-        public TstringsManager(MainWindow parent, object sender, string modFolder, string destinationFolder, bool manageDuplicates, List<GameFile> files, string startingID = "")
+        public TstringsManager(MainWindow parent, object sender, string modFolder, string destinationFolder, bool manageDuplicates, List<GameFile> files, string startingID, bool extractToSeparateFiles)
         {
             Parent = parent;
             Sender = sender;
@@ -31,9 +32,9 @@ namespace FreeSpace2TranslationTools.Services
             CurrentProgress = 0;
             ManageDuplicates = manageDuplicates;
             StartingID = startingID;
-            Lines = new();
+			ExtractToSeparateFiles = extractToSeparateFiles;
+			Lines = new();
             Duplicates = new();
-
             Files = files;
 
             MainWindow.InitializeProgress(Sender);
@@ -71,7 +72,12 @@ namespace FreeSpace2TranslationTools.Services
         /// </summary>
         private void FetchXstr()
         {
-            List<GameFile> compatibleFiles = Files.Where(x => !x.Name.Contains("-lcl.tbm") && !x.Name.Contains("-tlc.tbm") && !x.Name.Contains("strings.tbl")).ToList();
+            List<GameFile> compatibleFiles = Files.Where(x => !x.Name.EndsWith("-lcl.tbm") && !x.Name.EndsWith("-tlc.tbm") && !x.Name.EndsWith("strings.tbl")).ToList();
+
+            if (ExtractToSeparateFiles)
+            {
+                compatibleFiles = compatibleFiles.Where(x => (!x.Name.EndsWith("-shp.tbm") && !x.Name.EndsWith("-wep.tbm")) || x.Name.Contains("_i18n")).ToList();
+			}
 
             foreach (GameFile file in compatibleFiles)
             {

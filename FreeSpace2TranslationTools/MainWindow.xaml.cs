@@ -312,12 +312,14 @@ namespace FreeSpace2TranslationTools
                 string destinationFolder = string.Empty;
                 string startingID = string.Empty;
                 bool duplicatesMustBeManaged = false;
+                bool extractToSeparateFiles = false;
 
-                Dispatcher.Invoke(() =>
+				Dispatcher.Invoke(() =>
                 {
                     modFolder = tbModFolderXSTR.Text;
                     destinationFolder = tbDestinationFolderXSTR.Text;
                     duplicatesMustBeManaged = cbManageDuplicates.IsChecked ?? false;
+					extractToSeparateFiles = cbExtractToNewFiles.IsChecked ?? false;
                     startingID = tbStartingID.Text;
                 });
 
@@ -326,11 +328,11 @@ namespace FreeSpace2TranslationTools
 
                 List<GameFile> files = FileManager.GetFilesWithXstrFromFolder(modFolder);
 
-                XstrManager xstrManager = new(this, sender, files);
+                XstrManager xstrManager = new(this, sender, files, extractToSeparateFiles);
                 xstrManager.LaunchXstrProcess();
                 SetProgressToMax(sender);
 
-                TstringsManager tstringsManager = new(this, sender, modFolder, destinationFolder, duplicatesMustBeManaged, files, startingID);
+                TstringsManager tstringsManager = new(this, sender, modFolder, destinationFolder, duplicatesMustBeManaged, files, startingID, extractToSeparateFiles);
                 tstringsManager.ProcessTstrings();
                 SetProgressToMax(sender);
 
@@ -399,5 +401,5 @@ namespace FreeSpace2TranslationTools
                 (sender as BackgroundWorker).ReportProgress(Convert.ToInt32(pbGlobalProgress.Maximum));
             });
         }
-    }
+	}
 }

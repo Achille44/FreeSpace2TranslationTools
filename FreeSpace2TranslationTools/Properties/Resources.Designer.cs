@@ -88,6 +88,15 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à When possible, extract internationalization properties to separate files..
+        /// </summary>
+        public static string CheckBoxExtractToSeparateFiles {
+            get {
+                return ResourceManager.GetString("CheckBoxExtractToSeparateFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Generate new IDs in case of duplicates (this option will create files with new IDs in the destination folder). Almost mandatory if original files only contain &apos;-1&apos; as ID..
         /// </summary>
         public static string CheckBoxManageDuplicates {

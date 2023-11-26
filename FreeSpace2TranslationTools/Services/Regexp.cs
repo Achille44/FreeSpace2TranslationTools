@@ -89,11 +89,31 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _MessagesSection();
         public static Regex MessagesSection { get => _MessagesSection(); }
 
-        [GeneratedRegex("\\$Name:\\s*(.*?)(?=;|\\r)", RegexOptions.Multiline)]
-        private static partial Regex _Messages();
-        public static Regex Messages { get => _Messages(); }
+		[GeneratedRegex("\\$Name:\\s*(.*?)(?=;|\\r)", RegexOptions.Multiline)]
+		private static partial Regex _Messages();
+		public static Regex Messages { get => _Messages(); }
 
-        [GeneratedRegex("(show-subtitle-text\\s*\r\n\\s*\")(.*?)\"", RegexOptions.Multiline)]
+		[GeneratedRegex("(?<=\\$Name:[ \\t]*)(.*?)(?=;|\\r)")]
+        private static partial Regex _Names();
+        public static Regex Names { get => _Names(); }
+
+		[GeneratedRegex("(?<=\\+Name:[ \\t]*)(.*?)(?=;|\\r)")]
+		private static partial Regex _MainhallNames();
+		public static Regex MainhallNames { get => _MainhallNames(); }
+
+		[GeneratedRegex("(?<=\\$Filename:[ \\t]*)(.*?)(?=;|\\r)")]
+		private static partial Regex _FileNames();
+		public static Regex FileNames { get => _FileNames(); }
+
+		[GeneratedRegex("(?<=\\$Alt Name:[ \\t]*)(.*?)(?=;|\\r)")]
+		private static partial Regex _AltNames();
+		public static Regex AltNames { get => _AltNames(); }
+
+		[GeneratedRegex("(?<=\\$Turret Name:[ \\t]*)(.*?)(?=;|\\r)", RegexOptions.IgnoreCase)]
+		private static partial Regex _TurretNames();
+		public static Regex TurretNames { get => _TurretNames(); }
+
+		[GeneratedRegex("(show-subtitle-text\\s*\r\n\\s*\")(.*?)\"", RegexOptions.Multiline)]
         private static partial Regex _SubtitleTexts();
         public static Regex SubtitleTexts { get => _SubtitleTexts(); }
 
@@ -169,7 +189,11 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _HardcodedDoorDescriptions();
         public static Regex HardcodedDoorDescriptions { get => _HardcodedDoorDescriptions(); }
 
-        [GeneratedRegex("\".+?\"")]
+		[GeneratedRegex("(?<=\\+Door description:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _DoorDescriptions();
+		public static Regex DoorDescriptions { get => _DoorDescriptions(); }
+
+		[GeneratedRegex("\".+?\"")]
         private static partial Regex _NotEmptyStrings();
         public static Regex NotEmptyStrings { get => _NotEmptyStrings(); }
 
@@ -186,22 +210,78 @@ namespace FreeSpace2TranslationTools.Services
         public static Regex HardCodedTurretNames { get => _HardCodedTurretNames(); }
 
         [GeneratedRegex("[^;]\\$Turret Name: XSTR\\(\\\"(.*)\", -1\\)\\r\\n", RegexOptions.IgnoreCase)]
-        private static partial Regex _TurretNames();
-        public static Regex TurretNames { get => _TurretNames(); }
+        private static partial Regex _TurretNamesInsideXstr();
+        public static Regex TurretNamesInsideXstr { get => _TurretNamesInsideXstr(); }
 
         [GeneratedRegex("(\\+Title:[ \\t]*)(.*?)\\r\\n")]
-        private static partial Regex _Titles();
-        public static Regex Titles { get => _Titles(); }
+        private static partial Regex _TitlesFullLine();
+        public static Regex TitlesFullLine { get => _TitlesFullLine(); }
 
-        [GeneratedRegex("(\\+Description:[ \\t]*)(.*?)\\r\\n(?=\\$end_multi_text)", RegexOptions.Singleline)]
-        private static partial Regex _Descriptions();
-        public static Regex Descriptions { get => _Descriptions(); }
+		[GeneratedRegex("(?<=\\+Title:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _Titles();
+		public static Regex Titles { get => _Titles(); }
 
-        [GeneratedRegex("(?<!;)\\$Name:\\s*.*?(?=\\$Name|#end)", RegexOptions.IgnoreCase |RegexOptions.Singleline)]
-        private static partial Regex _Weapons();
-        public static Regex Weapons { get => _Weapons(); }
+		[GeneratedRegex("(?<=\\+Tech Title:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _TechTitles();
+		public static Regex TechTitles { get => _TechTitles(); }
 
-        [GeneratedRegex("(\\$Name:\\s*(.*?)\\r\\n.*?\\r\\n)(\\s*\\+Tech Anim:|\\s*\\+Tech Description:)", RegexOptions.Singleline)]
+		[GeneratedRegex("(?<=\\+Type:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _Types();
+		public static Regex Types { get => _Types(); }
+
+		[GeneratedRegex("(?<=\\+Maneuverability:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _Maneuverabilities();
+		public static Regex Maneuverabilities { get => _Maneuverabilities(); }
+
+		[GeneratedRegex("(?<=\\+Armor:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _Armors();
+		public static Regex Armors { get => _Armors(); }
+
+		[GeneratedRegex("(?<=\\+Manufacturer:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _Manufacturers();
+		public static Regex Manufacturers { get => _Manufacturers(); }
+
+		[GeneratedRegex("(?<=\\+Length:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _Lengths();
+		public static Regex Lengths { get => _Lengths(); }
+
+		[GeneratedRegex("(?<!;)\\$Alt Subsystem Name:[ \\t]*(.*?)(?=\\r)")]
+		private static partial Regex _AltSubsystemNames();
+		public static Regex AltSubsystemNames { get => _AltSubsystemNames(); }
+
+		[GeneratedRegex("(?<=\\$Alt Damage Popup Subsystem Name:[ \\t]*)(.*?)(?=\\r)")]
+		private static partial Regex _AltDamagePopupSubsystemNames();
+		public static Regex AltDamagePopupSubsystemNames { get => _AltDamagePopupSubsystemNames(); }
+
+		[GeneratedRegex("(\\+Description:[ \\t]*)(.*?)\\r\\n(?=\\$end_multi_text)", RegexOptions.Singleline)]
+        private static partial Regex _DescriptionsFullLine();
+        public static Regex DescriptionsFullLine { get => _DescriptionsFullLine(); }
+
+		[GeneratedRegex("(?<=\\+Description:[ \\t]*)(.*?)(?=\\r\\n\\$end_multi_text)", RegexOptions.Singleline)]
+		private static partial Regex _Descriptions();
+		public static Regex Descriptions { get => _Descriptions(); }
+
+		[GeneratedRegex("(?<=\\$Description:.*?\")(.*?)(?=\".*?\\r\\n\\$end_multi_text)", RegexOptions.Singleline)]
+		private static partial Regex _CutsceneDescriptions();
+		public static Regex CutsceneDescriptions { get => _CutsceneDescriptions(); }
+
+		[GeneratedRegex("(?<=\\+Tech Description:[ \\t]*)(.*?)(?=\\r\\n\\$end_multi_text)", RegexOptions.Singleline)]
+		private static partial Regex _TechDescriptions();
+		public static Regex TechDescriptions { get => _TechDescriptions(); }
+
+		[GeneratedRegex("(?<!;)\\$Name:\\s*.*?(?=\\$Name|#end)", RegexOptions.IgnoreCase |RegexOptions.Singleline)]
+        private static partial Regex _GenericEntries();
+        public static Regex GenericEntries { get => _GenericEntries(); }
+
+		[GeneratedRegex("(?<!;)\\+Name:\\s*.*?(?=\\+Name|#end)", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+		private static partial Regex _MainhallEntries();
+		public static Regex MainhallEntries { get => _MainhallEntries(); }
+
+		[GeneratedRegex("(?<!;)\\$Filename:\\s*.*?(?=\\$Filename|#end)", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+		private static partial Regex _CutsceneEntries();
+		public static Regex CutsceneEntries { get => _CutsceneEntries(); }
+
+		[GeneratedRegex("(\\$Name:\\s*(.*?)\\r\\n.*?\\r\\n)(\\s*\\+Tech Anim:|\\s*\\+Tech Description:)", RegexOptions.Singleline)]
         private static partial Regex _NoTechTitles();
         public static Regex NoTechTitles { get => _NoTechTitles(); }
 
@@ -229,13 +309,21 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _ShipNames();
         public static Regex ShipNames { get => _ShipNames(); }
 
-        [GeneratedRegex("(?<!;)(\\$Subsystem:[ \\t]*([^\\r\\n]*?),[^\\r\\n]*?\\r?\\n)(.*?)(?=\\$Subsystem:|$)", RegexOptions.Singleline)]
-        private static partial Regex _Subsystems();
-        public static Regex Subsystems { get => _Subsystems(); }
+		[GeneratedRegex("(?<!;)\\$Subsystem:.*?(?=\\$Subsystem:|\\$Name|#end)", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+		private static partial Regex _Subsystems();
+		public static Regex Subsystems { get => _Subsystems(); }
+
+		[GeneratedRegex("(?<=\\$Subsystem:[ \\t]*)(.*?)(?=\\r)", RegexOptions.IgnoreCase)]
+		private static partial Regex _SubsystemNamesAndCoordinates();
+		public static Regex SubsystemNamesAndCoordinates { get => _SubsystemNamesAndCoordinates(); }
+
+		[GeneratedRegex("(?<!;)(\\$Subsystem:[ \\t]*([^\\r\\n]*?),[^\\r\\n]*?\\r?\\n)(.*?)(?=\\$Subsystem:|$)", RegexOptions.Singleline)]
+        private static partial Regex _FullSubsystems();
+        public static Regex FullSubsystems { get => _FullSubsystems(); }
 
         [GeneratedRegex("(\\+Tech Description:[ \\t]*)(.*?)\\r\\n")]
-        private static partial Regex _TechDescriptions();
-        public static Regex TechDescriptions { get => _TechDescriptions(); }
+        private static partial Regex _FullTechDescriptions();
+        public static Regex FullTechDescriptions { get => _FullTechDescriptions(); }
 
         // the main problem is that there are two different +Length properties, and only one of them should be translated (the one before $thruster property)
         [GeneratedRegex("(\\$Name:(?:(?!\\$Name:|\\$Thruster).)*?\\r\\n)([ \\t]*\\+Length:[ \\t]*)([^\\r]*?)(\\r\\n)", RegexOptions.Singleline)]
@@ -247,8 +335,8 @@ namespace FreeSpace2TranslationTools.Services
         public static Regex SubsystemNames { get => _SubsystemNames(); }
 
         [GeneratedRegex("(.*\\$Alt Subsystem Name:[ \\t]*)(.*)\\r?\\n", RegexOptions.IgnoreCase)]
-        private static partial Regex _AltSubsystemNames();
-        public static Regex AltSubsystemNames { get => _AltSubsystemNames(); }
+        private static partial Regex _AltSubsystemNamesToModify();
+        public static Regex AltSubsystemNamesToModify { get => _AltSubsystemNamesToModify(); }
 
         [GeneratedRegex("(\\$Alt Subsystem Name:[ \t]*XSTR\\(\"(.*?)\", -1\\)\\r?\\n)(.*?)", RegexOptions.IgnoreCase)]
         private static partial Regex _InternationalizedAltSubsystemNamesWithFollowingLine();
@@ -265,8 +353,8 @@ namespace FreeSpace2TranslationTools.Services
 
         // [ \t] because \s includes \r and \n
         [GeneratedRegex("(.*\\$Alt Damage Popup Subsystem Name:[ \\t]*)(.*)\\r?\\n")]
-        private static partial Regex _AltDamagePopupSubsystemNames();
-        public static Regex AltDamagePopupSubsystemNames { get => _AltDamagePopupSubsystemNames(); }
+        private static partial Regex _AltDamagePopupSubsystemNamesToModify();
+        public static Regex AltDamagePopupSubsystemNamesToModify { get => _AltDamagePopupSubsystemNamesToModify(); }
 
         [GeneratedRegex("\\$Alt Damage Popup Subsystem Name:[ \t]*XSTR\\(\"([^\r\n]*?)\", -1\\)")]
         private static partial Regex _InternationalizedAltDamagePopupSubsystemNames();
@@ -276,7 +364,7 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _InternationalizedAltSubsystemNames();
         public static Regex InternationalizedAltSubsystemNames { get => _InternationalizedAltSubsystemNames(); }
 
-        [GeneratedRegex("\\$Default PBanks:[ \t]*\\([ \t]*\"(.*?)\"")]
+        [GeneratedRegex("(?<=\\$Default PBanks:[ \t]*\\([ \t]*\")(.*?)(?=\")")]
         private static partial Regex _DefaultPBanks();
         public static Regex DefaultPBanks { get => _DefaultPBanks(); }
 
@@ -323,6 +411,14 @@ namespace FreeSpace2TranslationTools.Services
 		[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n.*?\\+remove.*?\\r\\n)(.)", RegexOptions.Singleline)]
 		private static partial Regex _Remove();
 		public static Regex Remove { get => _Remove(); }
+
+		[GeneratedRegex("#Primary Weapons.*#End", RegexOptions.Singleline |RegexOptions.IgnoreCase)]
+		private static partial Regex _Primaries();
+		public static Regex Primaries { get => _Primaries(); }
+
+		[GeneratedRegex("#Secondary Weapons.*#End", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+		private static partial Regex _Secondaries();
+		public static Regex Secondaries { get => _Secondaries(); }
 
 		// Only used for FSO < v23.0
 		public static Regex GetJumpNodeReferences(string jumpNode)
