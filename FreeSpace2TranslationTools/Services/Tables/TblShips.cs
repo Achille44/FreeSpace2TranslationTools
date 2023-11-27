@@ -41,6 +41,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 					Match description = Regexp.Descriptions.Match(entry.Value);
 					Match techDescription = Regexp.TechDescriptions.Match(entry.Value);
 					Match length = Regexp.Lengths.Match(entry.Value);
+					Match flags = Regexp.Flags.Match(entry.Value);
 					IEnumerable<Match> subsystems = Regexp.Subsystems.Matches(entry.Value);
 
 					EShip ship;
@@ -97,6 +98,11 @@ namespace FreeSpace2TranslationTools.Services.Tables
 					if (length.Success && ship.Length == null)
 					{
 						ship.Length = XstrManager.GetValueWithoutXstr(length.Value);
+					}
+
+					if (flags.Success && flags.Value.Contains("player_ship"))
+					{
+						ship.IsPlayerShip = true;
 					}
 
 					foreach (Match subsystem in subsystems)
@@ -214,12 +220,12 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 					if (ship.Description != null)
 					{
-						content.Append($"+Description: XSTR(\"{ship.Description}\", -1){Environment.NewLine}");
+						content.Append($"+Description: XSTR(\"{ship.Description}\", -1){Environment.NewLine}$end_multi_text{Environment.NewLine}");
 					}
 
 					if (ship.TechDescription != null)
 					{
-						content.Append($"+Tech Description: XSTR(\"{ship.TechDescription}\", -1){Environment.NewLine}");
+						content.Append($"+Tech Description: XSTR(\"{ship.TechDescription}\", -1){Environment.NewLine}$end_multi_text{Environment.NewLine}");
 					}
 
 					if (ship.Length != null)
@@ -229,69 +235,79 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 					foreach (ESubsystem subsystem in ship.Subsystems)
 					{
-						content.Append($"$Subsystem: {subsystem.SubsystemName}");
-
-						if (subsystem.HP != null)
-						{
-							content.Append($", {subsystem.HP}");
-						}
-						if (subsystem.DegreeTurn != null)
-						{
-							content.Append($", {subsystem.DegreeTurn}");
-						}
-
-						content.Append($"{Environment.NewLine}");
+						StringBuilder stringBuilderSubsystem = new();
 
 						// if we're treating a turret that already has a $Turret Name, no need to add $Alt...
 						if (subsystem.TurretNameFromDefaultBank == null)
 						{
 							if (subsystem.AltSubsystemName != null)
 							{
-								content.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltSubsystemName}\", -1){Environment.NewLine}");
+								stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltSubsystemName}\", -1){Environment.NewLine}");
 							}
 							// if alt damage popup name already existing but not alt name, then copy it to alt name
 							else if (subsystem.AltDamagePopupSubsystemName != null)
 							{
-								content.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltDamagePopupSubsystemName}\", -1){Environment.NewLine}");
+								stringBuilderSubsystem	.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltDamagePopupSubsystemName}\", -1){Environment.NewLine}");
 							}
 							// if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name
 							else if (subsystem.IsMissileLauncher)
 							{
-								content.Append($"$Alt Subsystem Name: XSTR(\"Missile lnchr\", -1){Environment.NewLine}");
+								stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"Missile lnchr\", -1){Environment.NewLine}");
 							}
 							// if there is neither alt name nor alt damage popup, then check if this is a gun turret ("PBanks" or "$Turret Reset Delay" key words) to set a custom alt name
 							else if (subsystem.TurretTypeFromDefaultBank != null)
 							{
-								content.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.TurretTypeFromDefaultBank}\", -1){Environment.NewLine}");
+								stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.TurretTypeFromDefaultBank}\", -1){Environment.NewLine}");
 							}
 							else
 							{
-								content.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.SubsystemName.Split(',')[0]}\", -1){Environment.NewLine}");
+								stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.SubsystemName.Split(',')[0]}\", -1){Environment.NewLine}");
 							}
 						}
 
-						if (subsystem.AltDamagePopupSubsystemName != null)
+						if (ship.IsPlayerShip)
 						{
-							content.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.AltDamagePopupSubsystemName}\", -1){Environment.NewLine}");
+							if (subsystem.AltDamagePopupSubsystemName != null)
+							{
+								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.AltDamagePopupSubsystemName}\", -1){Environment.NewLine}");
+							}
+							// if there is a turret name but no damage popup name, then copy the turret name to damage popup name
+							else if (subsystem.TurretNameFromDefaultBank != null)
+							{
+								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.TurretNameFromDefaultBank}\", -1){Environment.NewLine}");
+							}
+							// if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name
+							else if (subsystem.IsMissileLauncher)
+							{
+								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"Missile lnchr\", -1){Environment.NewLine}");
+							}
+							// if there is neither alt name nor alt damage popup, then check if this is a gun turret ("PBanks" or "$Turret Reset Delay" key words) to set a custom alt name
+							else if (subsystem.TurretTypeFromDefaultBank != null)
+							{
+								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.TurretTypeFromDefaultBank}\", -1){Environment.NewLine}");
+							}
+							else
+							{
+								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.SubsystemName.Split(',')[0]}\", -1){Environment.NewLine}");
+							}
 						}
-						// if there is a turret name but no damage popup name, then copy the turret name to damage popup name
-						else if (subsystem.TurretNameFromDefaultBank != null)
+
+						// only add the subsystem if there is something inside
+						if (stringBuilderSubsystem.Length > 0)
 						{
-							content.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.TurretNameFromDefaultBank}\", -1){Environment.NewLine}");
-						}
-						// if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name
-						else if (subsystem.IsMissileLauncher)
-						{
-							content.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"Missile lnchr\", -1){Environment.NewLine}");
-						}
-						// if there is neither alt name nor alt damage popup, then check if this is a gun turret ("PBanks" or "$Turret Reset Delay" key words) to set a custom alt name
-						else if (subsystem.TurretTypeFromDefaultBank != null)
-						{
-							content.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.TurretTypeFromDefaultBank}\", -1){Environment.NewLine}");
-						}
-						else
-						{
-							content.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.SubsystemName.Split(',')[0]}\", -1){Environment.NewLine}");
+							content.Append($"$Subsystem: {subsystem.SubsystemName}");
+
+							if (subsystem.HP != null)
+							{
+								content.Append($", {subsystem.HP}");
+							}
+							if (subsystem.DegreeTurn != null)
+							{
+								content.Append($", {subsystem.DegreeTurn}");
+							}
+
+							content.Append($"{Environment.NewLine}");
+							content.Append(stringBuilderSubsystem);
 						}
 					}
 				}

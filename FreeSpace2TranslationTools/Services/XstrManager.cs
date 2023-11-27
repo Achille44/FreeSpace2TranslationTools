@@ -45,7 +45,7 @@ namespace FreeSpace2TranslationTools.Services
 			ProcessCutscenesFile();
 			ProcessHudGaugeFiles();
 			ProcessMainHallFiles();
-			ProcessMedalsFile();
+			ProcessMedalsFiles();
 			ProcessRankFile();
 			// Weapons must be treated before ships because of the way ship turrets are treated!
 			ProcessWeaponFiles();
@@ -179,55 +179,32 @@ namespace FreeSpace2TranslationTools.Services
 			}
 		}
 
-		private void ProcessMedalsFile()
+		private void ProcessMedalsFiles()
 		{
-			GameFile medals = Files.FirstOrDefault(x => x.Name.EndsWith("medals.tbl"));
-
-			if (medals != null)
+			foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-mdl.tbm") || x.Name.EndsWith("medals.tbl")))
 			{
 				try
 				{
-					ProcessFile(medals, new Medals(medals.Content));
+					ProcessFile(file, new Medals(file.Content));
 				}
 				catch (Exception ex)
 				{
-					throw new FileException(ex, medals.Name);
+					throw new FileException(ex, file.Name);
 				}
 			}
 		}
 
 		private void ProcessMainHallFiles()
 		{
-			if (false)
+			foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hall.tbm") || x.Name.EndsWith("mainhall.tbl")))
 			{
-				TblMainhall tblMainhall = new();
-				string i18n = "";
-
-				foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hall.tbm") || x.Name.EndsWith("mainhall.tbl")))
+				try
 				{
-					i18n = file.Name.Replace(Path.GetFileName(file.Name), "_i18n-hall.tbm");
-					tblMainhall.AllTables.Add(file.Content);
+					ProcessFile(file, new Mainhall(file.Content));
 				}
-
-				tblMainhall.ExtractInternationalizationContent();
-
-				if (tblMainhall.Mainhalls.Count > 0)
+				catch (Exception ex)
 				{
-					Files.Add(new GameFile(i18n, tblMainhall.GetContent()));
-				}
-			}
-			else
-			{
-				foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hall.tbm") || x.Name.EndsWith("mainhall.tbl")))
-				{
-					try
-					{
-						ProcessFile(file, new Mainhall(file.Content));
-					}
-					catch (Exception ex)
-					{
-						throw new FileException(ex, file.Name);
-					}
+					throw new FileException(ex, file.Name);
 				}
 			}
 		}

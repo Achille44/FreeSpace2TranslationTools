@@ -412,11 +412,11 @@ namespace FreeSpace2TranslationTools.Services
 		private static partial Regex _Remove();
 		public static Regex Remove { get => _Remove(); }
 
-		[GeneratedRegex("#Primary Weapons.*#End", RegexOptions.Singleline |RegexOptions.IgnoreCase)]
+		[GeneratedRegex("#Primary Weapons.*?#End", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
 		private static partial Regex _Primaries();
 		public static Regex Primaries { get => _Primaries(); }
 
-		[GeneratedRegex("#Secondary Weapons.*#End", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+		[GeneratedRegex("#Secondary Weapons.*?#End", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
 		private static partial Regex _Secondaries();
 		public static Regex Secondaries { get => _Secondaries(); }
 
