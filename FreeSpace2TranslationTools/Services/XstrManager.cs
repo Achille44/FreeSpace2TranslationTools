@@ -410,7 +410,7 @@ namespace FreeSpace2TranslationTools.Services
 				content = content.Split('\"')[1];
 			}
 
-			return content.Split('#')[0].Trim().TrimStart('@');
+			return content.Split('#')[0].TrimStart('@');
 		}
 	}
 }
