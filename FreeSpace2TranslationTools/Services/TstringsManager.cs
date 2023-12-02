@@ -1,11 +1,13 @@
 ﻿using FreeSpace2TranslationTools.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace FreeSpace2TranslationTools.Services
 {
@@ -76,16 +78,34 @@ namespace FreeSpace2TranslationTools.Services
 
             if (ExtractToSeparateFiles)
             {
-                compatibleFiles = compatibleFiles.Where(x => (!x.Name.EndsWith("-shp.tbm") && !x.Name.EndsWith("-wep.tbm") && !x.Name.EndsWith("-csn.tbm")) || x.Name.Contains("_i18n")).ToList();
+                compatibleFiles = compatibleFiles.Where(x => (
+                    !x.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX) && 
+                    !x.Name.EndsWith(Constants.WEAPON_MODULAR_TABLE_SUFFIX) && 
+                    !x.Name.EndsWith(Constants.CUTSCENE_MODULAR_TABLE_SUFFIX)) || 
+                    x.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
 			}
 
-            foreach (GameFile file in compatibleFiles)
+            List<GameFile> orderedFiles = new();
+
+			// First we look for tables, then modular tables (so that original tbl have less chance to see their ID changed in case of duplicates),
+			// then we look for missions, to try to follow the translation conventions... and to avoid token problems in tables
+			string[] tablesExtensions = new[] { Constants.TABLE_EXTENSION };
+			string[] modularTablesExtensions = new[] { Constants.MODULAR_TABLE_EXTENSION, Constants.SOURCE_CODE_EXTENSION };
+			string[] missionsExtensions = new[] { Constants.CAMPAIGN_EXTENSION, Constants.MISSION_EXTENSION };
+			string[] fictionExtensions = new[] { Constants.FICTION_EXTENSION };
+
+			orderedFiles.AddRange(compatibleFiles.Where(f => tablesExtensions.Contains(Path.GetExtension(f.Name))).ToList());
+			orderedFiles.AddRange(compatibleFiles.Where(f => modularTablesExtensions.Contains(Path.GetExtension(f.Name))).ToList());
+			orderedFiles.AddRange(compatibleFiles.Where(f => missionsExtensions.Contains(Path.GetExtension(f.Name))).ToList());
+			orderedFiles.AddRange(compatibleFiles.Where(f => fictionExtensions.Contains(Path.GetExtension(f.Name))).ToList());
+
+			foreach (GameFile file in orderedFiles)
             {
                 try
                 {
-                    IEnumerable<IXstr> xstrs = file.GetAllXstr();
+                    IEnumerable<IXstr> allXstr = file.GetAllXstr();
 
-                    foreach (IXstr xstr in xstrs)
+                    foreach (IXstr xstr in allXstr)
                     {
                         // if id not existing, add a new line
                         if (xstr.Id >= 0 && !Lines.Any(x => x.Id == xstr.Id))

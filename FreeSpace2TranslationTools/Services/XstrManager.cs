@@ -137,13 +137,13 @@ namespace FreeSpace2TranslationTools.Services
 			if (ExtractToSeparateFiles)
 			{
 				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
-				List<GameFile> files = Files.Where(f => f.Name.EndsWith("-csn.tbm")).ToList();
+				List<GameFile> files = Files.Where(f => f.Name.EndsWith(Constants.CUTSCENE_MODULAR_TABLE_SUFFIX) && !f.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
 				files.AddRange(Files.Where(f => f.Name.EndsWith("cutscenes.tbl")).ToList());
 
 				if (files.Count > 0)
 				{
 					TblCutscenes tblCutscenes = new();
-					string i18n = files[0].Name.Replace(Path.GetFileName(files[0].Name), "_i18n-csn.tbm");
+					string i18n = files[0].Name.Replace(Path.GetFileName(files[0].Name), Constants.I18N_FILE_PREFIX + Constants.CUTSCENE_MODULAR_TABLE_SUFFIX);
 
 					foreach (GameFile file in files)
 					{
@@ -243,13 +243,13 @@ namespace FreeSpace2TranslationTools.Services
 			if (ExtractToSeparateFiles)
 			{
 				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
-				List<GameFile> shipFiles = Files.Where(f => f.Name.Contains("-shp.tbm")).ToList();
-				shipFiles.AddRange(Files.Where(f => f.Name.Contains("ships.tbl")).ToList());
+				List<GameFile> shipFiles = Files.Where(f => f.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX) && !f.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
+				shipFiles.AddRange(Files.Where(f => f.Name.EndsWith("ships.tbl")).ToList());
 
 				if (shipFiles.Count > 0)
 				{
 					TblShips tblShips = new(EWeapons);
-					string i18n = shipFiles[0].Name.Replace(Path.GetFileName(shipFiles[0].Name), "_i18n-shp.tbm");
+					string i18n = shipFiles[0].Name.Replace(Path.GetFileName(shipFiles[0].Name), Constants.I18N_FILE_PREFIX + Constants.SHIP_MODULAR_TABLE_SUFFIX);
 
 					foreach (GameFile file in shipFiles)
 					{
@@ -267,8 +267,8 @@ namespace FreeSpace2TranslationTools.Services
 			else
 			{
 				// Start with ships.tbl
-				List<GameFile> shipFiles = Files.Where(f => f.Name.Contains("ships.tbl")).ToList();
-				shipFiles.AddRange(Files.Where(f => f.Name.Contains("-shp.tbm")).ToList());
+				List<GameFile> shipFiles = Files.Where(f => f.Name.EndsWith("ships.tbl")).ToList();
+				shipFiles.AddRange(Files.Where(f => f.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX)).ToList());
 
 				foreach (GameFile file in shipFiles)
 				{
@@ -289,13 +289,13 @@ namespace FreeSpace2TranslationTools.Services
 			if (ExtractToSeparateFiles)
 			{
 				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
-				List<GameFile> weaponFiles = Files.Where(x => x.Name.EndsWith("-wep.tbm")).ToList();
-				weaponFiles.AddRange(Files.Where(x => x.Name.EndsWith("weapons.tbl")));
+				List<GameFile> weaponFiles = Files.Where(f => f.Name.EndsWith(Constants.WEAPON_MODULAR_TABLE_SUFFIX) && !f.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
+				weaponFiles.AddRange(Files.Where(f => f.Name.EndsWith("weapons.tbl")));
 
 				if (weaponFiles.Count > 0)
 				{
 					TblWeapons tblWeapons = new();
-					string i18n = weaponFiles[0].Name.Replace(Path.GetFileName(weaponFiles[0].Name), "_i18n-wep.tbm");
+					string i18n = weaponFiles[0].Name.Replace(Path.GetFileName(weaponFiles[0].Name), Constants.I18N_FILE_PREFIX + Constants.WEAPON_MODULAR_TABLE_SUFFIX);
 
 					foreach (GameFile file in weaponFiles)
 					{
@@ -312,7 +312,7 @@ namespace FreeSpace2TranslationTools.Services
 			}
 			else
 			{
-				foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-wep.tbm") || x.Name.EndsWith("weapons.tbl")))
+				foreach (GameFile file in Files.Where(x => x.Name.EndsWith(Constants.WEAPON_MODULAR_TABLE_SUFFIX) || x.Name.EndsWith("weapons.tbl")))
 				{
 					try
 					{
@@ -420,6 +420,10 @@ namespace FreeSpace2TranslationTools.Services
 			if (content.Contains("XSTR"))
 			{
 				content = content.Split('\"')[1];
+			}
+			else
+			{
+				content = content.Replace("\"", "$quote");
 			}
 
 			return content.Split('#')[0].TrimStart('@');
