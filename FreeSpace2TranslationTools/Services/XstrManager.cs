@@ -134,23 +134,35 @@ namespace FreeSpace2TranslationTools.Services
 
 		private void ProcessCutscenesFile()
 		{
-			GameFile cutscenes = Files.FirstOrDefault(x => x.Name.EndsWith("cutscenes.tbl"));
-
-			if (cutscenes != null)
+			if (ExtractToSeparateFiles)
 			{
-				if (ExtractToSeparateFiles)
+				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
+				List<GameFile> files = Files.Where(f => f.Name.EndsWith("-csn.tbm")).ToList();
+				files.AddRange(Files.Where(f => f.Name.EndsWith("cutscenes.tbl")).ToList());
+
+				if (files.Count > 0)
 				{
 					TblCutscenes tblCutscenes = new();
-					tblCutscenes.AllTables.Add(cutscenes.Content);
+					string i18n = files[0].Name.Replace(Path.GetFileName(files[0].Name), "_i18n-csn.tbm");
+
+					foreach (GameFile file in files)
+					{
+						tblCutscenes.AllTables.Add(file.Content);
+					}
+
 					tblCutscenes.ExtractInternationalizationContent();
 
 					if (tblCutscenes.Cutscenes.Count > 0)
 					{
-						string i18n = cutscenes.Name.Replace(Path.GetFileName(cutscenes.Name), "_i18n-csn.tbm");
 						Files.Add(new GameFile(i18n, tblCutscenes.GetContent()));
 					}
 				}
-				else
+			}
+			else
+			{
+				GameFile cutscenes = Files.FirstOrDefault(x => x.Name.EndsWith("cutscenes.tbl"));
+
+				if (cutscenes != null)
 				{
 					try
 					{

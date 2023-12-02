@@ -76,7 +76,7 @@ namespace FreeSpace2TranslationTools.Services
 
             if (ExtractToSeparateFiles)
             {
-                compatibleFiles = compatibleFiles.Where(x => (!x.Name.EndsWith("-shp.tbm") && !x.Name.EndsWith("-wep.tbm")) || x.Name.Contains("_i18n")).ToList();
+                compatibleFiles = compatibleFiles.Where(x => (!x.Name.EndsWith("-shp.tbm") && !x.Name.EndsWith("-wep.tbm") && !x.Name.EndsWith("-csn.tbm")) || x.Name.Contains("_i18n")).ToList();
 			}
 
             foreach (GameFile file in compatibleFiles)
