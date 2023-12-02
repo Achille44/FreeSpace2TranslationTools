@@ -74,7 +74,7 @@ namespace FreeSpace2TranslationTools.Services
 			else
 			{
 				string[] values = value.Trim().Split(';', 2, StringSplitOptions.RemoveEmptyEntries);
-				string sanatizedValue = values.Length == 0 ? "" : values[0].Replace("\"", "$quote");
+				string sanatizedValue = values.Length == 0 ? "" : values[0].Replace("\"", "$quote").Trim();
 
 				// in case no value, keep original
 				if (sanatizedValue == "")
@@ -392,7 +392,7 @@ namespace FreeSpace2TranslationTools.Services
 			}
 			else
 			{
-				string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0];
+				string valueWithoutComment = match.Groups[2].Value.Split(';', 2, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
 				string valueWithoutAlias = valueWithoutComment.Split('#', 2, StringSplitOptions.RemoveEmptyEntries)[0];
 				return $"{match.Groups[1].Value}{newMarker}: XSTR(\"{valueWithoutAlias.Trim().TrimStart('@')}\", -1){Environment.NewLine}{match.Groups[3].Value}";
 			}
