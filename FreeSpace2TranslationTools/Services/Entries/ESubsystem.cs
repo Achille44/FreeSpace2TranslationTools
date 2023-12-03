@@ -16,5 +16,6 @@ namespace FreeSpace2TranslationTools.Services.Entries
         public string TurretNameFromDefaultBank { get; set; }
         public string TurretTypeFromDefaultBank { get; set; }
 		public bool IsMissileLauncher { get; set; } = false;
+        public bool IsTurret { get; set; } = false;
     }
 }

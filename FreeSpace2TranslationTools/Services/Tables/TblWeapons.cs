@@ -153,7 +153,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 					{
 						weapon.Type = "Missile lnchr";
 					}
-					else
+					else if (flags.Value.Contains("Ballistic"))
 					{
 						weapon.Type = "Turret";
 					}

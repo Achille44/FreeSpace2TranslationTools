@@ -165,17 +165,30 @@ namespace FreeSpace2TranslationTools.Services.Tables
 									{
 										eSubsystem.TurretTypeFromDefaultBank = defaultWeapon.Type;
 									}
+									else
+									{
+										eSubsystem.TurretTypeFromDefaultBank = "Laser turret";
+									}
+								}
+								else
+								{
+									eSubsystem.TurretTypeFromDefaultBank = "Laser turret";
 								}
 							}
 
 							if (subsystem.Value.Contains("$Turret Reset Delay:") && eSubsystem.TurretTypeFromDefaultBank == null)
 							{
-								eSubsystem.TurretTypeFromDefaultBank = "Turret";
+								eSubsystem.TurretTypeFromDefaultBank = "Laser turret";
 							}
 
 							if (subsystem.Value.Contains("$Default SBanks:"))
 							{
 								eSubsystem.IsMissileLauncher = true;
+							}
+
+							if (subsystem.Value.Contains("$Default PBanks:") || subsystem.Value.Contains("$Default SBanks:"))
+							{
+								eSubsystem.IsTurret = true;
 							}
 						}
 					}
@@ -239,6 +252,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 						// if we're treating a turret that already has a $Turret Name, no need to add $Alt...
 						if (subsystem.TurretNameFromDefaultBank == null)
+						//if (!subsystem.IsTurret)
 						{
 							if (subsystem.AltSubsystemName != null)
 							{
@@ -247,7 +261,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 							// if alt damage popup name already existing but not alt name, then copy it to alt name
 							else if (subsystem.AltDamagePopupSubsystemName != null)
 							{
-								stringBuilderSubsystem	.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltDamagePopupSubsystemName}\", -1){Environment.NewLine}");
+								stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltDamagePopupSubsystemName}\", -1){Environment.NewLine}");
 							}
 							// if there is neither alt name nor alt damage popup, then check if this is missile launcher (SBanks key word) to set a custom alt name
 							else if (subsystem.IsMissileLauncher)
@@ -286,7 +300,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 							{
 								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.TurretTypeFromDefaultBank}\", -1){Environment.NewLine}");
 							}
-							else
+							else // if (!subsystem.IsTurret)
 							{
 								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.SubsystemName.Split(',')[0]}\", -1){Environment.NewLine}");
 							}
