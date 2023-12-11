@@ -40,7 +40,8 @@ namespace FreeSpace2TranslationTools.Services.Tables
 					Match manufacturer = Regexp.Manufacturers.Match(entry.Value);
 					Match description = Regexp.Descriptions.Match(entry.Value);
 					Match techDescription = Regexp.TechDescriptions.Match(entry.Value);
-					Match length = Regexp.Lengths.Match(entry.Value);
+					// ignore the length of thrusters
+					Match length = Regexp.Lengths.Match(entry.Value.Split("$Thruster")[0]);
 					Match flags = Regexp.Flags.Match(entry.Value);
 					IEnumerable<Match> subsystems = Regexp.Subsystems.Matches(entry.Value);
 
