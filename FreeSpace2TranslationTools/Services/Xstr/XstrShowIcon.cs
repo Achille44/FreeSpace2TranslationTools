@@ -10,16 +10,16 @@ namespace FreeSpace2TranslationTools.Services
         public string FileName { get; set; }
         public string FilePath { get; set; }
         public string FullLine { get; set; }
-        public bool Treated { get; set; }
+        public bool Treated { get; set; } = false;
+		public bool Replaceable { get; set; } = false;
 
-        public XstrShowIcon(int id, string text, FileInfo file, string fullLine)
+		public XstrShowIcon(int id, string text, FileInfo file, string fullLine)
         {
             Id = id;
             Text = text;
             FileName = file.Name;
             FilePath = file.FullName;
             FullLine = fullLine;
-            Treated = false;
         }
 
         public string ReplaceContentWithNewXstrId(string content)

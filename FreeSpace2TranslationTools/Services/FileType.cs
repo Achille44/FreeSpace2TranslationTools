@@ -5,6 +5,7 @@
         Campaign,
         Fiction,
         Mission,
-        Table
+        Table,
+        Tstrings
     }
 }

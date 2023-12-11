@@ -13,5 +13,9 @@
         public const string SHIP_MODULAR_TABLE_SUFFIX = "-shp.tbm";
         public const string WEAPON_MODULAR_TABLE_SUFFIX = "-wep.tbm";
         public const string CUTSCENE_MODULAR_TABLE_SUFFIX = "-csn.tbm";
+        public const string TSTRINGS_MODULAR_TABLE_SUFFIX = "-tlc.tbm";
+        public const string STRINGS_MODULAR_TABLE_SUFFIX = "-lcl.tbm.tbm";
+        public const string TSTRINGS_TABLE = "tstrings.tbl";
+        public const string STRINGS_TABLE = "strings.tbl";
 	}
 }

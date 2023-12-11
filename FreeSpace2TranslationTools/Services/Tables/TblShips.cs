@@ -142,7 +142,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 							if (altsubsystemName.Success && eSubsystem.AltSubsystemName == null)
 							{
-								eSubsystem.AltSubsystemName = XstrManager.GetValueWithoutXstr(altsubsystemName.Groups[1].Value);
+								eSubsystem.AltSubsystemName = XstrManager.GetValueWithoutXstr(altsubsystemName.Value);
 							}
 
 							if (altDamagePopupSubsystemName.Success && eSubsystem.AltDamagePopupSubsystemName == null)
@@ -175,15 +175,25 @@ namespace FreeSpace2TranslationTools.Services.Tables
 									eSubsystem.TurretTypeFromDefaultBank = "Laser turret";
 								}
 							}
+							else if (subsystem.Value.Contains("$Default SBanks:"))
+							{
+								eSubsystem.IsMissileLauncher = true;
+
+								string defaultSBank = Regexp.DefaultPBanks.Match(subsystem.Value).Value;
+								EWeapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name.TrimStart('@') == defaultSBank || w.Name.TrimStart('@').ToUpper() == defaultSBank.ToUpper());
+
+								if (defaultWeapon != null)
+								{
+									if (defaultWeapon.TurretName != null)
+									{
+										eSubsystem.TurretNameFromDefaultBank = defaultWeapon.TurretName;
+									}
+								}
+							}
 
 							if (subsystem.Value.Contains("$Turret Reset Delay:") && eSubsystem.TurretTypeFromDefaultBank == null)
 							{
 								eSubsystem.TurretTypeFromDefaultBank = "Laser turret";
-							}
-
-							if (subsystem.Value.Contains("$Default SBanks:"))
-							{
-								eSubsystem.IsMissileLauncher = true;
 							}
 
 							if (subsystem.Value.Contains("$Default PBanks:") || subsystem.Value.Contains("$Default SBanks:"))
@@ -250,16 +260,15 @@ namespace FreeSpace2TranslationTools.Services.Tables
 					{
 						StringBuilder stringBuilderSubsystem = new();
 
-						// if we're treating a turret that already has a $Turret Name, no need to add $Alt...
-						if (subsystem.TurretNameFromDefaultBank == null)
-						//if (!subsystem.IsTurret)
+						if (subsystem.AltSubsystemName != null)
 						{
-							if (subsystem.AltSubsystemName != null)
-							{
-								stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltSubsystemName}\", -1){Environment.NewLine}");
-							}
+							stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltSubsystemName}\", -1){Environment.NewLine}");
+						}
+						// if we're treating a turret that already has a $Turret Name, no need to add $Alt...
+						else if (subsystem.TurretNameFromDefaultBank == null)
+						{
 							// if alt damage popup name already existing but not alt name, then copy it to alt name
-							else if (subsystem.AltDamagePopupSubsystemName != null)
+							if (subsystem.AltDamagePopupSubsystemName != null)
 							{
 								stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.AltDamagePopupSubsystemName}\", -1){Environment.NewLine}");
 							}

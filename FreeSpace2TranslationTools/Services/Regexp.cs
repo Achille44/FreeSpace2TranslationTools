@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 
 namespace FreeSpace2TranslationTools.Services
 {
-    public static partial class Regexp
+	public static partial class Regexp
     {
         // REGEX HELP
         // (?=): Positive lookahead. Matches a group after the main expression without including it in the result
@@ -20,9 +15,13 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _Xstr();
         public static Regex Xstr { get => _Xstr(); }
 
-        // don't select entries in comment... but take into account comments between $Name and +nocreate
-        //[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n(?:;.*?\\r\\n)?(?:[ \\t]*\\+nocreate[ \\t]*\\r\\n)?)(((?!\\$Alt Name|\\+nocreate).)*?\\r\\n)", RegexOptions.Singleline)]
-        [GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n)(.)")]
+		[GeneratedRegex("^(\\d+), (\".*?\")", RegexOptions.Singleline | RegexOptions.Multiline)]
+		private static partial Regex _Tstrings();
+		public static Regex Tstrings { get => _Tstrings(); }
+
+		// don't select entries in comment... but take into account comments between $Name and +nocreate
+		//[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n(?:;.*?\\r\\n)?(?:[ \\t]*\\+nocreate[ \\t]*\\r\\n)?)(((?!\\$Alt Name|\\+nocreate).)*?\\r\\n)", RegexOptions.Singleline)]
+		[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n)(.)")]
         private static partial Regex _NoAltNames();
         public static Regex NoAltNames { get => _NoAltNames(); }
 
@@ -241,11 +240,11 @@ namespace FreeSpace2TranslationTools.Services
 		private static partial Regex _Manufacturers();
 		public static Regex Manufacturers { get => _Manufacturers(); }
 
-		[GeneratedRegex("(?<=\\+Length:[ \\t]*)(.*?)(?=\\r)")]
+		[GeneratedRegex("(?<=^[^;]*\\+Length:[ \\t]*)(.*?)(?=$)", RegexOptions.Multiline)]
 		private static partial Regex _Lengths();
 		public static Regex Lengths { get => _Lengths(); }
 
-		[GeneratedRegex("(?<!;)\\$Alt Subsystem Name:[ \\t]*(.*?)(?=\\r)")]
+		[GeneratedRegex("(?<=^[^;]*\\$Alt Subsystem Name:[ \\t]*)(.*?)(?=$)", RegexOptions.Multiline)]
 		private static partial Regex _AltSubsystemNames();
 		public static Regex AltSubsystemNames { get => _AltSubsystemNames(); }
 
@@ -368,7 +367,11 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _DefaultPBanks();
         public static Regex DefaultPBanks { get => _DefaultPBanks(); }
 
-        [GeneratedRegex("(\\d+), (\".*?\")", RegexOptions.Singleline)]
+		[GeneratedRegex("(?<=\\$Default SBanks:[ \t]*\\([ \t]*\")(.*?)(?=\")")]
+		private static partial Regex _DefaultSBanks();
+		public static Regex DefaultSBanks { get => _DefaultSBanks(); }
+
+		[GeneratedRegex("(\\d+), (\".*?\")", RegexOptions.Singleline)]
         private static partial Regex _XstrInTstrings();
         public static Regex XstrInTstrings { get => _XstrInTstrings(); }
 
