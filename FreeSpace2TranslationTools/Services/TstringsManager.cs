@@ -100,11 +100,14 @@ namespace FreeSpace2TranslationTools.Services
 
 			if (ExtractToSeparateFiles)
 			{
-				compatibleFiles = compatibleFiles.Where(x => (
-					!x.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX) &&
-					!x.Name.EndsWith(Constants.WEAPON_MODULAR_TABLE_SUFFIX) &&
-					!x.Name.EndsWith(Constants.CUTSCENE_MODULAR_TABLE_SUFFIX)) ||
-					x.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
+				compatibleFiles = compatibleFiles.Where(x => 
+					(
+						!x.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX)
+						&& !x.Name.EndsWith(Constants.WEAPON_MODULAR_TABLE_SUFFIX)
+						&& !x.Name.EndsWith(Constants.CUTSCENE_MODULAR_TABLE_SUFFIX)
+						&& !x.Name.EndsWith(Constants.RANK_MODULAR_TABLE_SUFFIX)
+					)
+					|| x.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
 			}
 
 			List<GameFile> orderedFiles = new();
@@ -138,7 +141,7 @@ namespace FreeSpace2TranslationTools.Services
 							Lines.Add(xstr);
 						}
 						// if id already existing but value is different, then put it in another list that will be treated separately
-						else if (ManageDuplicates && (xstr.Id < 0 || Lines.First(x => x.Id == xstr.Id).Text != xstr.Text))
+						else if (ManageDuplicates && (xstr.Id < 0 || Lines.First(x => x.Id == xstr.Id).Text != xstr.Text || xstr.UniqueId))
 						{
 							Duplicates.Add(xstr);
 						}
@@ -165,16 +168,16 @@ namespace FreeSpace2TranslationTools.Services
 
 			foreach (IXstr duplicate in Duplicates)
 			{
-				IXstr originalXstr = Lines.FirstOrDefault(x => x.Text == duplicate.Text);
+				IXstr originalXstr = Lines.FirstOrDefault(x => x.Text == duplicate.Text && !x.UniqueId);
 
 				// if duplicated text exists in another xstr in the original file, then copy its ID
-				if (originalXstr != null)
+				if (originalXstr != null && !duplicate.UniqueId)
 				{
 					duplicate.Id = originalXstr.Id;
 					duplicate.Treated = true;
 				}
 				// if there is another duplicate with the same text, we can reuse the same ID to avoid new duplicates in the new file
-				else if (i18nContent.ToString().Contains(duplicate.Text))
+				else if (i18nContent.ToString().Contains(duplicate.Text) && !duplicate.UniqueId)
 				{
 					IXstr result = Duplicates.FirstOrDefault(x => x.Treated && x.Text == duplicate.Text);
 

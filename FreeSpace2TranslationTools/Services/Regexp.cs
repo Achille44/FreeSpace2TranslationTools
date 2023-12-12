@@ -11,9 +11,14 @@ namespace FreeSpace2TranslationTools.Services
         // (?:...): non capturing group
         // -----------------------------------------------------------------------------------------------------------
 
-        [GeneratedRegex("XSTR\\s*\\(\\s*(\"(?:(?!XSTR).)*?\")\\s*,\\s*(-?\\d+)\\s*(\\)|,)", RegexOptions.Singleline)]
+        //[GeneratedRegex("XSTR\\s*\\(\\s*(\"(?:(?!XSTR).)*?\")\\s*,\\s*(-?\\d+)\\s*(\\)|,)", RegexOptions.Singleline)]
+		[GeneratedRegex("XSTR\\s*\\(\\s*(\"(?:(?!XSTR).)*?\")\\s*,\\s*(-?\\d+)\\s*(\\)|,)(.*?\\r?\\n)", RegexOptions.Singleline)]
         private static partial Regex _Xstr();
         public static Regex Xstr { get => _Xstr(); }
+
+		//[GeneratedRegex("XSTR\\s*\\(\\s*(\"(?:(?!XSTR).)*?\")\\s*,\\s*(-?\\d+)\\s*(\\)|,)(.*?\\r)", RegexOptions.Singleline)]
+		//private static partial Regex _XstrWithComments();
+		//public static Regex XstrWithComments { get => _XstrWithComments(); }
 
 		[GeneratedRegex("^(\\d+), (\".*?\")", RegexOptions.Singleline | RegexOptions.Multiline)]
 		private static partial Regex _Tstrings();
@@ -107,6 +112,10 @@ namespace FreeSpace2TranslationTools.Services
 		[GeneratedRegex("(?<=\\$Alt Name:[ \\t]*)(.*?)(?=;|\\r)")]
 		private static partial Regex _AltNames();
 		public static Regex AltNames { get => _AltNames(); }
+
+		[GeneratedRegex("(?<=\\$Title:[ \\t]*)(.*?)(?=;|\\r)")]
+		private static partial Regex _RankTitles();
+		public static Regex RankTitles { get => _RankTitles(); }
 
 		[GeneratedRegex("(?<=\\$Turret Name:[ \\t]*)(.*?)(?=;|\\r)", RegexOptions.IgnoreCase)]
 		private static partial Regex _TurretNames();
@@ -267,6 +276,10 @@ namespace FreeSpace2TranslationTools.Services
 		[GeneratedRegex("(?<=\\+Tech Description:[ \\t]*)(.*?)(?=\\r\\n\\$end_multi_text)", RegexOptions.Singleline)]
 		private static partial Regex _TechDescriptions();
 		public static Regex TechDescriptions { get => _TechDescriptions(); }
+
+		[GeneratedRegex("(?<=\\$Promotion Text:.*?\")(.*?)(?=\".*?\\r\\n\\$end_multi_text)", RegexOptions.Singleline)]
+		private static partial Regex _PromotionTexts();
+		public static Regex PromotionTexts { get => _PromotionTexts(); }
 
 		[GeneratedRegex("(?<!;)\\$Name:\\s*.*?(?=\\$Name|#end)", RegexOptions.IgnoreCase |RegexOptions.Singleline)]
         private static partial Regex _GenericEntries();

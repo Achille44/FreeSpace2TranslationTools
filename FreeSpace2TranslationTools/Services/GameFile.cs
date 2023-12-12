@@ -58,6 +58,12 @@ namespace FreeSpace2TranslationTools.Services
             foreach (Match match in resultsFromFile)
             {
                 IXstr xstr = new Xstr(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value);
+
+                if (match.Groups[4].Value.Contains(Constants.UNIQUE_ID))
+                {
+                    xstr.UniqueId = true;
+                }
+
                 result.Add(xstr);
             }
 

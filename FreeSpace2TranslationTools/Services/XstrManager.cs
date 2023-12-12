@@ -223,17 +223,44 @@ namespace FreeSpace2TranslationTools.Services
 
 		private void ProcessRankFile()
 		{
-			GameFile rankFile = Files.FirstOrDefault(x => x.Name.Contains("rank.tbl"));
-
-			if (rankFile != null)
+			if (ExtractToSeparateFiles)
 			{
-				try
+				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
+				List<GameFile> files = Files.Where(f => f.Name.EndsWith(Constants.RANK_MODULAR_TABLE_SUFFIX) && !f.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
+				files.AddRange(Files.Where(f => f.Name.EndsWith(Constants.RANK_TABLE)).ToList());
+
+				if (files.Count > 0)
 				{
-					ProcessFile(rankFile, new Rank(rankFile.Content));
+					TblRank tblRank = new();
+					string i18n = files[0].Name.Replace(Path.GetFileName(files[0].Name), Constants.I18N_FILE_PREFIX + Constants.RANK_MODULAR_TABLE_SUFFIX);
+
+					foreach (GameFile file in files)
+					{
+						tblRank.AllTables.Add(file.Content);
+					}
+
+					tblRank.ExtractInternationalizationContent();
+
+					if (tblRank.Ranks.Count > 0)
+					{
+						Files.Add(new GameFile(i18n, tblRank.GetContent()));
+					}
 				}
-				catch (Exception ex)
+			}
+			else
+			{
+				GameFile rankFile = Files.FirstOrDefault(x => x.Name.Contains(Constants.RANK_TABLE));
+
+				if (rankFile != null)
 				{
-					throw new FileException(ex, rankFile.Name);
+					try
+					{
+						ProcessFile(rankFile, new Rank(rankFile.Content));
+					}
+					catch (Exception ex)
+					{
+						throw new FileException(ex, rankFile.Name);
+					}
 				}
 			}
 		}

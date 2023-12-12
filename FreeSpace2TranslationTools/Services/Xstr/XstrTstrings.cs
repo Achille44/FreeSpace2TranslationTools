@@ -16,6 +16,7 @@ namespace FreeSpace2TranslationTools.Services
 		public string FullLine { get; set; }
 		public bool Treated { get; set; } = false;
 		public bool Replaceable { get; set; } = true;
+		public bool UniqueId { get; set; } = false;
 
 		public XstrTstrings(int id, string text, FileInfo file, string fullLine)
 		{

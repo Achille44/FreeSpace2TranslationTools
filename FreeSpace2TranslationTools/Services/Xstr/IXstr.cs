@@ -9,7 +9,8 @@
         public string FullLine { get; set; }
         public bool Treated { get; set; }
 		public bool Replaceable { get; set; }
+        public bool UniqueId { get; set; }
 
-		public string ReplaceContentWithNewXstrId(string content);
+        public string ReplaceContentWithNewXstrId(string content);
     }
 }
