@@ -16,14 +16,6 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _Xstr();
         public static Regex Xstr { get => _Xstr(); }
 
-		//[GeneratedRegex("XSTR\\s*\\(\\s*(\"(?:(?!XSTR).)*?\")\\s*,\\s*(-?\\d+)\\s*(\\)|,)(.*?\\r)", RegexOptions.Singleline)]
-		//private static partial Regex _XstrWithComments();
-		//public static Regex XstrWithComments { get => _XstrWithComments(); }
-
-		[GeneratedRegex("^(\\d+), (\".*?\")", RegexOptions.Singleline | RegexOptions.Multiline)]
-		private static partial Regex _Tstrings();
-		public static Regex Tstrings { get => _Tstrings(); }
-
 		// don't select entries in comment... but take into account comments between $Name and +nocreate
 		//[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n(?:;.*?\\r\\n)?(?:[ \\t]*\\+nocreate[ \\t]*\\r\\n)?)(((?!\\$Alt Name|\\+nocreate).)*?\\r\\n)", RegexOptions.Singleline)]
 		[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n)(.)")]
@@ -384,7 +376,8 @@ namespace FreeSpace2TranslationTools.Services
 		private static partial Regex _DefaultSBanks();
 		public static Regex DefaultSBanks { get => _DefaultSBanks(); }
 
-		[GeneratedRegex("(\\d+), (\".*?\")", RegexOptions.Singleline)]
+		//[GeneratedRegex("(\\d+), (\".*?\")", RegexOptions.Singleline)]
+		[GeneratedRegex("^(\\d+), (\".*?\")(.*?)\\r?\\n", RegexOptions.Singleline | RegexOptions.Multiline)]
         private static partial Regex _XstrInTstrings();
         public static Regex XstrInTstrings { get => _XstrInTstrings(); }
 

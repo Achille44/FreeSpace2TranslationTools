@@ -197,9 +197,19 @@ namespace FreeSpace2TranslationTools
                 string newTranslatedContent = File.ReadAllText(newTranslatedFile);
 
                 MatchCollection matchesInNewOriginal = Regexp.XstrInTstrings.Matches(newOriginalContent);
+				List<IXstr> newOriginalXstrList = new();
 
-                // Required to avoid thread access errors...
-                Dispatcher.Invoke(() =>
+				foreach (Match match in matchesInNewOriginal.AsEnumerable())
+				{
+					Xstr xstr = new(int.Parse(match.Groups[1].Value), match.Groups[2].Value, match.Value, match.Groups[3].Value);
+					newOriginalXstrList.Add(xstr);
+				}
+
+				// We order the list so that entries with comments are treated before, and so they don't get replaced by similar entries without comments
+                newOriginalXstrList = newOriginalXstrList.OrderByDescending(x => x.Comments).ToList();
+
+				// Required to avoid thread access errors...
+				Dispatcher.Invoke(() =>
                 {
                     pbGlobalProgress.Maximum = matchesInNewOriginal.Count;
                 });
@@ -209,8 +219,7 @@ namespace FreeSpace2TranslationTools
 
                 foreach (Match match in matchesInOldOriginal)
                 {
-                    Xstr xstr = new(int.Parse(match.Groups[1].Value), match.Groups[2].Value, match.Value);
-
+                    Xstr xstr = new(int.Parse(match.Groups[1].Value), match.Groups[2].Value, match.Value, match.Groups[3].Value);
                     oldOriginalXstrList.Add(xstr);
                 }
 
@@ -219,27 +228,41 @@ namespace FreeSpace2TranslationTools
 
                 foreach (Match match in matchesInOldTranslated)
                 {
-                    Xstr xstr = new(int.Parse(match.Groups[1].Value), match.Groups[2].Value, match.Value);
-
+                    Xstr xstr = new(int.Parse(match.Groups[1].Value), match.Groups[2].Value, match.Value, match.Groups[3].Value);
                     oldTranslatedXstrList.Add(xstr);
                 }
 
-                foreach (Match match in matchesInNewOriginal.AsEnumerable())
+                foreach (IXstr xstrNewOriginal in newOriginalXstrList)
                 {
                     currentProgress++;
                     (sender as BackgroundWorker).ReportProgress(currentProgress);
+                    bool exactMatch = true;
 
-                    IXstr xstrOldOriginal = oldOriginalXstrList.FirstOrDefault(x => x.Text == match.Groups[2].Value);
+                    // first we look for an entry with same text and same comments, then only same text by default
+                    IXstr xstrOldOriginal = oldOriginalXstrList.FirstOrDefault(x => x.Text == xstrNewOriginal.Text && x.Comments == xstrNewOriginal.Comments);
 
-                    if (xstrOldOriginal != null)
+                    if (xstrOldOriginal == null)
+                    {
+                        exactMatch = false;
+						xstrOldOriginal = oldOriginalXstrList.FirstOrDefault(x => x.Text == xstrNewOriginal.Text);
+					}
+
+					if (xstrOldOriginal != null)
                     {
                         IXstr xstrOldTranslated = oldTranslatedXstrList.FirstOrDefault(x => x.Id == xstrOldOriginal.Id);
 
                         if (xstrOldTranslated != null)
                         {
-                            newTranslatedContent = newTranslatedContent.Replace(match.Groups[2].Value.Insert(1, marker), xstrOldTranslated.Text);
+                            if (exactMatch)
+                            {
+								newTranslatedContent = newTranslatedContent.Replace(xstrNewOriginal.Text.Insert(1, marker) + xstrNewOriginal.Comments, xstrOldTranslated.Text + xstrOldTranslated.Comments);
+							}
+                            else
+                            {
+								newTranslatedContent = newTranslatedContent.Replace(xstrNewOriginal.Text.Insert(1, marker), xstrOldTranslated.Text);
+							}
 
-                            oldTranslatedXstrList.Remove(xstrOldTranslated);
+							oldTranslatedXstrList.Remove(xstrOldTranslated);
                         }
 
                         oldOriginalXstrList.Remove(xstrOldOriginal);

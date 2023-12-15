@@ -71,7 +71,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 			{
 				content.Append($"{Environment.NewLine}$Name: {rank.Name}{Environment.NewLine}+nocreate{Environment.NewLine}");
 				content.Append($"$Alt Name: XSTR(\"{rank.AltName}\", -1){Environment.NewLine}");
-				content.Append($"$Title: XSTR({Environment.NewLine}\"{rank.Title}\", -1) ;{Constants.UNIQUE_ID + Environment.NewLine}");
+				content.Append($"$Title: XSTR({Environment.NewLine}\"{rank.Title}\", -1) ;{Constants.UNIQUE_ID} | used in $rtitle{Environment.NewLine}");
 				content.Append($"$Promotion Text: XSTR({Environment.NewLine}\"{rank.PromotionText}\", -1){Environment.NewLine}$end_multi_text{Environment.NewLine}");
 			}
 

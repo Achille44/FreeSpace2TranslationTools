@@ -200,10 +200,10 @@ namespace FreeSpace2TranslationTools.Services
 					if (currentFile != duplicate.FileName)
 					{
 						currentFile = duplicate.FileName;
-						i18nContent.Append($"{Environment.NewLine}; {duplicate.FileName}{Environment.NewLine}");
+						i18nContent.Append($"{Environment.NewLine}; {duplicate.FileName + Environment.NewLine}");
 					}
 
-					i18nContent.Append($"{Environment.NewLine}{duplicate.Id}, {duplicate.Text}{Environment.NewLine}");
+					i18nContent.Append($"{Environment.NewLine + duplicate.Id}, {duplicate.Text + duplicate.Comments + Environment.NewLine}");
 					duplicate.Treated = true;
 				}
 
@@ -274,10 +274,10 @@ namespace FreeSpace2TranslationTools.Services
 					if (iterationFile != line.FileName && line.GetType().Name != nameof(XstrTstrings))
 					{
 						iterationFile = line.FileName;
-						content.Append($"{Environment.NewLine}; {line.FileName}{Environment.NewLine}");
+						content.Append($"{Environment.NewLine}; {line.FileName + Environment.NewLine}");
 					}
 
-					content.Append($"{Environment.NewLine}{line.Id}, {line.Text}{Environment.NewLine}");
+					content.Append($"{Environment.NewLine + line.Id}, {line.Text + line.Comments + Environment.NewLine}");
 
 					MainWindow.IncreaseProgress(Sender, CurrentProgress++);
 				}

@@ -13,6 +13,7 @@ namespace FreeSpace2TranslationTools.Services
         public bool Treated { get; set; } = false;
 		public bool Replaceable { get; set; } = false;
 		public bool UniqueId { get; set; } = false;
+		public string Comments { get; set; } = "";
 
 		public XstrMsg(int id, string text, FileInfo file, string fullLine)
         {

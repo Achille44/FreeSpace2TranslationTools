@@ -10,6 +10,7 @@
         public bool Treated { get; set; }
 		public bool Replaceable { get; set; }
         public bool UniqueId { get; set; }
+        public string Comments { get; set; }
 
         public string ReplaceContentWithNewXstrId(string content);
     }

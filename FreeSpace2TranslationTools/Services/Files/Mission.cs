@@ -560,7 +560,7 @@ namespace FreeSpace2TranslationTools.Services
 
         private void AddEventToManageTranslations()
         {
-            if (Variables.Where(v => v.Original == false).Count() > 0)
+            if (Variables.Any(v => v.Original == false))
             {
                 // very unorthodox way to add the event but it allows me to manage the case when this event already exists in the original file
                 string eventForAltNamesTitle = "Manage translation variables";
