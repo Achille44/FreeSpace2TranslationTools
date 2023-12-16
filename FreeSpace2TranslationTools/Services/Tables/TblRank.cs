@@ -8,18 +8,14 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
-	internal class TblRank
+	internal class TblRank : Tables
 	{
-		public List<ERank> Ranks { get; set; }
-		public List<string> AllTables { get; set; }
-
-		public TblRank()
+		public TblRank(List<GameFile> files, string tableName, string modularTableSuffix) : base(files, tableName, modularTableSuffix)
 		{
-			Ranks = new List<ERank>();
-			AllTables = new List<string>();
+			ExtractInternationalizationContent();
 		}
 
-		public void ExtractInternationalizationContent()
+		protected override void ExtractInternationalizationContent()
 		{
 			foreach (string table in AllTables)
 			{
@@ -51,7 +47,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						promotionText = promotionTextMatch.Value;
 					}
 
-					Ranks.Add(new ERank()
+					Entries.Add(new ERank()
 					{
 						Name = name.Value.Trim(),
 						AltName = altName,
@@ -62,12 +58,12 @@ namespace FreeSpace2TranslationTools.Services.Tables
 			}
 		}
 
-		public string GetContent()
+		protected override string GetInternationalizedContent()
 		{
 			StringBuilder content = new();
 			content.Append($"[RANK NAMES]{Environment.NewLine}");
 
-			foreach (ERank rank in Ranks)
+			foreach (ERank rank in Entries)
 			{
 				content.Append($"{Environment.NewLine}$Name: {rank.Name}{Environment.NewLine}+nocreate{Environment.NewLine}");
 				content.Append($"$Alt Name: XSTR(\"{rank.AltName}\", -1){Environment.NewLine}");

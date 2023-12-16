@@ -19,6 +19,9 @@
         public const string TSTRINGS_TABLE = "tstrings.tbl";
         public const string STRINGS_TABLE = "strings.tbl";
         public const string RANK_TABLE = "rank.tbl";
+        public const string CUTSCENES_TABLE = "cutscenes.tbl";
+        public const string WEAPONS_TABLE = "weapons.tbl";
+        public const string SHIPS_TABLE = "ships.tbl";
         public const string UNIQUE_ID = "i18n:unique_id";
 	}
 }

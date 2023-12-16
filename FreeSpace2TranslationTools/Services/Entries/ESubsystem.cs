@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Entries
 {
-	internal class ESubsystem
+	internal class ESubsystem : IEntry
 	{
-        public string SubsystemName { get; set; }
+        public string Name { get; set; }
         public string HP { get; set; }
         public string DegreeTurn { get; set; }
         public string AltSubsystemName { get; set; }

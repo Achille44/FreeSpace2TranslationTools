@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Entries
 {
-	internal class ERank
+	internal class ERank : IEntry
 	{
         public string Name { get; set; }
         public string AltName { get; set; }

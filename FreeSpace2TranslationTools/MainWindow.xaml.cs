@@ -51,7 +51,7 @@ namespace FreeSpace2TranslationTools
 
         private void btnUpdate_Click(object sender, RoutedEventArgs e)
         {
-            BackgroundWorker worker = new BackgroundWorker();
+            BackgroundWorker worker = new();
             worker.WorkerReportsProgress = true;
             worker.DoWork += UpdateTranslation;
             worker.ProgressChanged += WorkerProgressChanged;
@@ -60,11 +60,13 @@ namespace FreeSpace2TranslationTools
 
         private static void ChooseLocation(string title, bool isFolderPicker, TextBox textBox)
         {
-            CommonOpenFileDialog dlg = new CommonOpenFileDialog();
-            dlg.Title = title;
-            dlg.IsFolderPicker = isFolderPicker;
+			CommonOpenFileDialog dlg = new()
+			{
+				Title = title,
+				IsFolderPicker = isFolderPicker
+			};
 
-            if (dlg.ShowDialog() == CommonFileDialogResult.Ok)
+			if (dlg.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 textBox.Text = dlg.FileName;
             }

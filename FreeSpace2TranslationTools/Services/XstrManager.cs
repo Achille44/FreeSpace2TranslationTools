@@ -18,19 +18,15 @@ namespace FreeSpace2TranslationTools.Services
 		private object Sender { get; set; }
 		private List<GameFile> Files { get; set; }
 		public bool ExtractToSeparateFiles { get; set; }
-		private int CurrentProgress { get; set; }
-		private List<Weapon> Weapons { get; set; }
-		private List<EWeapon> EWeapons { get; set; }
-		private List<Ship> Ships { get; set; }
+		private int CurrentProgress { get; set; } = 0;
+		private List<Weapon> Weapons { get; set; } = new List<Weapon>();
+		private List<EWeapon> EWeapons { get; set; } = new List<EWeapon>();
+		private List<Ship> Ships { get; set; } = new List<Ship>();
 
 		public XstrManager(MainWindow parent, object sender, List<GameFile> files, bool extractToSeparateFiles)
 		{
 			Parent = parent;
 			Sender = sender;
-			CurrentProgress = 0;
-			Weapons = new List<Weapon>();
-			EWeapons = new List<EWeapon>();
-			Ships = new List<Ship>();
 			Files = files;
 			ExtractToSeparateFiles = extractToSeparateFiles;
 
@@ -136,26 +132,12 @@ namespace FreeSpace2TranslationTools.Services
 		{
 			if (ExtractToSeparateFiles)
 			{
-				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
-				List<GameFile> files = Files.Where(f => f.Name.EndsWith(Constants.CUTSCENE_MODULAR_TABLE_SUFFIX) && !f.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
-				files.AddRange(Files.Where(f => f.Name.EndsWith("cutscenes.tbl")).ToList());
+				TblCutscenes tables = new(Files, Constants.CUTSCENES_TABLE, Constants.CUTSCENE_MODULAR_TABLE_SUFFIX);
+				GameFile internationalizedTable = tables.CreateInternationalizedTable();
 
-				if (files.Count > 0)
+				if (internationalizedTable != null)
 				{
-					TblCutscenes tblCutscenes = new();
-					string i18n = files[0].Name.Replace(Path.GetFileName(files[0].Name), Constants.I18N_FILE_PREFIX + Constants.CUTSCENE_MODULAR_TABLE_SUFFIX);
-
-					foreach (GameFile file in files)
-					{
-						tblCutscenes.AllTables.Add(file.Content);
-					}
-
-					tblCutscenes.ExtractInternationalizationContent();
-
-					if (tblCutscenes.Cutscenes.Count > 0)
-					{
-						Files.Add(new GameFile(i18n, tblCutscenes.GetContent()));
-					}
+					Files.Add(internationalizedTable);
 				}
 			}
 			else
@@ -225,26 +207,12 @@ namespace FreeSpace2TranslationTools.Services
 		{
 			if (ExtractToSeparateFiles)
 			{
-				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
-				List<GameFile> files = Files.Where(f => f.Name.EndsWith(Constants.RANK_MODULAR_TABLE_SUFFIX) && !f.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
-				files.AddRange(Files.Where(f => f.Name.EndsWith(Constants.RANK_TABLE)).ToList());
+				TblRank tables = new(Files, Constants.RANK_TABLE, Constants.RANK_MODULAR_TABLE_SUFFIX);
+				GameFile internationalizedTable = tables.CreateInternationalizedTable();
 
-				if (files.Count > 0)
+				if (internationalizedTable != null)
 				{
-					TblRank tblRank = new();
-					string i18n = files[0].Name.Replace(Path.GetFileName(files[0].Name), Constants.I18N_FILE_PREFIX + Constants.RANK_MODULAR_TABLE_SUFFIX);
-
-					foreach (GameFile file in files)
-					{
-						tblRank.AllTables.Add(file.Content);
-					}
-
-					tblRank.ExtractInternationalizationContent();
-
-					if (tblRank.Ranks.Count > 0)
-					{
-						Files.Add(new GameFile(i18n, tblRank.GetContent()));
-					}
+					Files.Add(internationalizedTable);
 				}
 			}
 			else
@@ -269,26 +237,12 @@ namespace FreeSpace2TranslationTools.Services
 		{
 			if (ExtractToSeparateFiles)
 			{
-				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
-				List<GameFile> shipFiles = Files.Where(f => f.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX) && !f.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
-				shipFiles.AddRange(Files.Where(f => f.Name.EndsWith("ships.tbl")).ToList());
+				TblShips tables = new(Files, Constants.SHIPS_TABLE, Constants.SHIP_MODULAR_TABLE_SUFFIX, EWeapons);
+				GameFile internationalizedTable = tables.CreateInternationalizedTable();
 
-				if (shipFiles.Count > 0)
+				if (internationalizedTable != null)
 				{
-					TblShips tblShips = new(EWeapons);
-					string i18n = shipFiles[0].Name.Replace(Path.GetFileName(shipFiles[0].Name), Constants.I18N_FILE_PREFIX + Constants.SHIP_MODULAR_TABLE_SUFFIX);
-
-					foreach (GameFile file in shipFiles)
-					{
-						tblShips.AllTables.Add(file.Content);
-					}
-
-					tblShips.ExtractInternationalizationContent();
-
-					if (tblShips.Ships.Count > 0)
-					{
-						Files.Add(new GameFile(i18n, tblShips.GetContent()));
-					}
+					Files.Add(internationalizedTable);
 				}
 			}
 			else
@@ -315,26 +269,13 @@ namespace FreeSpace2TranslationTools.Services
 		{
 			if (ExtractToSeparateFiles)
 			{
-				// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
-				List<GameFile> weaponFiles = Files.Where(f => f.Name.EndsWith(Constants.WEAPON_MODULAR_TABLE_SUFFIX) && !f.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
-				weaponFiles.AddRange(Files.Where(f => f.Name.EndsWith("weapons.tbl")));
+				TblWeapons tables = new(Files, Constants.WEAPONS_TABLE, Constants.WEAPON_MODULAR_TABLE_SUFFIX);
+				EWeapons = tables.ExtractInternationalizationWeaponContent();
+				GameFile internationalizedTable = tables.CreateInternationalizedTable();
 
-				if (weaponFiles.Count > 0)
+				if (internationalizedTable != null)
 				{
-					TblWeapons tblWeapons = new();
-					string i18n = weaponFiles[0].Name.Replace(Path.GetFileName(weaponFiles[0].Name), Constants.I18N_FILE_PREFIX + Constants.WEAPON_MODULAR_TABLE_SUFFIX);
-
-					foreach (GameFile file in weaponFiles)
-					{
-						tblWeapons.AllTables.Add(file.Content);
-					}
-
-					EWeapons = tblWeapons.ExtractInternationalizationContent();
-
-					if (tblWeapons.Primaries.Count > 0 || tblWeapons.Secondaries.Count > 0)
-					{
-						Files.Add(new GameFile(i18n, tblWeapons.GetContent()));
-					}
+					Files.Add(internationalizedTable);
 				}
 			}
 			else

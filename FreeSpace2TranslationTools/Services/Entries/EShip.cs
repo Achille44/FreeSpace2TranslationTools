@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Entries
 {
-	internal class EShip
+	internal class EShip : IEntry
 	{
         public string Name { get; set; }
         public string AltName { get; set; }
@@ -18,11 +18,6 @@ namespace FreeSpace2TranslationTools.Services.Entries
         public string TechDescription { get; set; }
         public string Length { get; set; }
         public bool IsPlayerShip { get; set; } = false;
-        public List<ESubsystem> Subsystems { get; set; }
-
-        public EShip() 
-        {
-            Subsystems = new List<ESubsystem>();
-        }
+        public List<ESubsystem> Subsystems { get; set; } = new List<ESubsystem>();
     }
 }

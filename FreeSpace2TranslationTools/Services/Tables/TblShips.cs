@@ -9,25 +9,22 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
-	internal class TblShips
+	internal class TblShips : Tables
 	{
-		public List<EShip> Ships { get; set; }
-		public List<EWeapon> ModWeapons { get; set; }
-		public List<string> AllTables { get; set; }
+		public List<EShip> Ships { get; set; } = new List<EShip>();
+		public List<EWeapon> ModWeapons { get; set; } = new List<EWeapon>();
 
-		public TblShips(List<EWeapon> modWeapons)
+		public TblShips(List<GameFile> files, string tableName, string modularTableSuffix, List<EWeapon> modWeapons) : base(files, tableName, modularTableSuffix)
 		{
-			Ships = new List<EShip>();
-			AllTables = new List<string>();
 			ModWeapons = modWeapons;
+			ExtractInternationalizationContent();
 		}
 
-		public void ExtractInternationalizationContent()
+		protected override void ExtractInternationalizationContent()
 		{
 			foreach (string table in AllTables)
 			{
 				Match shipClasses = Regexp.ShipSection.Match(table);
-
 				IEnumerable<Match> entries = Regexp.GenericEntries.Matches(shipClasses.Value);
 
 				foreach (Match entry in entries)
@@ -59,6 +56,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						};
 
 						Ships.Add(ship);
+						Entries.Add(ship);
 					}
 
 					if (altName.Success && ship.AltName == null)
@@ -116,9 +114,9 @@ namespace FreeSpace2TranslationTools.Services.Tables
 							Match altDamagePopupSubsystemName = Regexp.AltDamagePopupSubsystemNames.Match(subsystem.Value);
 							ESubsystem eSubsystem;
 
-							if (ship.Subsystems.Exists(s => s.SubsystemName.ToLower() == subsystemName.Value.Split(',')[0].Trim().ToLower()))
+							if (ship.Subsystems.Exists(s => s.Name.ToLower() == subsystemName.Value.Split(',')[0].Trim().ToLower()))
 							{
-								eSubsystem = ship.Subsystems.First(s => s.SubsystemName.ToLower() == subsystemName.Value.Split(',')[0].Trim().ToLower());
+								eSubsystem = ship.Subsystems.First(s => s.Name.ToLower() == subsystemName.Value.Split(',')[0].Trim().ToLower());
 							}
 							else
 							{
@@ -126,7 +124,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 								eSubsystem = new ESubsystem()
 								{
-									SubsystemName = subsystemParts[0].Trim()
+									Name = subsystemParts[0].Trim()
 								};
 
 								if (subsystemParts.Length > 1)
@@ -207,7 +205,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 			}
 		}
 
-		public string GetContent()
+		protected override string GetInternationalizedContent()
 		{
 			StringBuilder content = new();
 
@@ -267,7 +265,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						}
 						else if (!subsystem.IsTurret)
 						{
-							stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.SubsystemName.Split(',')[0]}\", -1){Environment.NewLine}");
+							stringBuilderSubsystem.Append($"$Alt Subsystem Name: XSTR(\"{subsystem.Name.Split(',')[0]}\", -1){Environment.NewLine}");
 						}
 
 						if (ship.IsPlayerShip)
@@ -293,14 +291,14 @@ namespace FreeSpace2TranslationTools.Services.Tables
 							}
 							else
 							{
-								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.SubsystemName.Split(',')[0]}\", -1){Environment.NewLine}");
+								stringBuilderSubsystem.Append($"$Alt Damage Popup Subsystem Name: XSTR(\"{subsystem.Name.Split(',')[0]}\", -1){Environment.NewLine}");
 							}
 						}
 
 						// only add the subsystem if there is something inside
 						if (stringBuilderSubsystem.Length > 0)
 						{
-							content.Append($"$Subsystem: {subsystem.SubsystemName}");
+							content.Append($"$Subsystem: {subsystem.Name}");
 
 							if (subsystem.HP != null)
 							{

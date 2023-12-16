@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Entries
 {
-	internal class EWeapon
+	internal class EWeapon : IEntry
 	{
         public string Name { get; set; }
         public string AltName { get; set; }
@@ -16,7 +16,5 @@ namespace FreeSpace2TranslationTools.Services.Entries
         public string TechDescription { get; set; }
         public string TurretName { get; set; }
         public string Type { get; set; }
-
-        public EWeapon() { }
     }
 }

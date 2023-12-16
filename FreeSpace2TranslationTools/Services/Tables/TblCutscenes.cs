@@ -8,18 +8,16 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
-	internal class TblCutscenes
+	internal class TblCutscenes : Tables
 	{
-		public List<ECutscene> Cutscenes { get; set; }
-		public List<string> AllTables { get; set; }
+		public List<ECutscene> Cutscenes { get; set; } = new List<ECutscene>();
 
-		public TblCutscenes() 
+		public TblCutscenes(List<GameFile> files, string tableName, string modularTableSuffix) : base(files, tableName, modularTableSuffix)
 		{
-			Cutscenes = new List<ECutscene>();
-			AllTables = new List<string>();
+			ExtractInternationalizationContent();
 		}
 
-		public void ExtractInternationalizationContent()
+		protected override void ExtractInternationalizationContent()
 		{
 			foreach (string table in AllTables)
 			{
@@ -34,18 +32,21 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						Match name = Regexp.Names.Match(entry.Value);
 						Match description = Regexp.CutsceneDescriptions.Match(entry.Value);
 
-						Cutscenes.Add(new ECutscene()
+						ECutscene cutscene = new ECutscene()
 						{
 							FileName = fileName.Value,
 							Name = name.Value.Trim(),
 							Description = description.Value
-						});
+						};
+
+						Cutscenes.Add(cutscene);
+						Entries.Add(cutscene);
 					}
 				}
 			}
 		}
 
-		public string GetContent()
+		protected override string GetInternationalizedContent()
 		{
 			StringBuilder content = new();
 			content.Append($"#Cutscenes{Environment.NewLine}");

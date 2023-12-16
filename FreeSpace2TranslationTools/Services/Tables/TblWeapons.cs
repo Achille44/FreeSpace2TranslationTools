@@ -9,20 +9,19 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
-	internal class TblWeapons
+	internal class TblWeapons : Tables
 	{
-        public List<EWeapon> Primaries { get; set; }
-        public List<EWeapon> Secondaries { get; set; }
-		public List<string> AllTables { get; set; }
+        public List<EWeapon> Primaries { get; set; } = new List<EWeapon>();
+        public List<EWeapon> Secondaries { get; set; } = new List<EWeapon>();
 
-		public TblWeapons() 
+		public TblWeapons(List<GameFile> files, string tableName, string modularTableSuffix) : base(files, tableName, modularTableSuffix) { }
+
+		protected override void ExtractInternationalizationContent()
 		{
-			Primaries = new List<EWeapon>();
-			Secondaries = new List<EWeapon>();
-			AllTables = new List<string>();
+			// nothing here, because in the case of weapons we use ExtractInternationalizationWeaponContent instead
 		}
 
-		public List<EWeapon> ExtractInternationalizationContent()
+		public List<EWeapon> ExtractInternationalizationWeaponContent()
 		{
 			foreach (string table in AllTables)
 			{
@@ -50,7 +49,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 			return allWeapons;
 		}
 
-		public string GetContent()
+		protected override string GetInternationalizedContent()
 		{
 			StringBuilder content = new();
 
@@ -79,6 +78,15 @@ namespace FreeSpace2TranslationTools.Services.Tables
 			}
 
 			return content.ToString();
+		}
+
+		public override GameFile CreateInternationalizedTable()
+		{
+			if (Primaries.Count == 0 && Secondaries.Count == 0) return null;
+			else
+			{
+				return new GameFile(I18nFile, GetInternationalizedContent());
+			}
 		}
 
 		private static void FetchWeapons(IEnumerable<Match> entries, List<EWeapon> weapons)
