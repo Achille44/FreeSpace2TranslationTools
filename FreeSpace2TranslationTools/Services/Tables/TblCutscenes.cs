@@ -32,7 +32,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						Match name = Regexp.Names.Match(entry.Value);
 						Match description = Regexp.CutsceneDescriptions.Match(entry.Value);
 
-						ECutscene cutscene = new ECutscene()
+						ECutscene cutscene = new()
 						{
 							FileName = fileName.Value,
 							Name = name.Value.Trim(),

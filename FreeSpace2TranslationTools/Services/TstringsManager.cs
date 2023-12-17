@@ -106,6 +106,7 @@ namespace FreeSpace2TranslationTools.Services
 						&& !x.Name.EndsWith(Constants.WEAPON_MODULAR_TABLE_SUFFIX)
 						&& !x.Name.EndsWith(Constants.CUTSCENE_MODULAR_TABLE_SUFFIX)
 						&& !x.Name.EndsWith(Constants.RANK_MODULAR_TABLE_SUFFIX)
+						&& !x.Name.EndsWith(Constants.MAINHALL_MODULAR_TABLE_SUFFIX)
 					)
 					|| x.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
 			}

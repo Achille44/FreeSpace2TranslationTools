@@ -190,15 +190,24 @@ namespace FreeSpace2TranslationTools.Services
 
 		private void ProcessMainHallFiles()
 		{
-			foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hall.tbm") || x.Name.EndsWith("mainhall.tbl")))
+			if (ExtractToSeparateFiles)
 			{
-				try
+				TblMainhall tables = new(Files, Constants.MAINHALL_TABLE, Constants.MAINHALL_MODULAR_TABLE_SUFFIX);
+				IEnumerable<GameFile> internationalizedTables = tables.CreateInternationalizedTables();
+				Files.AddRange(internationalizedTables);
+			}
+			else
+			{
+				foreach (GameFile file in Files.Where(x => x.Name.EndsWith("-hall.tbm") || x.Name.EndsWith("mainhall.tbl")))
 				{
-					ProcessFile(file, new Mainhall(file.Content));
-				}
-				catch (Exception ex)
-				{
-					throw new FileException(ex, file.Name);
+					try
+					{
+						ProcessFile(file, new Mainhall(file.Content));
+					}
+					catch (Exception ex)
+					{
+						throw new FileException(ex, file.Name);
+					}
 				}
 			}
 		}

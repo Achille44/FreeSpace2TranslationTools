@@ -277,11 +277,11 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _GenericEntries();
         public static Regex GenericEntries { get => _GenericEntries(); }
 
-		[GeneratedRegex("(?<!;)\\+Name:\\s*.*?(?=\\+Name|#end)", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+		[GeneratedRegex("\\$Main Hall.*?(?=\\$Main Hall|#end)", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
 		private static partial Regex _MainhallEntries();
 		public static Regex MainhallEntries { get => _MainhallEntries(); }
 
-		[GeneratedRegex("(?<!;)\\$Filename:\\s*.*?(?=\\$Filename|#end)", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+		[GeneratedRegex("(?<!;)\\$Filename:.*?(?=\\$Filename|#end)", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
 		private static partial Regex _CutsceneEntries();
 		public static Regex CutsceneEntries { get => _CutsceneEntries(); }
 
@@ -428,6 +428,10 @@ namespace FreeSpace2TranslationTools.Services
 		[GeneratedRegex("#Secondary Weapons.*?#End", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
 		private static partial Regex _Secondaries();
 		public static Regex Secondaries { get => _Secondaries(); }
+
+		[GeneratedRegex("^\\$Num Resolutions: (\\d+)")]
+		private static partial Regex _NumResolutions();
+		public static Regex NumResolutions { get => _NumResolutions(); }
 
 		// Only used for FSO < v23.0
 		public static Regex GetJumpNodeReferences(string jumpNode)

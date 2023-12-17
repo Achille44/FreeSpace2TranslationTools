@@ -13,7 +13,8 @@
         public const string SHIP_MODULAR_TABLE_SUFFIX = "-shp.tbm";
         public const string WEAPON_MODULAR_TABLE_SUFFIX = "-wep.tbm";
         public const string CUTSCENE_MODULAR_TABLE_SUFFIX = "-csn.tbm";
-        public const string RANK_MODULAR_TABLE_SUFFIX = "-rnk.tbm";
+        public const string MAINHALL_MODULAR_TABLE_SUFFIX = "-hall.tbm";
+		public const string RANK_MODULAR_TABLE_SUFFIX = "-rnk.tbm";
 		public const string TSTRINGS_MODULAR_TABLE_SUFFIX = "-tlc.tbm";
         public const string STRINGS_MODULAR_TABLE_SUFFIX = "-lcl.tbm.tbm";
         public const string TSTRINGS_TABLE = "tstrings.tbl";
@@ -22,6 +23,7 @@
         public const string CUTSCENES_TABLE = "cutscenes.tbl";
         public const string WEAPONS_TABLE = "weapons.tbl";
         public const string SHIPS_TABLE = "ships.tbl";
-        public const string UNIQUE_ID = "i18n:unique_id";
+        public const string MAINHALL_TABLE = "mainhall.tbl";
+		public const string UNIQUE_ID = "i18n:unique_id";
 	}
 }
