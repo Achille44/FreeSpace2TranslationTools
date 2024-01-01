@@ -31,8 +31,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public string ReplaceContentWithNewXstrId(string content)
         {
-            string newLine = Regexp.TechAddIntelXstr.Replace(FullLine, match => $"{match.Groups[1].Value}{Id}{match.Groups[4].Value}");
-
+            string newLine = Regexp.XstrInSexp.Replace(FullLine, match => $"{match.Groups[1].Value}{Id}");
             return content.Replace(FullLine, newLine);
         }
     }

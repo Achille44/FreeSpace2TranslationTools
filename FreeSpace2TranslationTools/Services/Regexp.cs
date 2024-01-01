@@ -401,9 +401,13 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _ShowIcon();
         public static Regex ShowIcon { get => _ShowIcon(); }
 
-        [GeneratedRegex("(\\(\\s*tech-add-intel-xstr\\s*(\".*?\")\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline)]
-        private static partial Regex _TechAddIntelXstr();
-        public static Regex TechAddIntelXstr { get => _TechAddIntelXstr(); }
+		[GeneratedRegex("(\\(\\s*tech-add-intel-xstr\\s*(\".*?\")\\s*)(-?\\d+)(\\s*\\))", RegexOptions.Singleline)]
+		private static partial Regex _TechAddIntelXstr();
+		public static Regex TechAddIntelXstr { get => _TechAddIntelXstr(); }
+
+		[GeneratedRegex("((\".*?\")\\s*)(-?\\d+)", RegexOptions.Singleline)]
+		private static partial Regex _XstrInSexp();
+		public static Regex XstrInSexp { get => _XstrInSexp(); }
 
 		[GeneratedRegex("(?<!;)(\\$Name:[ \\t]*(.*?)\\r\\n.*\\+Use Ship as Template.*?\\r\\n)(.)", RegexOptions.Singleline)]
 		private static partial Regex _UseShipAsTemplate();

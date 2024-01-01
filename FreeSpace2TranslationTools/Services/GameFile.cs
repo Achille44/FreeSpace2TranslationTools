@@ -101,8 +101,11 @@ namespace FreeSpace2TranslationTools.Services
 
 					foreach (Match match in techIntelResults)
 					{
-						IXstr xstr = new XstrTechIntel(int.Parse(match.Groups[3].Value), match.Groups[2].Value, fileInfo, match.Value);
-						result.Add(xstr);
+                        foreach (Match intel in Regexp.XstrInSexp.Matches(match.Value).Cast<Match>())
+                        {
+							IXstr xstr = new XstrTechIntel(int.Parse(intel.Groups[3].Value), intel.Groups[2].Value, fileInfo, intel.Value);
+							result.Add(xstr);
+						}
 					}
 					break;
                 case FileType.Table:
