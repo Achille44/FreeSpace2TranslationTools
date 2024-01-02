@@ -102,10 +102,15 @@ namespace FreeSpace2TranslationTools.Services
 			{
 				compatibleFiles = compatibleFiles.Where(x => 
 					(
-						!x.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX)
+						!x.Name.EndsWith(Constants.SHIPS_TABLE)
+						&& !x.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX)
+						&& !x.Name.EndsWith(Constants.WEAPONS_TABLE)
 						&& !x.Name.EndsWith(Constants.WEAPON_MODULAR_TABLE_SUFFIX)
+						&& !x.Name.EndsWith(Constants.CUTSCENES_TABLE)
 						&& !x.Name.EndsWith(Constants.CUTSCENE_MODULAR_TABLE_SUFFIX)
+						&& !x.Name.EndsWith(Constants.RANK_TABLE)
 						&& !x.Name.EndsWith(Constants.RANK_MODULAR_TABLE_SUFFIX)
+						&& !x.Name.EndsWith(Constants.MAINHALL_TABLE)
 						&& !x.Name.EndsWith(Constants.MAINHALL_MODULAR_TABLE_SUFFIX)
 					)
 					|| x.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
