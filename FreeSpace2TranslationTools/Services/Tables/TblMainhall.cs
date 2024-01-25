@@ -12,7 +12,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 	{
 		public List<EMainhall> Mainhalls { get; set; } = new();
 
-        public TblMainhall(List<GameFile> files, string tableName, string modularTableSuffix) : base(files, tableName, modularTableSuffix)
+		public TblMainhall(List<GameFile> files, string tableName, string modularTableSuffix) : base(files, tableName, modularTableSuffix)
 		{
 			ExtractInternationalizationContent();
 		}
@@ -79,8 +79,11 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 				foreach (int numResolution in numResolutions)
 				{
-					string fileName = I18nFile.Replace(Constants.MAINHALL_MODULAR_TABLE_SUFFIX, "_" + numResolution + "res" + Constants.MAINHALL_MODULAR_TABLE_SUFFIX);
-					files.Add(new GameFile(fileName, GetInternationalizedContent(numResolution)));
+					if (Mainhalls.Any(m => m.NumResolutions == numResolution && m.MainhallResolutions.Any(mr => mr.DoorDescriptions.Count > 0)))
+					{
+						string fileName = I18nFile.Replace(Constants.MAINHALL_MODULAR_TABLE_SUFFIX, "_" + numResolution + "res" + Constants.MAINHALL_MODULAR_TABLE_SUFFIX);
+						files.Add(new GameFile(fileName, GetInternationalizedContent(numResolution)));
+					}
 				}
 			}
 
@@ -108,7 +111,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 					content.Append(Environment.NewLine);
 
-					foreach(string doorDescription in mainhallResolution.DoorDescriptions)
+					foreach (string doorDescription in mainhallResolution.DoorDescriptions)
 					{
 						content.Append($"+Door description: XSTR(\"{doorDescription}\", -1){Environment.NewLine}");
 					}
