@@ -595,7 +595,7 @@ namespace FreeSpace2TranslationTools.Services
                 do
                 {
                     i++;
-                    name = "autoGenVar" + i;
+                    name = "i18nVariable" + i;
                 } while (Variables.Any(v => v.Name == name));
 
                 return name;
