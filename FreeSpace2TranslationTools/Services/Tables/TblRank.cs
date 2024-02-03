@@ -28,8 +28,8 @@ namespace FreeSpace2TranslationTools.Services.Tables
 					Match rankTitleMatch = Regexp.RankTitles.Match(entry.Value);
 					Match promotionTextMatch = Regexp.PromotionTexts.Match(entry.Value);
 
-					string altName = name.Value.Trim();
-					string title = name.Value.Trim();
+					string altName = XstrManager.GetValueWithoutXstr(name.Value);
+					string title = XstrManager.GetValueWithoutXstr(name.Value);
 					string promotionText = "";
 
 					if (altNameMatch.Success)
@@ -49,7 +49,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 					Entries.Add(new ERank()
 					{
-						Name = name.Value.Trim(),
+						Name = XstrManager.GetValueWithoutXstr(name.Value),
 						AltName = altName,
 						Title = title,
 						PromotionText = promotionText
