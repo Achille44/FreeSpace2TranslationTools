@@ -23,13 +23,14 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 				foreach (Match entry in entries)
 				{
-					Match name = Regexp.Names.Match(entry.Value);
+					Match nameMatch = Regexp.Names.Match(entry.Value);
 					Match altNameMatch = Regexp.AltNames.Match(entry.Value);
 					Match rankTitleMatch = Regexp.RankTitles.Match(entry.Value);
 					Match promotionTextMatch = Regexp.PromotionTexts.Match(entry.Value);
 
-					string altName = XstrManager.GetValueWithoutXstr(name.Value);
-					string title = XstrManager.GetValueWithoutXstr(name.Value);
+					string name = XstrManager.GetValueWithoutXstr(nameMatch.Value);
+					string altName = name;
+					string title = name;
 					string promotionText = "";
 
 					if (altNameMatch.Success)
@@ -47,13 +48,16 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						promotionText = promotionTextMatch.Value;
 					}
 
-					Entries.Add(new ERank()
+					if (!Entries.Any(r => r.Name == name))
 					{
-						Name = XstrManager.GetValueWithoutXstr(name.Value),
-						AltName = altName,
-						Title = title,
-						PromotionText = promotionText
-					});
+						Entries.Add(new ERank()
+						{
+							Name = name,
+							AltName = altName,
+							Title = title,
+							PromotionText = promotionText
+						});
+					}
 				}
 			}
 		}
