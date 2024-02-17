@@ -129,7 +129,7 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _FromObjectsToWaypoints();
         public static Regex FromObjectsToWaypoints { get => _FromObjectsToWaypoints(); }
 
-        [GeneratedRegex("(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited|lua-mark-ship|lua-mark-wing|ship-create|lua-staged-countdown-start).*?\"(.*?)\"", RegexOptions.Singleline)]
+        [GeneratedRegex("(add-nav-waypoint|addnav-ship|del-nav|hide-nav|restrict-nav|unhide-nav|unrestrict-nav|set-nav-visited|unset-nav-visited|select-nav|unselect-nav|is-nav-visited|lua-mark-ship|lua-mark-wing|ship-create|lua-staged-countdown-start|set-cargo).*?\"(.*?)\"", RegexOptions.Singleline)]
         private static partial Regex _FirstSexpParameters();
         public static Regex FirstSexpParameters { get => _FirstSexpParameters(); }
 
