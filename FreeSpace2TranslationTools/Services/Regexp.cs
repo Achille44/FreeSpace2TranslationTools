@@ -433,7 +433,7 @@ namespace FreeSpace2TranslationTools.Services
 		private static partial Regex _Secondaries();
 		public static Regex Secondaries { get => _Secondaries(); }
 
-		[GeneratedRegex("^\\$Num Resolutions: (\\d+)")]
+		[GeneratedRegex("^\\$Num Resolutions: (\\d+)", RegexOptions.Multiline)]
 		private static partial Regex _NumResolutions();
 		public static Regex NumResolutions { get => _NumResolutions(); }
 
