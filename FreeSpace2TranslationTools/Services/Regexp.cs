@@ -313,7 +313,7 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _ShipNames();
         public static Regex ShipNames { get => _ShipNames(); }
 
-		[GeneratedRegex("(?<!;)\\$Subsystem:.*?(?=\\$Subsystem:|\\r?\\n\\r?\\n)", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+		[GeneratedRegex("(?<!;)\\$Subsystem:.*?(?=\\$Subsystem:|\\r?\\n[ \t]*\\r?\\n)", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
 		private static partial Regex _Subsystems();
 		public static Regex Subsystems { get => _Subsystems(); }
 
