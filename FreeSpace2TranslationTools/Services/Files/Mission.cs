@@ -44,7 +44,9 @@ namespace FreeSpace2TranslationTools.Services
 
             ConvertSecondSexpParametersToVariables();
 
-            ConvertEachSexpStringParameterToVariable();
+            ConvertFourthSexpParametersToVariables();
+
+			ConvertEachSexpStringParameterToVariable();
 
             // AddVariablesToSexpVariablesSection and AddEventToManageTranslations must be the last methods called here, so add the new ones before those two
 
@@ -371,76 +373,23 @@ namespace FreeSpace2TranslationTools.Services
 
         private void ConvertFirstSexpParametersToVariables()
         {
-            List<MissionVariable> variableList = new();
-
             IEnumerable<Match> matches = Regexp.FirstSexpParameters.Matches(Content);
+            ConvertSexpParametersToVariables(matches);
+		}
 
-            foreach (Match match in matches)
-            {
-                if (!string.IsNullOrEmpty(match.Groups[2].Value)
-                    && !match.Groups[2].Value.StartsWith('@')
-                    && match.Groups[2].Value != "<argument>"
-                    && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
-                {
-                    MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
-                    variableList.Add(variable);
-                    AddVariableToListIfNotExisting(variable);
-                }
-            }
-
-            if (variableList.Count > 0)
-            {
-                // let's cycle again to catch all sexps that could have different conditions or space/tab count...
-                foreach (Match match in matches)
-                {
-                    if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith('@') && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
-                    {
-                        MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
-
-                        string newSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
-                        Content = Content.Replace(match.Value, newSexp);
-                    }
-                }
-            }
-        }
-
-        private void ConvertSecondSexpParametersToVariables()
+		private void ConvertSecondSexpParametersToVariables()
         {
             IEnumerable<Match> matches = Regexp.SecondSexpParameters.Matches(Content);
-            List<MissionVariable> variableList = new();
+            ConvertSexpParametersToVariables(matches);
+		}
 
-            foreach (Match match in matches)
-            {
-                // Only treat sexp not using variables or <argument>
-                if (!string.IsNullOrEmpty(match.Groups[2].Value)
-                    && !match.Groups[2].Value.StartsWith('@')
-					&& match.Groups[2].Value != "<argument>"
-					&& !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
-                {
-                    MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
-                    variableList.Add(variable);
-                    AddVariableToListIfNotExisting(variable);
-                }
-            }
+		private void ConvertFourthSexpParametersToVariables()
+		{
+			IEnumerable<Match> matches = Regexp.FourthSexpParameters.Matches(Content);
+			ConvertSexpParametersToVariables(matches);
+		}
 
-            if (variableList.Count > 0)
-            {
-                // let's cycle again to catch all sexps that could have different conditions or space/tab count...
-                foreach (Match match in matches)
-                {
-                    if (!string.IsNullOrEmpty(match.Groups[2].Value)
-                        && !match.Groups[2].Value.StartsWith('@')
-						&& variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
-                    {
-                        MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
-                        string newSexp = match.Groups[1].Value + variable.NewSexp.Trim('"') + match.Groups[3].Value;
-                        Content = Content.Replace(match.Value, newSexp);
-                    }
-                }
-            }
-        }
-
-        private void ConvertEachSexpStringParameterToVariable()
+		private void ConvertEachSexpStringParameterToVariable()
         {
             List<MissionVariable> variableList = new();
 
@@ -475,11 +424,46 @@ namespace FreeSpace2TranslationTools.Services
                     Content = Content.Replace(sexp.Value, newNavSexp);
                 }
             }
-        }
+		}
 
-        private void AddVariablesToSexpVariablesSection()
+		private void ConvertSexpParametersToVariables(IEnumerable<Match> matches)
+		{
+			List<MissionVariable> variableList = new();
+
+			foreach (Match match in matches)
+			{
+				// Only treat sexp not using variables or <argument>
+				if (!string.IsNullOrEmpty(match.Groups[2].Value)
+					&& !match.Groups[2].Value.StartsWith('@')
+					&& match.Groups[2].Value != "<argument>"
+					&& !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+				{
+					MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
+					variableList.Add(variable);
+					AddVariableToListIfNotExisting(variable);
+				}
+			}
+
+			if (variableList.Count > 0)
+			{
+				// let's cycle again to catch all sexps that could have different conditions or space/tab count...
+				foreach (Match match in matches)
+				{
+					if (!string.IsNullOrEmpty(match.Groups[2].Value)
+						&& !match.Groups[2].Value.StartsWith('@')
+						&& variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+					{
+						MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
+						string newSexp = match.Groups[1].Value + variable.NewSexp.Trim('"') + match.Groups[3].Value;
+						Content = Content.Replace(match.Value, newSexp);
+					}
+				}
+			}
+		}
+
+		private void AddVariablesToSexpVariablesSection()
         {
-            if (Variables.Where(v => v.Original == false).Count() > 0)
+            if (Variables.Where(v => v.Original == false).Any())
             {
                 // Create '#Sexp_variables' section if not exists
                 if (!Content.Contains("#Sexp_variables"))

@@ -137,7 +137,11 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _SecondSexpParameters();
         public static Regex SecondSexpParameters { get => _SecondSexpParameters(); }
 
-        [GeneratedRegex("\\( (set-nav-color|Add-Object-Role).*?\\)", RegexOptions.Singleline)]
+		[GeneratedRegex("(\\( lua-turrethotkey-add.*?\".*?\".*?\".*?\".*?\".*?\".*?\")(.*?)(\".*?\\))", RegexOptions.Singleline)]
+		private static partial Regex _FourthSexpParameters();
+		public static Regex FourthSexpParameters { get => _FourthSexpParameters(); }
+
+		[GeneratedRegex("\\( (set-nav-color|Add-Object-Role).*?\\)", RegexOptions.Singleline)]
         private static partial Regex _Sexp();
         public static Regex Sexp { get => _Sexp(); }
 
