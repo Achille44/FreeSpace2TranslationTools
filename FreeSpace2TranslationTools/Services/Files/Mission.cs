@@ -459,8 +459,11 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (Match match in matches)
             {
-                // Only treat sexp not using variables
-                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith('@') && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                // Only treat sexp not using variables or <argument>
+                if (!string.IsNullOrEmpty(match.Groups[2].Value)
+                    && !match.Groups[2].Value.StartsWith('@')
+                    && !match.Groups[2].Value.StartsWith("<argument>")
+                    && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
                     MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
                     variableList.Add(variable);
@@ -473,7 +476,10 @@ namespace FreeSpace2TranslationTools.Services
                 // let's cycle again to catch all sexps that could have different conditions or space/tab count...
                 foreach (Match match in matches)
                 {
-                    if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith('@') && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                    if (!string.IsNullOrEmpty(match.Groups[2].Value)
+                        && !match.Groups[2].Value.StartsWith('@')
+                        && !match.Groups[2].Value.StartsWith("<argument>")
+                        && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                     {
                         MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
 
