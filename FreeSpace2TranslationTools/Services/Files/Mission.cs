@@ -40,9 +40,6 @@ namespace FreeSpace2TranslationTools.Services
 
             Content = Regexp.JumpNodeNames.Replace(Content, new MatchEvaluator(GenerateJumpNodeNames));
 
-			// Only used for FSO < v23.0
-			//ConvertJumpNodeReferencesToVariables();
-
             ConvertFirstSexpParametersToVariables();
 
             ConvertSecondSexpParametersToVariables();
@@ -93,18 +90,6 @@ namespace FreeSpace2TranslationTools.Services
 
         private string GenerateJumpNodeNames(Match match)
         {
-			#region Only used for FSO < v23.0
-			//string newName = XstrManager.ReplaceHardcodedValueWithXstr(match.Value, match.Groups[1].Value, match.Groups[2].Value);
-
-			//// if the jump node has already been translated, then don't add it to the list
-			//if (match.Value != newName)
-			//{
-			//    JumpNodes.Add(XstrManager.SanitizeName(match.Groups[2].Value, true));
-			//}
-
-			//return newName; 
-			#endregion
-
 			return XstrManager.AddXstrLineToHardcodedValue("+Display Name", match);
 		}
 
@@ -292,7 +277,7 @@ namespace FreeSpace2TranslationTools.Services
                         }
                     }
 
-                    if (Variables.Where(v => v.Original == false).Count() > 0)
+                    if (Variables.Where(v => v.Original == false).Any())
                     {
                         // Remove the 'Alternate Types' section
                         Content = Content.Replace(alternateTypes, "");
@@ -384,42 +369,6 @@ namespace FreeSpace2TranslationTools.Services
             }
         }
 
-		/// <summary>
-		/// Only used for FSO < v23.0
-		/// </summary>
-		private void ConvertJumpNodeReferencesToVariables()
-        {
-            if (JumpNodes.Count > 0)
-            {
-                List<MissionVariable> variableList = new();
-                // don't take variables section
-                string originalContent = Regexp.FromObjectsToWaypoints.Match(Content).Value;
-
-                foreach (string jumpNode in JumpNodes)
-                {
-                    // find all references outside XSTR
-                    if (Regexp.GetJumpNodeReferences(jumpNode).IsMatch(originalContent))
-                    {
-                        MissionVariable variable = new(GiveMeAVariableName(jumpNode), jumpNode);
-                        variableList.Add(variable);
-                        AddVariableToListIfNotExisting(variable);
-                    }
-                }
-
-                if (variableList.Count > 0)
-                {
-                    string newContent = originalContent;
-
-                    foreach (MissionVariable variable in variableList)
-                    {
-                        newContent = Regexp.GetJumpNodeReferences(variable.DefaultValue).Replace(newContent, variable.NewSexp);
-                    }
-
-                    Content = Content.Replace(originalContent, newContent);
-                }
-            }
-        }
-
         private void ConvertFirstSexpParametersToVariables()
         {
             List<MissionVariable> variableList = new();
@@ -428,7 +377,10 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (Match match in matches)
             {
-                if (!string.IsNullOrEmpty(match.Groups[2].Value) && !match.Groups[2].Value.StartsWith('@') && match.Groups[2].Value != "<argument>" && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+                if (!string.IsNullOrEmpty(match.Groups[2].Value)
+                    && !match.Groups[2].Value.StartsWith('@')
+                    && match.Groups[2].Value != "<argument>"
+                    && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
                     MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
                     variableList.Add(variable);
@@ -462,8 +414,8 @@ namespace FreeSpace2TranslationTools.Services
                 // Only treat sexp not using variables or <argument>
                 if (!string.IsNullOrEmpty(match.Groups[2].Value)
                     && !match.Groups[2].Value.StartsWith('@')
-                    && !match.Groups[2].Value.StartsWith("<argument>")
-                    && !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+					&& match.Groups[2].Value != "<argument>"
+					&& !variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                 {
                     MissionVariable variable = new(GiveMeAVariableName(match.Groups[2].Value), match.Groups[2].Value);
                     variableList.Add(variable);
@@ -478,12 +430,10 @@ namespace FreeSpace2TranslationTools.Services
                 {
                     if (!string.IsNullOrEmpty(match.Groups[2].Value)
                         && !match.Groups[2].Value.StartsWith('@')
-                        && !match.Groups[2].Value.StartsWith("<argument>")
-                        && variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
+						&& variableList.Any(v => v.DefaultValue == match.Groups[2].Value))
                     {
                         MissionVariable variable = variableList.FirstOrDefault(v => v.DefaultValue == match.Groups[2].Value);
-
-                        string newSexp = match.Value.Replace($"\"{variable.DefaultValue}\"", variable.NewSexp);
+                        string newSexp = match.Groups[1].Value + variable.NewSexp.Trim('"') + match.Groups[3].Value;
                         Content = Content.Replace(match.Value, newSexp);
                     }
                 }
