@@ -1,11 +1,10 @@
-﻿using FreeSpace2TranslationTools.Services.Entries;
+﻿using FreeSpace2TranslationTools.Enums;
+using FreeSpace2TranslationTools.Services.Entries;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
@@ -99,9 +98,20 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						ship.Length = XstrManager.GetValueWithoutXstr(length.Value);
 					}
 
-					if (flags.Success && flags.Value.Contains("player_ship"))
+					if (flags.Success)
 					{
-						ship.IsPlayerShip = true;
+						if (flags.Value.Contains("player_ship"))
+						{
+							ship.IsPlayerShip = true;
+						}
+
+						foreach (var shipType in ShipTypes.Types)
+						{
+							if (flags.Value.Contains(shipType.Key))
+							{
+								ship.DefaultType = shipType.Value;
+							}
+						}
 					}
 
 					foreach (Match subsystem in subsystems)
@@ -223,6 +233,10 @@ namespace FreeSpace2TranslationTools.Services.Tables
 					if (ship.Type != null)
 					{
 						content.Append($"+Type: XSTR(\"{ship.Type}\", -1){Environment.NewLine}");
+					}
+					else if (ship.DefaultType != null)
+					{
+						content.Append($"+Type: XSTR(\"{ship.DefaultType}\", -1){Environment.NewLine}");
 					}
 
 					if (ship.Maneuverability != null)

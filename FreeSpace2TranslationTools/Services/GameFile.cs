@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using FreeSpace2TranslationTools.Enums;
 
 namespace FreeSpace2TranslationTools.Services
 {
@@ -11,7 +12,7 @@ namespace FreeSpace2TranslationTools.Services
         public string Name { get; private set; }
         public string Content { get; private set; }
         private bool Modified { get; set; }
-        public FileType Type { get; private set; }
+        public FileTypes Type { get; private set; }
 
         public GameFile(string name)
         {
@@ -69,9 +70,9 @@ namespace FreeSpace2TranslationTools.Services
 
             switch (Type)
             {
-                case FileType.Campaign:
+                case FileTypes.Campaign:
                     break;
-                case FileType.Fiction:
+                case FileTypes.Fiction:
 					IEnumerable<Match> showIconLines = Regexp.ShowIcon.Matches(Content);
 
 					foreach (Match match in showIconLines)
@@ -88,7 +89,7 @@ namespace FreeSpace2TranslationTools.Services
 						result.Add(xstr);
 					}
 					break;
-                case FileType.Mission:
+                case FileTypes.Mission:
 					IEnumerable<Match> modifyResults = Regexp.ModifyVariableXstr.Matches(Content);
 
 					foreach (Match match in modifyResults)
@@ -108,9 +109,9 @@ namespace FreeSpace2TranslationTools.Services
 						}
 					}
 					break;
-                case FileType.Table:
+                case FileTypes.Table:
                     break;
-                case FileType.Tstrings:
+                case FileTypes.Tstrings:
 					IEnumerable<Match> tstrings = Regexp.XstrInTstrings.Matches(Content);
 
                     foreach(Match match in tstrings)
@@ -130,23 +131,23 @@ namespace FreeSpace2TranslationTools.Services
         {
             if (Name.EndsWith(Constants.MISSION_EXTENSION))
             {
-                Type = FileType.Mission;
+                Type = FileTypes.Mission;
             }
             else if (Name.EndsWith(Constants.CAMPAIGN_EXTENSION))
             {
-                Type = FileType.Campaign;
+                Type = FileTypes.Campaign;
 			}
 			else if (Name.EndsWith(Constants.TSTRINGS_TABLE) || Name.EndsWith(Constants.TSTRINGS_MODULAR_TABLE_SUFFIX))
 			{
-				Type = FileType.Tstrings;
+				Type = FileTypes.Tstrings;
 			}
 			else if (Name.EndsWith(Constants.TABLE_EXTENSION) || Name.EndsWith(Constants.MODULAR_TABLE_EXTENSION))
 			{
-				Type = FileType.Table;
+				Type = FileTypes.Table;
 			}
 			else if (Name.Contains(Constants.FICTION_FOLDER) && Name.EndsWith(Constants.FICTION_EXTENSION))
             {
-                Type = FileType.Fiction;
+                Type = FileTypes.Fiction;
             }
         }
     }

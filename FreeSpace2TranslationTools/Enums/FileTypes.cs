@@ -1,6 +1,6 @@
-﻿namespace FreeSpace2TranslationTools.Services
+﻿namespace FreeSpace2TranslationTools.Enums
 {
-    public enum FileType
+    public enum FileTypes
     {
         Campaign,
         Fiction,

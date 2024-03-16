@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FreeSpace2TranslationTools.Services
+﻿namespace FreeSpace2TranslationTools.Services
 {
-    class Sexp
+	class Sexp
     {
         public string Formula { get; set; }
         public string BeginningOfLine { get; set; }
@@ -31,7 +27,7 @@ namespace FreeSpace2TranslationTools.Services
 
         public void CloseFormula()
         {
-            Formula += BeginningOfLine.Substring(0, BeginningOfLine.Length - 3) + ")";
+            Formula += $"{BeginningOfLine.Substring(0, BeginningOfLine.Length - 3)})";
         }
     }
 }

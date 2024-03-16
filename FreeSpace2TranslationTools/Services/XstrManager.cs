@@ -1,4 +1,5 @@
-﻿using FreeSpace2TranslationTools.Exceptions;
+﻿using FreeSpace2TranslationTools.Enums;
+using FreeSpace2TranslationTools.Exceptions;
 using FreeSpace2TranslationTools.Services.Entries;
 using FreeSpace2TranslationTools.Services.Tables;
 using System;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services
 {
-	public class XstrManager
+    public class XstrManager
 	{
 		private MainWindow Parent { get; set; }
 		private object Sender { get; set; }
@@ -100,7 +101,7 @@ namespace FreeSpace2TranslationTools.Services
 
 		private void ProcessCampaignFiles()
 		{
-			foreach (GameFile file in Files.Where(x => x.Type == FileType.Campaign))
+			foreach (GameFile file in Files.Where(x => x.Type == FileTypes.Campaign))
 			{
 				try
 				{
@@ -302,7 +303,7 @@ namespace FreeSpace2TranslationTools.Services
 
 		private void ProcessMissionFiles()
 		{
-			foreach (GameFile file in Files.Where(x => x.Type == FileType.Mission).ToList())
+			foreach (GameFile file in Files.Where(x => x.Type == FileTypes.Mission).ToList())
 			{
 				try
 				{
@@ -314,7 +315,7 @@ namespace FreeSpace2TranslationTools.Services
 
 		private void ProcessVisualNovelFiles()
 		{
-			GameFile[] visualNovels = Files.Where(file => file.Type == FileType.Fiction).ToArray();
+			GameFile[] visualNovels = Files.Where(file => file.Type == FileTypes.Fiction).ToArray();
 
 			foreach (GameFile file in visualNovels)
 			{
