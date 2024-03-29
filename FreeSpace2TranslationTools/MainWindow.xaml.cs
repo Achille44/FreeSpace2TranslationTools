@@ -344,7 +344,7 @@ namespace FreeSpace2TranslationTools
                     modFolder = tbModFolderXSTR.Text;
                     destinationFolder = tbDestinationFolderXSTR.Text;
                     duplicatesMustBeManaged = cbManageDuplicates.IsChecked ?? false;
-					extractToSeparateFiles = cbExtractToNewFiles.IsChecked ?? false;
+					extractToSeparateFiles = !cbExtractToNewFiles.IsChecked ?? true;
                     startingID = tbStartingID.Text;
                 });
 

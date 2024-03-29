@@ -126,7 +126,7 @@
                     </Grid>
                     <WrapPanel Grid.Row="3">
                         <CheckBox x:Name="cbExtractToNewFiles">
-                            <TextBlock Style="{StaticResource TextInCB}" Text="{x:Static p:Resources.CheckBoxExtractToSeparateFiles}" />
+                            <TextBlock Style="{StaticResource TextInCB}" Text="{x:Static p:Resources.CheckBoxOverwriteOriginalTables}" />
                         </CheckBox>
                     </WrapPanel>
                     <WrapPanel Grid.Row="4">
