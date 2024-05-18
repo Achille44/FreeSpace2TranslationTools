@@ -16,7 +16,7 @@
         public const string MAINHALL_MODULAR_TABLE_SUFFIX = "-hall.tbm";
 		public const string RANK_MODULAR_TABLE_SUFFIX = "-rnk.tbm";
 		public const string TSTRINGS_MODULAR_TABLE_SUFFIX = "-tlc.tbm";
-        public const string STRINGS_MODULAR_TABLE_SUFFIX = "-lcl.tbm.tbm";
+        public const string STRINGS_MODULAR_TABLE_SUFFIX = "-lcl.tbm";
         public const string TSTRINGS_TABLE = "tstrings.tbl";
         public const string STRINGS_TABLE = "strings.tbl";
         public const string RANK_TABLE = "rank.tbl";
