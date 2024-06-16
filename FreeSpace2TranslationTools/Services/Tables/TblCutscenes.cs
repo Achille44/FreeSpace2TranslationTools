@@ -1,10 +1,8 @@
 ﻿using FreeSpace2TranslationTools.Services.Entries;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
@@ -35,7 +33,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 						ECutscene cutscene = new()
 						{
 							FileName = fileName.Value,
-							Name = name.Value.Trim(),
+							Name = XstrManager.GetValueWithoutXstr(name.Value),
 							Description = description.Value
 						};
 
