@@ -125,7 +125,11 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _SendMessages();
         public static Regex SendMessages { get => _SendMessages(); }
 
-        [GeneratedRegex("#Objects.*#Waypoints", RegexOptions.Singleline)]
+		[GeneratedRegex("\\( script-eval-block.*?\\n([ \\t]*\\))", RegexOptions.Singleline)]
+		private static partial Regex _ScriptEvalBlocks();
+        public static Regex ScriptEvalBlocks { get => _ScriptEvalBlocks(); }
+
+		[GeneratedRegex("#Objects.*#Waypoints", RegexOptions.Singleline)]
         private static partial Regex _FromObjectsToWaypoints();
         public static Regex FromObjectsToWaypoints { get => _FromObjectsToWaypoints(); }
 
@@ -149,7 +153,11 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _StringParameters();
         public static Regex StringParameters { get => _StringParameters(); }
 
-        [GeneratedRegex("(^.*?#Cutscenes|#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline)]
+		[GeneratedRegex("([ \\t]*\")(.*?)(\"[ \\t]*)", RegexOptions.Multiline)]
+		private static partial Regex _ParameterLines();
+		public static Regex ParameterLines { get => _ParameterLines(); }
+
+		[GeneratedRegex("(^.*?#Cutscenes|#Fiction Viewer|#Command Briefing)", RegexOptions.Multiline)]
         private static partial Regex _BeforeSexp();
         public static Regex BeforeSexp { get => _BeforeSexp(); }
 

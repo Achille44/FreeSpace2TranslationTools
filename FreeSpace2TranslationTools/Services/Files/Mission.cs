@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services
 {
-    internal class Mission : IFile
+	internal class Mission : IFile
     {
         internal string Content { get; set; }
         internal List<string> JumpNodes { get; set; } = new();
@@ -38,7 +36,10 @@ namespace FreeSpace2TranslationTools.Services
 
             ConvertSpecialMessageSendersToVariables();
 
-            Content = Regexp.JumpNodeNames.Replace(Content, new MatchEvaluator(GenerateJumpNodeNames));
+			// must be called before ConvertSecondSexpParametersToVariables
+			ConvertScriptEvalBlockToLuaSexp();
+
+			Content = Regexp.JumpNodeNames.Replace(Content, new MatchEvaluator(GenerateJumpNodeNames));
 
             ConvertFirstSexpParametersToVariables();
 
@@ -371,7 +372,34 @@ namespace FreeSpace2TranslationTools.Services
             }
         }
 
-        private void ConvertFirstSexpParametersToVariables()
+        private void ConvertScriptEvalBlockToLuaSexp()
+        {
+			IEnumerable<Match> scriptEvalBlockMatches = Regexp.ScriptEvalBlocks.Matches(Content);
+
+            foreach (Match scriptEvalBlock in scriptEvalBlockMatches)
+            {
+                if (scriptEvalBlock.Value.Contains("MarkBox:AddSubsys"))
+                {
+                    string newSexp = "( lua-mark-subsystem ";
+					IEnumerable<Match> parameterMatches = Regexp.ParameterLines.Matches(scriptEvalBlock.Value);
+
+                    foreach (Match parameter in parameterMatches)
+                    {
+                        if (!parameter.Value.Contains("MarkBox:AddSubsys"))
+                        {
+                            string sanatizedParameter = parameter.Groups[2].Value.Trim([')', ',', '\'']);
+                            newSexp += Environment.NewLine + parameter.Groups[1].Value + sanatizedParameter + parameter.Groups[3].Value;
+                        }
+                    }
+
+                    newSexp += Environment.NewLine + scriptEvalBlock.Groups[1].Value;
+                    Content = Content.Replace(scriptEvalBlock.Value, newSexp);
+				}
+			}
+		}
+
+
+		private void ConvertFirstSexpParametersToVariables()
         {
             IEnumerable<Match> matches = Regexp.FirstSexpParameters.Matches(Content);
             ConvertSexpParametersToVariables(matches);
