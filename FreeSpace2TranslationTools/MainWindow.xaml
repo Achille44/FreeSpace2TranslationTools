@@ -113,13 +113,13 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal">
                             <Label Content="{x:Static p:Resources.ModFolder}" />
-                            <Image Source="/Images/helpIcon.png" ToolTip="{x:Static p:Resources.ModFolderTooltip}" />
+                            <Image Source="/Images/helpIcon.png" ToolTip="{x:Static p:Resources.ModFolderTooltip}" ToolTipService.InitialShowDelay="0" />
                         </StackPanel>
                         <TextBox Name="tbModFolderXSTR" TextWrapping="Wrap" Grid.Column="1" AllowDrop="True" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button Name="btnModFolderXSTR" Content="{x:Static p:Resources.Browse}" Click="btnModFolderXSTR_Click" Grid.Column="2" />
                         <StackPanel Grid.Row="1" Orientation="Horizontal">
                             <Label Content="{x:Static p:Resources.DestinationFolder}" />
-                            <Image Source="/Images/helpIcon.png" ToolTip="{x:Static p:Resources.DestinationFolderTooltip}" />
+                            <Image Source="/Images/helpIcon.png" ToolTip="{x:Static p:Resources.DestinationFolderTooltip}" ToolTipService.InitialShowDelay="0" />
                         </StackPanel>
                         <TextBox x:Name="tbDestinationFolderXSTR" Text="" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Drop="textBox_Drop" PreviewDragOver="textBox_PreviewDragOver" />
                         <Button x:Name="btnDestinationFolderXSTR" Content="{x:Static p:Resources.Browse}" Click="btnDestinationFolderXSTR_Click" Grid.Row="1" Grid.Column="2" />

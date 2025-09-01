@@ -1,7 +1,6 @@
 ﻿using FreeSpace2TranslationTools.Exceptions;
 using FreeSpace2TranslationTools.Services;
 using FreeSpace2TranslationTools.Services.Xstr;
-using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -32,22 +31,22 @@ namespace FreeSpace2TranslationTools
 
         private void btnOldOriginal_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation(Localization.OldOriginalFile, false, tbOldOriginal);
+            ChooseFileLocation(Localization.OldOriginalFile, tbOldOriginal);
         }
 
         private void btnOldTranslated_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation(Localization.OldTranslatedFile, false, tbOldTranslated);
+            ChooseFileLocation(Localization.OldTranslatedFile, tbOldTranslated);
         }
 
         private void btnNewOriginal_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation(Localization.NewOriginalFile, false, tbNewOriginal);
+            ChooseFileLocation(Localization.NewOriginalFile, tbNewOriginal);
         }
 
         private void btnNewTranslated_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation(Localization.NewTranslatedFile, false, tbNewTranslated);
+            ChooseFileLocation(Localization.NewTranslatedFile, tbNewTranslated);
         }
 
         private void btnUpdate_Click(object sender, RoutedEventArgs e)
@@ -61,18 +60,37 @@ namespace FreeSpace2TranslationTools
             worker.RunWorkerAsync();
         }
 
-        private static void ChooseLocation(string title, bool isFolderPicker, TextBox textBox)
+        private static void ChooseFolderLocation(string title, TextBox textBox)
         {
-			CommonOpenFileDialog dlg = new()
-			{
-				Title = title,
-				IsFolderPicker = isFolderPicker
-			};
+			Microsoft.Win32.OpenFolderDialog dialog = new();
 
-			if (dlg.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                textBox.Text = dlg.FileName;
-            }
+			dialog.Multiselect = false;
+			dialog.Title = title;
+
+			// Show open folder dialog box
+			bool? result = dialog.ShowDialog();
+
+			// Process open folder dialog box results
+			if (result == true)
+			{
+				// Get the selected folder
+				textBox.Text = dialog.FolderName;
+			}
+		}
+
+        private static void ChooseFileLocation(string title, TextBox textBox)
+		{
+			var dialog = new Microsoft.Win32.OpenFileDialog();
+
+			// Show save file dialog box
+			bool? result = dialog.ShowDialog();
+
+			// Process save file dialog box results
+			if (result == true)
+			{
+				// Save document
+				textBox.Text = dialog.FileName;
+			}
         }
 
         private void OnlyDigits_PreviewTextInput(object sender, TextCompositionEventArgs e)
@@ -385,12 +403,12 @@ namespace FreeSpace2TranslationTools
 
         private void btnModFolderXSTR_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation(Localization.ModFolder, true, tbModFolderXSTR);
+			ChooseFolderLocation(Localization.ModFolder, tbModFolderXSTR);
         }
 
         private void btnDestinationFolderXSTR_Click(object sender, RoutedEventArgs e)
         {
-            ChooseLocation(Localization.DestinationFolder, true, tbDestinationFolderXSTR);
+			ChooseFolderLocation(Localization.DestinationFolder, tbDestinationFolderXSTR);
         }
 
         /// <summary>
