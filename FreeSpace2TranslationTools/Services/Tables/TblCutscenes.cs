@@ -8,7 +8,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 {
 	internal class TblCutscenes : Tables
 	{
-		public List<ECutscene> Cutscenes { get; set; } = new List<ECutscene>();
+		public List<ECutscene> Cutscenes { get; set; } = [];
 
 		public TblCutscenes(List<GameFile> files, string tableName, string modularTableSuffix) : base(files, tableName, modularTableSuffix)
 		{

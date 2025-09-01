@@ -1,25 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Shapes;
 
-namespace FreeSpace2TranslationTools.Services
+namespace FreeSpace2TranslationTools.Services.Files
 {
-    internal class ShipsFile : IFile
+    internal class ShipsFile(string content, List<Weapon> modWeapons) : IFile
     {
-        private string Content;
-        private readonly List<Weapon> ModWeapons;
+        private string Content = content;
+        private readonly List<Weapon> ModWeapons = modWeapons;
 
-        public ShipsFile(string content, List<Weapon> modWeapons)
-        {
-            Content = content;
-            ModWeapons = modWeapons;
-        }
-
-        public string GetInternationalizedContent()
+		public string GetInternationalizedContent()
         {
             throw new NotImplementedException();
         }
@@ -120,7 +111,7 @@ namespace FreeSpace2TranslationTools.Services
             if (match.Value.Contains("$Default PBanks:"))
             {
                 string defaultPBank = Regexp.DefaultPBanks.Match(match.Value).Value;
-                Weapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
+                Weapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.Equals(defaultPBank, StringComparison.CurrentCultureIgnoreCase));
 
                 if (defaultWeapon != null && defaultWeapon.HasTurretName)
                 {
@@ -191,7 +182,7 @@ namespace FreeSpace2TranslationTools.Services
                     {
                         string turretType = "Turret";
                         string defaultPBank = Regexp.DefaultPBanks.Match(match.Value).Value;
-                        Weapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.ToUpper() == defaultPBank.ToUpper());
+                        Weapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name == defaultPBank || w.Name.Equals(defaultPBank, StringComparison.CurrentCultureIgnoreCase));
 
                         if (defaultWeapon != null)
                         {

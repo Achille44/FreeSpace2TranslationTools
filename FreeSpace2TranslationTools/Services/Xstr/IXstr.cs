@@ -1,4 +1,4 @@
-﻿namespace FreeSpace2TranslationTools.Services
+﻿namespace FreeSpace2TranslationTools.Services.Xstr
 {
     internal interface IXstr
     {

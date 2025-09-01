@@ -27,7 +27,7 @@
 
         public void CloseFormula()
         {
-            Formula += $"{BeginningOfLine.Substring(0, BeginningOfLine.Length - 3)})";
+            Formula += $"{BeginningOfLine[..^3]})";
         }
     }
 }

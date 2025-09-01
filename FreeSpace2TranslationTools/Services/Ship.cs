@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace FreeSpace2TranslationTools.Services
 {
@@ -14,7 +10,7 @@ namespace FreeSpace2TranslationTools.Services
         public Ship()
         {
             Name = "";
-            Subsystems = new List<Subsystem>();
+            Subsystems = [];
         }
     }
 }

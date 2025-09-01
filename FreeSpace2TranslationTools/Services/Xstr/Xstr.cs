@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 
-namespace FreeSpace2TranslationTools.Services
+namespace FreeSpace2TranslationTools.Services.Xstr
 {
     public class Xstr : IXstr
     {

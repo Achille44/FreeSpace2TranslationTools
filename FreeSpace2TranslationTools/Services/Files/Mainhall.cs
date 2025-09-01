@@ -1,18 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace FreeSpace2TranslationTools.Services
+namespace FreeSpace2TranslationTools.Services.Files
 {
-    internal class Mainhall : IFile
+    internal class Mainhall(string originalContent) : IFile
     {
-        private readonly string OriginalContent;
+        private readonly string OriginalContent = originalContent;
 
-        public Mainhall(string originalContent)
-        {
-            OriginalContent = originalContent;
-        }
-
-        public string GetInternationalizedContent()
+		public string GetInternationalizedContent()
         {
             return Regexp.HardcodedDoorDescriptions.Replace(OriginalContent, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
         }

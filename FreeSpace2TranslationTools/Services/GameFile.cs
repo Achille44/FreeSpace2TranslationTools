@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using FreeSpace2TranslationTools.Enums;
+using FreeSpace2TranslationTools.Services.Xstr;
 
 namespace FreeSpace2TranslationTools.Services
 {
@@ -53,12 +53,12 @@ namespace FreeSpace2TranslationTools.Services
         internal IEnumerable<IXstr> GetAllXstr()
         {
             FileInfo fileInfo = new(Name);
-            List<IXstr> result = new();
+            List<IXstr> result = [];
             IEnumerable<Match> resultsFromFile = Regexp.Xstr.Matches(Content);
 
             foreach (Match match in resultsFromFile)
             {
-                IXstr xstr = new Xstr(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value, match.Groups[4].Value);
+                IXstr xstr = new Xstr.Xstr(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value, match.Groups[4].Value);
 
                 if (match.Groups[4].Value.Contains(Constants.UNIQUE_ID))
                 {

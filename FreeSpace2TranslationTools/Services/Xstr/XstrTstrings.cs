@@ -1,32 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
-namespace FreeSpace2TranslationTools.Services
+namespace FreeSpace2TranslationTools.Services.Xstr
 {
-	internal class XstrTstrings : IXstr
+	internal class XstrTstrings(int id, string text, FileInfo file, string fullLine) : IXstr
 	{
-		public int Id { get; set; }
-		public string Text { get; set; }
-		public string FileName { get; set; }
-		public string FilePath { get; set; }
-		public string FullLine { get; set; }
+		public int Id { get; set; } = id;
+		public string Text { get; set; } = text;
+		public string FileName { get; set; } = file.Name;
+		public string FilePath { get; set; } = file.FullName;
+		public string FullLine { get; set; } = fullLine;
 		public bool Treated { get; set; } = false;
 		public bool Replaceable { get; set; } = true;
 		public bool UniqueId { get; set; } = false;
 		public string Comments { get; set; } = "";
-
-		public XstrTstrings(int id, string text, FileInfo file, string fullLine)
-		{
-			Id = id;
-			Text = text;
-			FileName = file.Name;
-			FilePath = file.FullName;
-			FullLine = fullLine;
-		}
 
 		public string ReplaceContentWithNewXstrId(string content)
 		{

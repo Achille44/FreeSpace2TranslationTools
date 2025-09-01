@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
@@ -67,7 +66,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 			StringBuilder content = new();
 			content.Append($"[RANK NAMES]{Environment.NewLine}");
 
-			foreach (ERank rank in Entries)
+			foreach (ERank rank in Entries.Cast<ERank>())
 			{
 				content.Append($"{Environment.NewLine}$Name: {rank.Name}{Environment.NewLine}+nocreate{Environment.NewLine}");
 				content.Append($"$Alt Name: XSTR(\"{rank.AltName}\", -1){Environment.NewLine}");

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace FreeSpace2TranslationTools.Services
+namespace FreeSpace2TranslationTools.Services.Files
 {
     internal interface IFile
     {

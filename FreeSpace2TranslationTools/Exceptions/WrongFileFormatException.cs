@@ -3,7 +3,6 @@ using System.Runtime.Serialization;
 
 namespace FreeSpace2TranslationTools.Exceptions
 {
-    [Serializable]
     internal class WrongFileFormatException : Exception
     {
         public WrongFileFormatException()
@@ -15,10 +14,6 @@ namespace FreeSpace2TranslationTools.Exceptions
         }
 
         public WrongFileFormatException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        protected WrongFileFormatException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

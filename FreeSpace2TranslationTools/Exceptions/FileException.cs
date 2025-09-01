@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Exceptions
 {
-    [Serializable]
     internal class FileException : Exception
     {
         public string File { get; set; }
@@ -21,10 +16,6 @@ namespace FreeSpace2TranslationTools.Exceptions
         }
 
         public FileException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        protected FileException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
 

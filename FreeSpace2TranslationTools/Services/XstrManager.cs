@@ -1,15 +1,12 @@
 ﻿using FreeSpace2TranslationTools.Enums;
 using FreeSpace2TranslationTools.Exceptions;
 using FreeSpace2TranslationTools.Services.Entries;
+using FreeSpace2TranslationTools.Services.Files;
 using FreeSpace2TranslationTools.Services.Tables;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services
 {
@@ -20,9 +17,9 @@ namespace FreeSpace2TranslationTools.Services
 		private List<GameFile> Files { get; set; }
 		public bool ExtractToSeparateFiles { get; set; }
 		private int CurrentProgress { get; set; } = 0;
-		private List<Weapon> Weapons { get; set; } = new List<Weapon>();
-		private List<EWeapon> EWeapons { get; set; } = new List<EWeapon>();
-		private List<Ship> Ships { get; set; } = new List<Ship>();
+		private List<Weapon> Weapons { get; set; } = [];
+		private List<EWeapon> EWeapons { get; set; } = [];
+		private List<Ship> Ships { get; set; } = [];
 
 		public XstrManager(MainWindow parent, object sender, List<GameFile> files, bool extractToSeparateFiles)
 		{
@@ -90,7 +87,7 @@ namespace FreeSpace2TranslationTools.Services
 				{
 					result += "\r\n";
 				}
-				else if (originalMatch.EndsWith("\n"))
+				else if (originalMatch.EndsWith('\n'))
 				{
 					result += "\n";
 				}
@@ -258,8 +255,8 @@ namespace FreeSpace2TranslationTools.Services
 			else
 			{
 				// Start with ships.tbl
-				List<GameFile> shipFiles = Files.Where(f => f.Name.EndsWith("ships.tbl")).ToList();
-				shipFiles.AddRange(Files.Where(f => f.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX)).ToList());
+				List<GameFile> shipFiles = [.. Files.Where(f => f.Name.EndsWith("ships.tbl"))];
+				shipFiles.AddRange([.. Files.Where(f => f.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX))]);
 
 				foreach (GameFile file in shipFiles)
 				{
@@ -315,7 +312,7 @@ namespace FreeSpace2TranslationTools.Services
 
 		private void ProcessVisualNovelFiles()
 		{
-			GameFile[] visualNovels = Files.Where(file => file.Type == FileTypes.Fiction).ToArray();
+			GameFile[] visualNovels = [.. Files.Where(file => file.Type == FileTypes.Fiction)];
 
 			foreach (GameFile file in visualNovels)
 			{
@@ -341,14 +338,14 @@ namespace FreeSpace2TranslationTools.Services
 			MainWindow.IncreaseProgress(Sender, CurrentProgress++);
 		}
 
-		private void ProcessWeaponFile(GameFile gameFile, IFile file)
+		private void ProcessWeaponFile(GameFile gameFile, WeaponsFile file)
 		{
 			gameFile.SaveContent(file.GetInternationalizedContent(Weapons));
 
 			MainWindow.IncreaseProgress(Sender, CurrentProgress++);
 		}
 
-		private void ProcessShipFile(GameFile gameFile, IFile file)
+		private void ProcessShipFile(GameFile gameFile, ShipsFile file)
 		{
 			gameFile.SaveContent(file.GetInternationalizedContent(Ships));
 

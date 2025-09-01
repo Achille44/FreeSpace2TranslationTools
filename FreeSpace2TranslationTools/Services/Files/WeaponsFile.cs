@@ -1,20 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
-namespace FreeSpace2TranslationTools.Services
+namespace FreeSpace2TranslationTools.Services.Files
 {
-	internal class WeaponsFile : IFile
+	internal class WeaponsFile(string content) : IFile
 	{
-		internal string Content { get; set; }
-
-		public WeaponsFile(string content)
-		{
-			Content = content;
-		}
+		internal string Content { get; set; } = content;
 
 		public string GetInternationalizedContent()
 		{

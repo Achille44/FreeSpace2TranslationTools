@@ -4,13 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
 	internal class TblMainhall : Tables
 	{
-		public List<EMainhall> Mainhalls { get; set; } = new();
+		public List<EMainhall> Mainhalls { get; set; } = [];
 
 		public TblMainhall(List<GameFile> files, string tableName, string modularTableSuffix) : base(files, tableName, modularTableSuffix)
 		{
@@ -70,11 +69,11 @@ namespace FreeSpace2TranslationTools.Services.Tables
 
 		public IEnumerable<GameFile> CreateInternationalizedTables()
 		{
-			List<GameFile> files = new();
+			List<GameFile> files = [];
 
 			if (Mainhalls.Any(m => m.MainhallResolutions.Any(mr => mr.DoorDescriptions.Count > 0)))
 			{
-				Mainhalls = Mainhalls.OrderBy(m => m.NumResolutions).ToList();
+				Mainhalls = [.. Mainhalls.OrderBy(m => m.NumResolutions)];
 				IEnumerable<int> numResolutions = Mainhalls.DistinctBy(m => m.NumResolutions).Select(m => m.NumResolutions);
 
 				foreach (int numResolution in numResolutions)

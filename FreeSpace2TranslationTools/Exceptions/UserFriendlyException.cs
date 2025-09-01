@@ -3,7 +3,6 @@ using System.Runtime.Serialization;
 
 namespace FreeSpace2TranslationTools.Exceptions
 {
-    [Serializable]
     internal class UserFriendlyException : Exception
     {
         public UserFriendlyException()
@@ -15,10 +14,6 @@ namespace FreeSpace2TranslationTools.Exceptions
         }
 
         public UserFriendlyException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        protected UserFriendlyException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

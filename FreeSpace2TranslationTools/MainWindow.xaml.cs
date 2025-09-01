@@ -1,5 +1,6 @@
 ﻿using FreeSpace2TranslationTools.Exceptions;
 using FreeSpace2TranslationTools.Services;
+using FreeSpace2TranslationTools.Services.Xstr;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
@@ -51,9 +52,11 @@ namespace FreeSpace2TranslationTools
 
         private void btnUpdate_Click(object sender, RoutedEventArgs e)
         {
-            BackgroundWorker worker = new();
-            worker.WorkerReportsProgress = true;
-            worker.DoWork += UpdateTranslation;
+			BackgroundWorker worker = new()
+			{
+				WorkerReportsProgress = true
+			};
+			worker.DoWork += UpdateTranslation;
             worker.ProgressChanged += WorkerProgressChanged;
             worker.RunWorkerAsync();
         }
@@ -199,7 +202,7 @@ namespace FreeSpace2TranslationTools
                 string newTranslatedContent = File.ReadAllText(newTranslatedFile);
 
                 MatchCollection matchesInNewOriginal = Regexp.XstrInTstrings.Matches(newOriginalContent);
-				List<IXstr> newOriginalXstrList = new();
+				List<IXstr> newOriginalXstrList = [];
 
 				foreach (Match match in matchesInNewOriginal.AsEnumerable())
 				{
@@ -208,7 +211,7 @@ namespace FreeSpace2TranslationTools
 				}
 
 				// We order the list so that entries with comments are treated before, and so they don't get replaced by similar entries without comments
-                newOriginalXstrList = newOriginalXstrList.OrderByDescending(x => x.Comments).ToList();
+                newOriginalXstrList = [.. newOriginalXstrList.OrderByDescending(x => x.Comments)];
 
 				// Required to avoid thread access errors...
 				Dispatcher.Invoke(() =>
@@ -217,7 +220,7 @@ namespace FreeSpace2TranslationTools
                 });
 
                 IEnumerable<Match> matchesInOldOriginal = Regexp.XstrInTstrings.Matches(oldOriginalContent);
-                List<IXstr> oldOriginalXstrList = new();
+                List<IXstr> oldOriginalXstrList = [];
 
                 foreach (Match match in matchesInOldOriginal)
                 {
@@ -226,7 +229,7 @@ namespace FreeSpace2TranslationTools
                 }
 
                 IEnumerable<Match> matchesInOldTranslated = Regexp.XstrInTstrings.Matches(oldTranslatedContent);
-                List<IXstr> oldTranslatedXstrList = new();
+                List<IXstr> oldTranslatedXstrList = [];
 
                 foreach (Match match in matchesInOldTranslated)
                 {
@@ -315,9 +318,11 @@ namespace FreeSpace2TranslationTools
 
         private void btnCreateXstr_Click(object sender, RoutedEventArgs e)
         {
-            BackgroundWorker worker = new();
-            worker.WorkerReportsProgress = true;
-            worker.DoWork += CreateXstr;
+			BackgroundWorker worker = new()
+			{
+				WorkerReportsProgress = true
+			};
+			worker.DoWork += CreateXstr;
             worker.ProgressChanged += WorkerProgressChanged;
             worker.RunWorkerAsync();
         }

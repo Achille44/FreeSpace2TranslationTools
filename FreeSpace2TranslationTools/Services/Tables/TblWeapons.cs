@@ -1,20 +1,16 @@
 ﻿using FreeSpace2TranslationTools.Services.Entries;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace FreeSpace2TranslationTools.Services.Tables
 {
-	internal class TblWeapons : Tables
+	internal class TblWeapons(List<GameFile> files, string tableName, string modularTableSuffix) : Tables(files, tableName, modularTableSuffix)
 	{
-        public List<EWeapon> Primaries { get; set; } = new List<EWeapon>();
-        public List<EWeapon> Secondaries { get; set; } = new List<EWeapon>();
-
-		public TblWeapons(List<GameFile> files, string tableName, string modularTableSuffix) : base(files, tableName, modularTableSuffix) { }
+        public List<EWeapon> Primaries { get; set; } = [];
+        public List<EWeapon> Secondaries { get; set; } = [];
 
 		protected override void ExtractInternationalizationContent()
 		{
@@ -42,9 +38,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 				}
 			}
 
-			List<EWeapon> allWeapons = new();
-			allWeapons.AddRange(Primaries);
-			allWeapons.AddRange(Secondaries);
+			List<EWeapon> allWeapons = [.. Primaries, .. Secondaries];
 
 			return allWeapons;
 		}

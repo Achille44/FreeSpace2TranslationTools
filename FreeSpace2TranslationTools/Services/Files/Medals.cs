@@ -1,18 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace FreeSpace2TranslationTools.Services
+namespace FreeSpace2TranslationTools.Services.Files
 {
-    internal class Medals : IFile
+    internal class Medals(string content) : IFile
     {
-        internal string Content { get; set; }
+		internal string Content { get; set; } = content;
 
-        public Medals(string content)
-        {
-            Content = content;
-        }
-
-        public string GetInternationalizedContent()
+		public string GetInternationalizedContent()
         {
             Content = Regexp.HardCodedAltNames.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 

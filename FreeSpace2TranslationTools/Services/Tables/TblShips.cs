@@ -1,5 +1,4 @@
-﻿using FreeSpace2TranslationTools.Enums;
-using FreeSpace2TranslationTools.Services.Entries;
+﻿using FreeSpace2TranslationTools.Services.Entries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,8 +9,8 @@ namespace FreeSpace2TranslationTools.Services.Tables
 {
 	internal class TblShips : Tables
 	{
-		public List<EShip> Ships { get; set; } = new List<EShip>();
-		public List<EWeapon> ModWeapons { get; set; } = new List<EWeapon>();
+		public List<EShip> Ships { get; set; } = [];
+		public List<EWeapon> ModWeapons { get; set; } = [];
 
 		public TblShips(List<GameFile> files, string tableName, string modularTableSuffix, List<EWeapon> modWeapons) : base(files, tableName, modularTableSuffix)
 		{
@@ -124,9 +123,9 @@ namespace FreeSpace2TranslationTools.Services.Tables
 							Match altDamagePopupSubsystemName = Regexp.AltDamagePopupSubsystemNames.Match(subsystem.Value);
 							ESubsystem eSubsystem;
 
-							if (ship.Subsystems.Exists(s => s.Name.ToLower() == subsystemName.Value.Split(',')[0].Trim().ToLower()))
+							if (ship.Subsystems.Exists(s => s.Name.Equals(subsystemName.Value.Split(',')[0].Trim(), StringComparison.CurrentCultureIgnoreCase)))
 							{
-								eSubsystem = ship.Subsystems.First(s => s.Name.ToLower() == subsystemName.Value.Split(',')[0].Trim().ToLower());
+								eSubsystem = ship.Subsystems.First(s => s.Name.Equals(subsystemName.Value.Split(',')[0].Trim(), StringComparison.CurrentCultureIgnoreCase));
 							}
 							else
 							{
@@ -162,7 +161,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 							if (subsystem.Value.Contains("$Default PBanks:"))
 							{
 								string defaultPBank = Regexp.DefaultPBanks.Match(subsystem.Value).Value;
-								EWeapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name.TrimStart('@') == defaultPBank || w.Name.TrimStart('@').ToUpper() == defaultPBank.ToUpper());
+								EWeapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name.TrimStart('@') == defaultPBank || w.Name.TrimStart('@').Equals(defaultPBank, StringComparison.CurrentCultureIgnoreCase));
 
 								if (defaultWeapon != null)
 								{
@@ -189,7 +188,7 @@ namespace FreeSpace2TranslationTools.Services.Tables
 								eSubsystem.IsMissileLauncher = true;
 
 								string defaultSBank = Regexp.DefaultPBanks.Match(subsystem.Value).Value;
-								EWeapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name.TrimStart('@') == defaultSBank || w.Name.TrimStart('@').ToUpper() == defaultSBank.ToUpper());
+								EWeapon defaultWeapon = ModWeapons.FirstOrDefault(w => w.Name.TrimStart('@') == defaultSBank || w.Name.TrimStart('@').Equals(defaultSBank, StringComparison.CurrentCultureIgnoreCase));
 
 								if (defaultWeapon != null)
 								{

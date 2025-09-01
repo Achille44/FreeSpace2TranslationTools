@@ -1,4 +1,5 @@
 ﻿using FreeSpace2TranslationTools.Exceptions;
+using FreeSpace2TranslationTools.Services.Xstr;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +14,7 @@ namespace FreeSpace2TranslationTools.Services
 		private object Sender { get; set; }
 		private string ModFolder { get; set; }
 		private string DestinationFolder { get; set; }
-		private IReadOnlyCollection<GameFile> Files { get; set; }
+		private List<GameFile> Files { get; set; }
 		private List<IXstr> Lines { get; set; }
 		private List<IXstr> Duplicates { get; set; }
 		private bool ManageDuplicates { get; set; }
@@ -31,8 +32,8 @@ namespace FreeSpace2TranslationTools.Services
 			ManageDuplicates = manageDuplicates;
 			StartingID = startingID;
 			ExtractToSeparateFiles = extractToSeparateFiles;
-			Lines = new();
-			Duplicates = new();
+			Lines = [];
+			Duplicates = [];
 			Files = files;
 
 			MainWindow.InitializeProgress(Sender);
@@ -93,14 +94,14 @@ namespace FreeSpace2TranslationTools.Services
 				}
 			}
 
-			List<GameFile> compatibleFiles = Files.Where(x => 
+			List<GameFile> compatibleFiles = [.. Files.Where(x => 
 				!x.Name.EndsWith(Constants.STRINGS_MODULAR_TABLE_SUFFIX) 
 				&& !x.Name.EndsWith(Constants.TSTRINGS_MODULAR_TABLE_SUFFIX) 
-				&& !x.Name.EndsWith(Constants.STRINGS_TABLE)).ToList();
+				&& !x.Name.EndsWith(Constants.STRINGS_TABLE))];
 
 			if (ExtractToSeparateFiles)
 			{
-				compatibleFiles = compatibleFiles.Where(x => 
+				compatibleFiles = [.. compatibleFiles.Where(x => 
 					(
 						!x.Name.EndsWith(Constants.SHIPS_TABLE)
 						&& !x.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX)
@@ -113,22 +114,22 @@ namespace FreeSpace2TranslationTools.Services
 						&& !x.Name.EndsWith(Constants.MAINHALL_TABLE)
 						&& !x.Name.EndsWith(Constants.MAINHALL_MODULAR_TABLE_SUFFIX)
 					)
-					|| x.Name.Contains(Constants.I18N_FILE_PREFIX)).ToList();
+					|| x.Name.Contains(Constants.I18N_FILE_PREFIX))];
 			}
 
-			List<GameFile> orderedFiles = new();
+			List<GameFile> orderedFiles = [];
 
 			// First we look for tables, then modular tables (so that original tbl have less chance to see their ID changed in case of duplicates),
 			// then we look for missions, to try to follow the translation conventions... and to avoid token problems in tables
-			string[] tablesExtensions = new[] { Constants.TABLE_EXTENSION };
-			string[] modularTablesExtensions = new[] { Constants.MODULAR_TABLE_EXTENSION, Constants.SOURCE_CODE_EXTENSION };
-			string[] missionsExtensions = new[] { Constants.CAMPAIGN_EXTENSION, Constants.MISSION_EXTENSION };
-			string[] fictionExtensions = new[] { Constants.FICTION_EXTENSION };
+			string[] tablesExtensions = [Constants.TABLE_EXTENSION];
+			string[] modularTablesExtensions = [Constants.MODULAR_TABLE_EXTENSION, Constants.SOURCE_CODE_EXTENSION];
+			string[] missionsExtensions = [Constants.CAMPAIGN_EXTENSION, Constants.MISSION_EXTENSION];
+			string[] fictionExtensions = [Constants.FICTION_EXTENSION];
 
-			orderedFiles.AddRange(compatibleFiles.Where(f => tablesExtensions.Contains(Path.GetExtension(f.Name))).ToList());
-			orderedFiles.AddRange(compatibleFiles.Where(f => modularTablesExtensions.Contains(Path.GetExtension(f.Name))).ToList());
-			orderedFiles.AddRange(compatibleFiles.Where(f => missionsExtensions.Contains(Path.GetExtension(f.Name))).ToList());
-			orderedFiles.AddRange(compatibleFiles.Where(f => fictionExtensions.Contains(Path.GetExtension(f.Name))).ToList());
+			orderedFiles.AddRange([.. compatibleFiles.Where(f => tablesExtensions.Contains(Path.GetExtension(f.Name)))]);
+			orderedFiles.AddRange([.. compatibleFiles.Where(f => modularTablesExtensions.Contains(Path.GetExtension(f.Name)))]);
+			orderedFiles.AddRange([.. compatibleFiles.Where(f => missionsExtensions.Contains(Path.GetExtension(f.Name)))]);
+			orderedFiles.AddRange([.. compatibleFiles.Where(f => fictionExtensions.Contains(Path.GetExtension(f.Name)))]);
 
 			foreach (GameFile file in orderedFiles)
 			{
@@ -242,8 +243,8 @@ namespace FreeSpace2TranslationTools.Services
 		/// </summary>
 		private void CreateModFilesWithNewIds()
 		{
-			Duplicates = Duplicates.OrderBy(x => x.FileName).ToList();
-			IReadOnlyCollection<string> filesToModify = Duplicates.Select(x => x.FilePath).Distinct().ToList();
+			Duplicates = [.. Duplicates.OrderBy(x => x.FileName)];
+			IReadOnlyCollection<string> filesToModify = [.. Duplicates.Select(x => x.FilePath).Distinct()];
 
 			foreach (string sourceFile in filesToModify)
 			{

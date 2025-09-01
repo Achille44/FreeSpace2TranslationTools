@@ -15,6 +15,6 @@ namespace FreeSpace2TranslationTools.Services.Entries
         public string TechDescription { get; set; }
         public string Length { get; set; }
         public bool IsPlayerShip { get; set; } = false;
-        public List<ESubsystem> Subsystems { get; set; } = new List<ESubsystem>();
+        public List<ESubsystem> Subsystems { get; set; } = [];
     }
 }

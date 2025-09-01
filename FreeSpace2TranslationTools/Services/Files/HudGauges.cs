@@ -1,18 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace FreeSpace2TranslationTools.Services
+namespace FreeSpace2TranslationTools.Services.Files
 {
-    internal class HudGauges : IFile
+    internal class HudGauges(string originalContent) : IFile
     {
-        private readonly string OriginalContent;
+        private readonly string OriginalContent = originalContent;
 
-        public HudGauges(string originalContent)
-        {
-            OriginalContent = originalContent;
-        }
-
-        public string GetInternationalizedContent()
+		public string GetInternationalizedContent()
         {
             return Regexp.HardcodedTexts.Replace(OriginalContent, new MatchEvaluator(GenerateInternationalizedHudGauges));
         }
