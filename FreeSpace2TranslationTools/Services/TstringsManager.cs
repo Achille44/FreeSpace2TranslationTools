@@ -94,14 +94,14 @@ namespace FreeSpace2TranslationTools.Services
 				}
 			}
 
-			List<GameFile> compatibleFiles = [.. Files.Where(x => 
-				!x.Name.EndsWith(Constants.STRINGS_MODULAR_TABLE_SUFFIX) 
-				&& !x.Name.EndsWith(Constants.TSTRINGS_MODULAR_TABLE_SUFFIX) 
+			List<GameFile> compatibleFiles = [.. Files.Where(x =>
+				!x.Name.EndsWith(Constants.STRINGS_MODULAR_TABLE_SUFFIX)
+				&& !x.Name.EndsWith(Constants.TSTRINGS_MODULAR_TABLE_SUFFIX)
 				&& !x.Name.EndsWith(Constants.STRINGS_TABLE))];
 
 			if (ExtractToSeparateFiles)
 			{
-				compatibleFiles = [.. compatibleFiles.Where(x => 
+				compatibleFiles = [.. compatibleFiles.Where(x =>
 					(
 						!x.Name.EndsWith(Constants.SHIPS_TABLE)
 						&& !x.Name.EndsWith(Constants.SHIP_MODULAR_TABLE_SUFFIX)
@@ -177,41 +177,49 @@ namespace FreeSpace2TranslationTools.Services
 			{
 				IXstr originalXstr = Lines.FirstOrDefault(x => x.Text == duplicate.Text && !x.UniqueId);
 
-				// if duplicated text exists in another xstr in the original file, then copy its ID
-				if (originalXstr != null && !duplicate.UniqueId)
+				// ignore the empty strings
+				if (duplicate.Text == "\"\"")
 				{
-					duplicate.Id = originalXstr.Id;
 					duplicate.Treated = true;
-				}
-				// if there is another duplicate with the same text, we can reuse the same ID to avoid new duplicates in the new file
-				else if (i18nContent.ToString().Contains(duplicate.Text) && !duplicate.UniqueId)
-				{
-					IXstr result = Duplicates.FirstOrDefault(x => x.Treated && x.Text == duplicate.Text);
-
-					if (result != null)
-					{
-						duplicate.Id = result.Id;
-						duplicate.Treated = true;
-					}
-					else
-					{
-						throw new Exception();
-					}
 				}
 				else
 				{
-					duplicate.Id = newId;
-					newId++;
-
-					// add the name of the file in comment
-					if (currentFile != duplicate.FileName)
+					// if duplicated text exists in another xstr in the original file, then copy its ID
+					if (originalXstr != null && !duplicate.UniqueId)
 					{
-						currentFile = duplicate.FileName;
-						i18nContent.Append($"{Environment.NewLine}; {duplicate.FileName + Environment.NewLine}");
+						duplicate.Id = originalXstr.Id;
+						duplicate.Treated = true;
 					}
+					// if there is another duplicate with the same text, we can reuse the same ID to avoid new duplicates in the new file
+					else if (i18nContent.ToString().Contains(duplicate.Text) && !duplicate.UniqueId)
+					{
+						IXstr result = Duplicates.FirstOrDefault(x => x.Treated && x.Text == duplicate.Text);
 
-					i18nContent.Append($"{Environment.NewLine + duplicate.Id}, {duplicate.Text + duplicate.Comments + Environment.NewLine}");
-					duplicate.Treated = true;
+						if (result != null)
+						{
+							duplicate.Id = result.Id;
+							duplicate.Treated = true;
+						}
+						else
+						{
+							throw new Exception();
+						}
+					}
+					else
+					{
+						duplicate.Id = newId;
+						newId++;
+
+						// add the name of the file in comment
+						if (currentFile != duplicate.FileName)
+						{
+							currentFile = duplicate.FileName;
+							i18nContent.Append($"{Environment.NewLine}; {duplicate.FileName + Environment.NewLine}");
+						}
+
+						i18nContent.Append($"{Environment.NewLine + duplicate.Id}, {duplicate.Text + duplicate.Comments + Environment.NewLine}");
+						duplicate.Treated = true;
+					}
 				}
 
 				MainWindow.IncreaseProgress(Sender, CurrentProgress++);

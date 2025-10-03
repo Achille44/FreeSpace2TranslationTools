@@ -7,7 +7,7 @@ namespace FreeSpace2TranslationTools.Services.Files
     {
         private readonly string OriginalContent = originalContent;
 
-		public string GetInternationalizedContent()
+		public string GetInternationalizedContent(bool completeInternationalization = true)
         {
             return Regexp.HardcodedTexts.Replace(OriginalContent, new MatchEvaluator(GenerateInternationalizedHudGauges));
         }

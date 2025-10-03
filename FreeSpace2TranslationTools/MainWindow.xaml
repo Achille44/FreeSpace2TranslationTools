@@ -25,6 +25,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <WrapPanel Grid.Row="0">
                         <TextBlock Style="{StaticResource LongTextBlock}" Text="{x:Static p:Resources.CreateMissingXstrDescription}" />
@@ -139,6 +140,11 @@
                         <TextBlock Style="{StaticResource LongTextBlock}" Text="{x:Static p:Resources.StartingIdDescription}" />
                     </WrapPanel>
                     <WrapPanel Grid.Row="6">
+                        <CheckBox x:Name="cbCompleteInternationalization">
+                            <TextBlock Style="{StaticResource TextInCB}" Text="{x:Static p:Resources.CompleteInternationalization}" />
+                        </CheckBox>
+                    </WrapPanel>
+                    <WrapPanel Grid.Row="7">
                         <Button x:Name="btnCreateXstr" Content="{x:Static p:Resources.Generate}" Click="btnCreateXstr_Click" Style="{StaticResource ValidationButton}" />
                     </WrapPanel>
                 </Grid>

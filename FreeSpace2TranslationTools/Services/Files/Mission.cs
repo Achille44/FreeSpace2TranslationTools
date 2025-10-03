@@ -12,38 +12,47 @@ namespace FreeSpace2TranslationTools.Services.Files
 		internal List<string> JumpNodes { get; set; } = [];
         internal List<MissionVariable> Variables { get; set; } = [];
 
-		public string GetInternationalizedContent()
+		public string GetInternationalizedContent(bool completeInternationalization = true)
         {
             GetOriginalVariables();
 
-            Content = Regexp.Labels.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+            if (completeInternationalization)
+            {
+                Content = Regexp.Labels.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 
-            Content = Regexp.CallSigns.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
+                Content = Regexp.CallSigns.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue)); 
+            }
 
             Content = Regexp.MissionShipNames.Replace(Content, new MatchEvaluator(GenerateShipNames));
 
-            ConvertShowSubtitleToShowSubtitleText();
+            if (completeInternationalization)
+            {
+                ConvertShowSubtitleToShowSubtitleText();
 
-            ExtractShowSubtitleTextContentToMessages();
+                ExtractShowSubtitleTextContentToMessages(); 
+            }
 
             ConvertAltToVariables();
 
-            ConvertHardcodedHudTextToVariables();
+            if (completeInternationalization)
+            {
+                ConvertHardcodedHudTextToVariables();
 
-            ConvertSpecialMessageSendersToVariables();
+                ConvertSpecialMessageSendersToVariables();
 
-			// must be called before ConvertSecondSexpParametersToVariables
-			ConvertScriptEvalBlockToLuaSexp();
+                // must be called before ConvertSecondSexpParametersToVariables
+                ConvertScriptEvalBlockToLuaSexp();
 
-			Content = Regexp.JumpNodeNames.Replace(Content, new MatchEvaluator(GenerateJumpNodeNames));
+                Content = Regexp.JumpNodeNames.Replace(Content, new MatchEvaluator(GenerateJumpNodeNames));
 
-            ConvertFirstSexpParametersToVariables();
+                ConvertFirstSexpParametersToVariables();
 
-            ConvertSecondSexpParametersToVariables();
+                ConvertSecondSexpParametersToVariables();
 
-            ConvertFourthSexpParametersToVariables();
+                ConvertFourthSexpParametersToVariables();
 
-			ConvertEachSexpStringParameterToVariable();
+                ConvertEachSexpStringParameterToVariable(); 
+            }
 
             // AddVariablesToSexpVariablesSection and AddEventToManageTranslations must be the last methods called here, so add the new ones before those two
 

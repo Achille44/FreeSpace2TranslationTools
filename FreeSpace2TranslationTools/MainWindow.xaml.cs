@@ -27,6 +27,7 @@ namespace FreeSpace2TranslationTools
             InitializeComponent();
             // Default cache is 15
             Regex.CacheSize = 100;
+            cbCompleteInternationalization.IsChecked = true;
         }
 
         private void btnOldOriginal_Click(object sender, RoutedEventArgs e)
@@ -139,11 +140,6 @@ namespace FreeSpace2TranslationTools
             {
                 throw new UserFriendlyException($"{Localization.InvalidFile}{fileLabel}");
             }
-        }
-
-        private static void ProcessComplete()
-        {
-            MessageBox.Show(Localization.ProcessComplete);
         }
 
         private static void ProcessComplete(TimeSpan time)
@@ -361,6 +357,7 @@ namespace FreeSpace2TranslationTools
                 string startingID = string.Empty;
                 bool duplicatesMustBeManaged = false;
                 bool extractToSeparateFiles = false;
+                bool isCompleteInternationalization = false;
 
 				Dispatcher.Invoke(() =>
                 {
@@ -368,7 +365,8 @@ namespace FreeSpace2TranslationTools
                     destinationFolder = tbDestinationFolderXSTR.Text;
                     duplicatesMustBeManaged = cbManageDuplicates.IsChecked ?? false;
 					extractToSeparateFiles = !cbExtractToNewFiles.IsChecked ?? true;
-                    startingID = tbStartingID.Text;
+					isCompleteInternationalization = cbCompleteInternationalization.IsChecked ?? true;
+					startingID = tbStartingID.Text;
                 });
 
                 CheckDirectoryIsValid(modFolder, Localization.ModFolder);
@@ -377,7 +375,7 @@ namespace FreeSpace2TranslationTools
                 List<GameFile> files = FileManager.GetFilesWithXstrFromFolder(modFolder);
 
                 XstrManager xstrManager = new(this, sender, files, extractToSeparateFiles);
-                xstrManager.LaunchXstrProcess();
+                xstrManager.LaunchXstrProcess(isCompleteInternationalization);
                 SetProgressToMax(sender);
 
                 TstringsManager tstringsManager = new(this, sender, modFolder, destinationFolder, duplicatesMustBeManaged, files, startingID, extractToSeparateFiles);

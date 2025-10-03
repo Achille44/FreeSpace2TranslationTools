@@ -7,7 +7,7 @@ namespace FreeSpace2TranslationTools.Services.Files
     {
         private readonly string OriginalContent = originalContent;
 
-		public string GetInternationalizedContent()
+		public string GetInternationalizedContent(bool completeInternationalization = true)
         {
             return Regexp.HardcodedDoorDescriptions.Replace(OriginalContent, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
         }

@@ -30,7 +30,7 @@ namespace FreeSpace2TranslationTools.Services.Files
             ContentLines = content.Split(Environment.NewLine);
         }
 
-        public string GetInternationalizedContent()
+        public string GetInternationalizedContent(bool completeInternationalization = true)
         {
             foreach (string line in ContentLines)
             {

@@ -7,7 +7,7 @@ namespace FreeSpace2TranslationTools.Services.Files
     {
 		internal string Content { get; set; } = content;
 
-		public string GetInternationalizedContent()
+		public string GetInternationalizedContent(bool completeInternationalization = true)
         {
             Content = Regexp.HardCodedAltNames.Replace(Content, new MatchEvaluator(XstrManager.InternationalizeHardcodedValue));
 

@@ -132,6 +132,9 @@
   <data name="CheckBoxOverwriteOriginalTables" xml:space="preserve">
     <value>[OBSOLETE] Systematically overwite original tables instead of extracting to distinct modular tables.</value>
   </data>
+  <data name="CompleteInternationalization" xml:space="preserve">
+    <value>Complete internationalization</value>
+  </data>
   <data name="CreateMissingXstrDescription" xml:space="preserve">
     <value>This functionality replaces hard coded strings with XSTR variables in the mod files listed below, then creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder.</value>
   </data>

@@ -10,7 +10,7 @@ namespace FreeSpace2TranslationTools.Services.Files
         private string Content = content;
         private readonly List<Weapon> ModWeapons = modWeapons;
 
-		public string GetInternationalizedContent()
+		public string GetInternationalizedContent(bool completeInternationalization = true)
         {
             throw new NotImplementedException();
         }

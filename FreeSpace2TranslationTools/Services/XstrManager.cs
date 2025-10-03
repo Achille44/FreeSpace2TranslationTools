@@ -32,20 +32,27 @@ namespace FreeSpace2TranslationTools.Services
 			Parent.SetMaxProgress(Files.Count);
 		}
 
-		public void LaunchXstrProcess()
+		public void LaunchXstrProcess(bool completeInternationalization)
 		{
-			ProcessCampaignFiles();
-			ProcessCreditFiles();
-			ProcessCutscenesFile();
-			ProcessHudGaugeFiles();
-			ProcessMainHallFiles();
-			ProcessMedalsFiles();
-			ProcessRankFile();
-			// Weapons must be treated before ships because of the way ship turrets are treated!
-			ProcessWeaponFiles();
-			ProcessShipFiles();
-			ProcessMissionFiles();
-			ProcessVisualNovelFiles();
+			if (completeInternationalization)
+			{
+				ProcessCampaignFiles();
+				ProcessCreditFiles();
+				ProcessCutscenesFile();
+				ProcessHudGaugeFiles();
+				ProcessMainHallFiles();
+				ProcessMedalsFiles();
+				ProcessRankFile();
+				// Weapons must be treated before ships because of the way ship turrets are treated!
+				ProcessWeaponFiles();
+				ProcessShipFiles();
+				ProcessMissionFiles();
+				ProcessVisualNovelFiles();
+			}
+			else
+			{
+				ProcessMissionFiles(completeInternationalization);
+			}
 		}
 
 		internal static string GenerateAltNames(Match match)
@@ -298,13 +305,13 @@ namespace FreeSpace2TranslationTools.Services
 			}
 		}
 
-		private void ProcessMissionFiles()
+		private void ProcessMissionFiles(bool completeInternationalization = true)
 		{
 			foreach (GameFile file in Files.Where(x => x.Type == FileTypes.Mission).ToList())
 			{
 				try
 				{
-					ProcessFile(file, new Mission(file.Content));
+					ProcessFile(file, new Mission(file.Content), completeInternationalization);
 				}
 				catch (Exception ex) { throw new FileException(ex, file.Name); }
 			}
@@ -331,9 +338,9 @@ namespace FreeSpace2TranslationTools.Services
 			}
 		}
 
-		private void ProcessFile(GameFile gameFile, IFile file)
+		private void ProcessFile(GameFile gameFile, IFile file, bool completeInternationalization = true)
 		{
-			gameFile.SaveContent(file.GetInternationalizedContent());
+			gameFile.SaveContent(file.GetInternationalizedContent(completeInternationalization));
 
 			MainWindow.IncreaseProgress(Sender, CurrentProgress++);
 		}

@@ -106,6 +106,15 @@ namespace FreeSpace2TranslationTools.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Complete internationalization.
+        /// </summary>
+        public static string CompleteInternationalization {
+            get {
+                return ResourceManager.GetString("CompleteInternationalization", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à This functionality replaces hard coded strings with XSTR variables in the mod files listed below, then creates a tstrings.tbl from scratch, looking for all xstr variables located in the table and mission files of the mod (data) folder..
         /// </summary>
         public static string CreateMissingXstrDescription {
