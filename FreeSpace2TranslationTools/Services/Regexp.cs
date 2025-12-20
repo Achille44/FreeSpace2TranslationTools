@@ -6,6 +6,7 @@ namespace FreeSpace2TranslationTools.Services
     {
         // REGEX HELP
         // (?=): Positive lookahead. Matches a group after the main expression without including it in the result
+        // (?!...): negative lookahead
         // (?<=...): look behind
         // (?<!;): Negative lookbehind
         // (?:...): non capturing group
@@ -121,7 +122,7 @@ namespace FreeSpace2TranslationTools.Services
         private static partial Regex _HudTexts();
         public static Regex HudTexts { get => _HudTexts(); }
 
-        [GeneratedRegex("\\( (send-random-message|send-message).*?\\r?\\n[ \\t]*\\)\\r?\\n", RegexOptions.Singleline)]
+        [GeneratedRegex("\\( (send-random-message|send-message|send-message-list|send-message-chain)(?!-alt).*?\\r?\\n[ \\t]*\\)\\r?\\n", RegexOptions.Singleline)]
         private static partial Regex _SendMessages();
         public static Regex SendMessages { get => _SendMessages(); }
 
