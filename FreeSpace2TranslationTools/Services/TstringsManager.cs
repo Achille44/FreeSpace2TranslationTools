@@ -175,7 +175,7 @@ namespace FreeSpace2TranslationTools.Services
 
 			foreach (IXstr duplicate in Duplicates)
 			{
-				IXstr originalXstr = Lines.FirstOrDefault(x => x.Text == duplicate.Text && !x.UniqueId);
+				IXstr originalXstr = Lines.FirstOrDefault(x => x.Text == duplicate.Text && duplicate.UniqueId == x.UniqueId);
 
 				// ignore the empty strings
 				if (duplicate.Text == "\"\"")
@@ -185,7 +185,7 @@ namespace FreeSpace2TranslationTools.Services
 				else
 				{
 					// if duplicated text exists in another xstr in the original file, then copy its ID
-					if (originalXstr != null && !duplicate.UniqueId)
+					if (originalXstr != null)
 					{
 						duplicate.Id = originalXstr.Id;
 						duplicate.Treated = true;

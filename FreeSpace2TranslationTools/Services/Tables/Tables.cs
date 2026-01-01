@@ -11,15 +11,15 @@ namespace FreeSpace2TranslationTools.Services.Tables
 		protected List<IEntry> Entries { get; set; } = [];
 		protected string I18nFile { get; set; }
 
-		public Tables(List<GameFile> files, string tableName, string modulartableSuffix)
+		public Tables(List<GameFile> files, string tableName, string modularTableSuffix)
 		{
 			// the tbl file must be treated last in this case, as here we go from highest priority to lowest.
-			List<GameFile> tableFiles = [.. files.Where(f => f.Name.EndsWith(modulartableSuffix) && !f.Name.Contains(Constants.I18N_FILE_PREFIX))];
+			List<GameFile> tableFiles = [.. files.Where(f => f.Name.EndsWith(modularTableSuffix) && !f.Name.Contains(Constants.I18N_FILE_PREFIX))];
 			tableFiles.AddRange([.. files.Where(f => f.Name.EndsWith(tableName))]);
 
 			if (tableFiles.Count > 0)
 			{
-				I18nFile = tableFiles[0].Name.Replace(Path.GetFileName(tableFiles[0].Name), Constants.I18N_FILE_PREFIX + modulartableSuffix);
+				I18nFile = tableFiles[0].Name.Replace(Path.GetFileName(tableFiles[0].Name), Constants.I18N_FILE_PREFIX + modularTableSuffix);
 
 				foreach (GameFile file in tableFiles)
 				{

@@ -138,12 +138,7 @@ namespace FreeSpace2TranslationTools.Services
 			if (ExtractToSeparateFiles)
 			{
 				TblCutscenes tables = new(Files, Constants.CUTSCENES_TABLE, Constants.CUTSCENE_MODULAR_TABLE_SUFFIX);
-				GameFile internationalizedTable = tables.CreateInternationalizedTable();
-
-				if (internationalizedTable != null)
-				{
-					Files.Add(internationalizedTable);
-				}
+				ManageInternationalizedTable(tables);
 			}
 			else
 			{
@@ -199,7 +194,20 @@ namespace FreeSpace2TranslationTools.Services
 			{
 				TblMainhall tables = new(Files, Constants.MAINHALL_TABLE, Constants.MAINHALL_MODULAR_TABLE_SUFFIX);
 				IEnumerable<GameFile> internationalizedTables = tables.CreateInternationalizedTables();
-				Files.AddRange(internationalizedTables);
+
+				foreach (GameFile internationalizedTable in internationalizedTables)
+				{
+					GameFile alreadyExistingI18nFile = Files.FirstOrDefault(f => f.Name == internationalizedTable.Name);
+
+					if (alreadyExistingI18nFile != null)
+					{
+						alreadyExistingI18nFile.SaveContent(internationalizedTable.Content);
+					}
+					else
+					{
+						Files.Add(internationalizedTable);
+					}
+				}
 			}
 			else
 			{
@@ -222,12 +230,7 @@ namespace FreeSpace2TranslationTools.Services
 			if (ExtractToSeparateFiles)
 			{
 				TblRank tables = new(Files, Constants.RANK_TABLE, Constants.RANK_MODULAR_TABLE_SUFFIX);
-				GameFile internationalizedTable = tables.CreateInternationalizedTable();
-
-				if (internationalizedTable != null)
-				{
-					Files.Add(internationalizedTable);
-				}
+				ManageInternationalizedTable(tables);
 			}
 			else
 			{
@@ -252,12 +255,7 @@ namespace FreeSpace2TranslationTools.Services
 			if (ExtractToSeparateFiles)
 			{
 				TblShips tables = new(Files, Constants.SHIPS_TABLE, Constants.SHIP_MODULAR_TABLE_SUFFIX, EWeapons);
-				GameFile internationalizedTable = tables.CreateInternationalizedTable();
-
-				if (internationalizedTable != null)
-				{
-					Files.Add(internationalizedTable);
-				}
+				ManageInternationalizedTable(tables);
 			}
 			else
 			{
@@ -285,12 +283,7 @@ namespace FreeSpace2TranslationTools.Services
 			{
 				TblWeapons tables = new(Files, Constants.WEAPONS_TABLE, Constants.WEAPON_MODULAR_TABLE_SUFFIX);
 				EWeapons = tables.ExtractInternationalizationWeaponContent();
-				GameFile internationalizedTable = tables.CreateInternationalizedTable();
-
-				if (internationalizedTable != null)
-				{
-					Files.Add(internationalizedTable);
-				}
+				ManageInternationalizedTable(tables);
 			}
 			else
 			{
@@ -357,6 +350,25 @@ namespace FreeSpace2TranslationTools.Services
 			gameFile.SaveContent(file.GetInternationalizedContent(Ships));
 
 			MainWindow.IncreaseProgress(Sender, CurrentProgress++);
+		}
+
+		private void ManageInternationalizedTable(Tables.Tables tables)
+		{
+			GameFile internationalizedTable = tables.CreateInternationalizedTable();
+
+			if (internationalizedTable != null)
+			{
+				GameFile alreadyExistingI18nFile = Files.FirstOrDefault(f => f.Name == internationalizedTable.Name);
+
+				if (alreadyExistingI18nFile != null)
+				{
+					alreadyExistingI18nFile.SaveContent(internationalizedTable.Content);
+				}
+				else
+				{
+					Files.Add(internationalizedTable);
+				}
+			}
 		}
 
 		/// <summary>

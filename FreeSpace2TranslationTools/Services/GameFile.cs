@@ -58,7 +58,7 @@ namespace FreeSpace2TranslationTools.Services
 
             foreach (Match match in resultsFromFile)
             {
-                IXstr xstr = new Xstr.Xstr(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value, match.Groups[4].Value);
+				Xstr.Xstr xstr = new(int.Parse(match.Groups[2].Value), match.Groups[1].Value, fileInfo, match.Value, match.Groups[4].Value);
 
                 if (match.Groups[4].Value.Contains(Constants.UNIQUE_ID))
                 {
@@ -116,7 +116,7 @@ namespace FreeSpace2TranslationTools.Services
 
                     foreach(Match match in tstrings)
                     {
-                        IXstr xstr = new XstrTstrings(int.Parse(match.Groups[1].Value), match.Groups[2].Value, fileInfo, match.Value);
+                        IXstr xstr = new XstrTstrings(int.Parse(match.Groups[1].Value), match.Groups[2].Value, fileInfo, match.Value, match.Groups[3].Value);
 						result.Add(xstr);
 					}
 					break;
